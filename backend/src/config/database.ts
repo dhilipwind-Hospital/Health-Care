@@ -101,13 +101,28 @@ import { PcpndtFormF } from '../models/PcpndtFormF';
 import { PhysiotherapyOrder, PhysiotherapySession } from '../models/PhysiotherapyOrder';
 import { MedicalRecordFile } from '../models/MedicalRecordFile';
 
+// Support DATABASE_URL (Render/Supabase) or individual DB_* variables
+const getDatabaseConfig = () => {
+  if (process.env.DATABASE_URL) {
+    return {
+      type: 'postgres' as const,
+      url: process.env.DATABASE_URL,
+      ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
+    };
+  }
+  return {
+    type: 'postgres' as const,
+    host: process.env.DB_HOST || 'localhost',
+    port: parseInt(process.env.DB_PORT || '5432', 10),
+    username: process.env.DB_USER || 'postgres',
+    password: process.env.DB_PASSWORD || 'postgres',
+    database: process.env.DB_NAME || 'hospital_db',
+    ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
+  };
+};
+
 export const AppDataSource = new DataSource({
-  type: 'postgres',
-  host: process.env.DB_HOST || 'localhost',
-  port: parseInt(process.env.DB_PORT || '5432', 10),
-  username: process.env.DB_USER || 'postgres',
-  password: process.env.DB_PASSWORD || 'postgres',
-  database: process.env.DB_NAME || 'hospital_db',
+  ...getDatabaseConfig(),
   entities: [Organization, User, Role, SystemRoleCustomization, Notification, Service, Department, Appointment, RefreshToken, MedicalRecord, Bill, AvailabilitySlot, Referral, Report, EmergencyRequest, CallbackRequest, Plan, Policy, Claim, AppointmentHistory, Medicine, Prescription, PrescriptionItem, MedicineTransaction, LabTest, LabOrder, LabOrderItem, LabSample, LabResult, ConsultationNote, Ward, Room, Bed, Admission, NursingNote, VitalSign, MedicationAdministration, DoctorNote, DischargeSummary, Visit, QueueItem, Triage, VisitCounter, DoctorAvailability, AppointmentFeedback, PasswordResetToken, Reminder, Message, Feedback, HealthArticle, Allergy, Diagnosis, PurchaseOrder, Supplier, VitalSigns, TelemedicineSession, PatientAccessGrant, Location, StockMovement, StockAlert, SalesInquiry, DeathCertificate, BirthRegister, BillingPackage, Deposit, BloodDonor, BloodInventory, CrossMatchRequest, Transfusion, DialysisMachine, DialysisSession, DialysisPatientProfile, RadiologyOrder, RadiologyReport, RadiologyTemplate, OtRoom, Surgery, SurgicalChecklist, AnesthesiaRecord, AuditLog, ConsentRecord, MedicoLegalCase, DrugRegisterEntry, NdpsRegisterEntry, BiomedicalWasteEntry, IncidentReport, DietOrder, Asset, AssetMaintenanceLog, InfectionSurveillance, HandHygieneAudit, DutyRoster, LeaveRequest, TelemedicineConsultation, InsuranceCompany, InsuranceClaim, AbhaRecord, PcpndtFormF, PhysiotherapyOrder, PhysiotherapySession, MedicalRecordFile],
   migrations: [__dirname + '/../migrations/*.{ts,js}'],
   synchronize: process.env.NODE_ENV !== 'production',
