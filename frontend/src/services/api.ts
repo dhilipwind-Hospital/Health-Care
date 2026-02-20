@@ -8,7 +8,7 @@ interface CustomAxiosRequestConfig extends AxiosRequestConfig {
 // Create axios instance with base URL
 const api: AxiosInstance = axios.create({
   baseURL: process.env.REACT_APP_API_URL || '/api',
-  timeout: 10000,
+  timeout: 180000, // 3 minutes timeout for Render free tier cold starts
   headers: {
     'Content-Type': 'application/json',
   },
