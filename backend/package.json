@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "description": "Backend for Hospital Website",
   "main": "dist/server.js",
+  "engines": {
+    "node": ">=18.0.0"
+  },
   "scripts": {
     "build": "tsc || true",
     "start": "node dist/server.js",
