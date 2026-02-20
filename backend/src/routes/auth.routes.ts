@@ -5,6 +5,7 @@ import { User } from '../models/User';
 import { loginLimiter, forgotPasswordLimiter } from '../middleware/rateLimit.middleware';
 import { authenticate } from '../middleware/auth.middleware';
 import { tenantContext, optionalTenantContext } from '../middleware/tenant.middleware';
+import { getGoogleConfig } from '../controllers/google-auth.controller';
 
 /**
  * @swagger
@@ -283,5 +284,8 @@ router.post('/reset-password', AuthController.resetPassword);
  */
 router.get('/me', authenticate, AuthController.getCurrentUser);
 router.post('/switch-org', authenticate, AuthController.switchOrganization);
+
+// Google OAuth config endpoint (for frontend to fetch client ID)
+router.get('/google/config', getGoogleConfig);
 
 export default router;
