@@ -289,6 +289,37 @@ export class Server {
       res.status(200).json({ status: 'ok', timestamp: new Date() });
     });
 
+    // Seed super admin endpoint (one-time use)
+    this.app.post('/api/seed-super-admin', async (req: Request, res: Response) => {
+      try {
+        const userRepo = AppDataSource.getRepository(User);
+        const email = 'superadmin@hospital.com';
+        const password = 'SuperAdmin@2025';
+        
+        const existing = await userRepo.findOne({ where: { email } });
+        if (existing) {
+          return res.status(200).json({ message: 'Super admin already exists', email });
+        }
+        
+        const superAdmin = userRepo.create({
+          firstName: 'Super',
+          lastName: 'Admin',
+          email,
+          phone: '9999999999',
+          password,
+          role: UserRole.SUPER_ADMIN,
+          isActive: true,
+        });
+        await superAdmin.hashPassword();
+        await userRepo.save(superAdmin);
+        
+        res.status(201).json({ message: 'Super admin created successfully', email });
+      } catch (error: any) {
+        console.error('Seed super admin error:', error);
+        res.status(500).json({ message: 'Failed to seed super admin', error: error.message });
+      }
+    });
+
     // Main API routes - auth routes don't need tenant context
     this.app.use('/api/auth', authRoutes);
     this.app.use('/api/google-auth', googleAuthRoutes);
