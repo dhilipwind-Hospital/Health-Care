@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ayphen Care - Detailed Client Demo Document</title>
+    <style>
+        body {
+            font-family: 'Calibri', 'Segoe UI', sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 40px;
+        }
+
+        h1 {
+            color: #2c3e50;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 15px;
+            font-size: 32px;
+            margin-bottom: 5px;
+        }
+
+        h2 {
+            color: #34495e;
+            margin-top: 35px;
+            font-size: 24px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 8px;
+        }
+
+        h3 {
+            color: #16a085;
+            margin-top: 25px;
+            font-size: 19px;
+            font-weight: 600;
+        }
+
+        ul {
+            margin-bottom: 15px;
+            padding-left: 20px;
+        }
+
+        li {
+            margin-bottom: 8px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 50px;
+            background-color: #f9f9f9;
+            padding: 30px;
+            border-radius: 8px;
+        }
+
+        .header h1 {
+            border: none;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            font-size: 20px;
+            color: #7f8c8d;
+        }
+
+        hr {
+            border: 0;
+            border-top: 1px solid #eee;
+            margin: 40px 0;
+        }
+
+        strong {
+            color: #2c3e50;
+        }
+
+        .persona-box {
+            background-color: #fcfcfc;
+            border-left: 4px solid #3498db;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="header">
+        <h1>Ayphen Care - Hospital Management System</h1>
+        <div class="subtitle">Client Demo & Technical Overview Documentation</div>
+    </div>
+
+    <h2>1. Executive Summary</h2>
+    <p><strong>Ayphen Care</strong> is a cutting-edge, enterprise-grade <strong>Hospital Management System
+            (HMS)</strong> designed to digitize and streamline the complex operations of modern healthcare facilities.
+        Built on a scalable, multi-tenant SaaS architecture, it empowers hospitals, clinics, and multi-specialty chains
+        to manage their entire clinical and administrative workflow from a single, unified platform.</p>
+    <p>By connecting doctors, nurses, pharmacists, lab technicians, and administrators, Ayphen Care eliminates data
+        silos, reduces manual errors, and significantly enhances the patient experience. The platform is designed with a
+        "Patient-First" philosophy, ensuring that technology serves as an enabler for better care delivery.</p>
+
+    <h2>2. Comprehensive Module Breakdown</h2>
+
+    <h3>🏥 A. Patient Registration & Management</h3>
+    <p>Ideally the entry point for any healthcare interaction, this module ensures seamless patient onboarding.</p>
+    <ul>
+        <li><strong>Unified Patient Profile:</strong> A 360-degree view of the patient, aggregating demographics,
+            medical history, allergies, insurance details, and past visits.</li>
+        <li><strong>Smart Search:</strong> Quickly locate patients using name, phone number, or unique Patient ID
+            (UHID).</li>
+        <li><strong>Document Management:</strong> Upload and store external reports, ID proofs, and consent forms
+            securely.</li>
+        <li><strong>Family Linking:</strong> Link family members for easier billing and shared medical history tracking.
+        </li>
+    </ul>
+
+    <h3>📅 B. Appointment & Scheduling</h3>
+    <p>Efficiently manages the provider's most valuable resource: time.</p>
+    <ul>
+        <li><strong>Multi-Channel Booking:</strong> Supports walk-ins via reception, phone bookings, and patient
+            self-scheduling via the portal.</li>
+        <li><strong>Doctor Availability Management:</strong> Doctors can set complex recurring schedules, break times,
+            and leave days.</li>
+        <li><strong>Automated Reminders:</strong> Reduces no-shows by sending automated SMS/Email reminders to patients.
+        </li>
+        <li><strong>Calendar View:</strong> Visual daily, weekly, and monthly views for receptionists to manage slot
+            utilization.</li>
+    </ul>
+
+    <h3>🚦 C. Queue Management System (QMS)</h3>
+    <p>Transforms chaotic waiting rooms into organized, efficient spaces.</p>
+    <ul>
+        <li><strong>Token Generation:</strong> Automatically assigns a token number upon check-in.</li>
+        <li><strong>Real-Time Stage Tracking:</strong> Tracks patient movement from <code>Reception</code> ->
+            <code>Triage</code> -> <code>Waiting</code> -> <code>In-Consultation</code> -> <code>Completed</code>.</li>
+        <li><strong>TV Display Interface:</strong> Dedicated "TV Mode" screens for waiting areas to display current
+            token numbers, reducing patient anxiety.</li>
+        <li><strong>Priority Handling:</strong> Ability to flag "Emergency" or "VIP" patients to bypass standard queues.
+        </li>
+    </ul>
+
+    <h3>🩺 D. Clinical Care (EMR/EHR)</h3>
+    <p>The heart of the system, empowering clinicians to deliver data-driven care.</p>
+    <ul>
+        <li><strong>Digital Prescription Writing:</strong> Select medicines from a master database, auto-fill dosages,
+            and print professional prescriptions.</li>
+        <li><strong>ICD-10 Diagnosis Coding:</strong> Standardized recording of diagnoses for insurance and statistical
+            compliance.</li>
+        <li><strong>Lab Order Entry (CPOE):</strong> Order lab tests directly from the consultation screen with one
+            click.</li>
+        <li><strong>Vitals Charting:</strong> Visualize trends in Blood Pressure, BMI, Temperature, and Sugar levels
+            over time.</li>
+        <li><strong>Clinical Notes:</strong> Structured templates for SOAP (Subjective, Objective, Assessment, Plan)
+            notes.</li>
+    </ul>
+
+    <h3>💊 E. Pharmacy Management</h3>
+    <p>A robust retail pharmacy solution integrated directly with clinical data.</p>
+    <ul>
+        <li><strong>Prescription Fulfillment:</strong> Pharmacists see pending prescriptions instantly; no need to
+            decipher handwriting.</li>
+        <li><strong>Stock Management:</strong> Real-time tracking of batches, expiry dates, and stock levels.
+        <li><strong>Dispensing Workflow:</strong> "Partial Dispensing" support for when full stock isn't available.</li>
+        <li><strong>Low Stock Alerts:</strong> Automated notifications when inventory dips below re-order levels.</li>
+        <li><strong>Sales & Billing:</strong> Generate compliant tax invoices for medicines and OTC products.</li>
+    </ul>
+
+    <h3>🔬 F. Laboratory Information System (LIS)</h3>
+    <p>End-to-end management of the diagnostic workflow.</p>
+    <ul>
+        <li><strong>Sample Collection:</strong> Barcode generation and sample tracking from collection to analysis.</li>
+        <li><strong>Result Entry:</strong> Digital entry forms with reference ranges automatically flagging abnormal
+            results.</li>
+        <li><strong>Report Generation:</strong> One-click PDF generation of verified lab reports with digital
+            signatures.</li>
+        <li><strong>Patient Access:</strong> Reports are automatically pushed to the Patient Portal once verified.</li>
+    </ul>
+
+    <h3>🛡️ G. Administration & Analytics</h3>
+    <p>Tools for hospital leadership to maintain control and visibility.</p>
+    <ul>
+        <li><strong>Role-Based Access Control (RBAC):</strong> Granular permission settings (e.g., "View Only", "Edit",
+            "Delete") for every module.</li>
+        <li><strong>Audit Trails:</strong> Detailed logs of who accessed what date and when—critical for HIPAA/GDPR
+            compliance.</li>
+        <li><strong>Financial Reports:</strong> Daily collection reports, doctor revenue shares, and department-wise
+            earnings.</li>
+        <li><strong>Operational Dashboards:</strong> Live metrics on patient footfall, average wait times, and bed
+            occupancy.</li>
+    </ul>
+
+    <h2>3. Technology Stack & Architecture</h2>
+    <p>Ayphen Care is built on a modern, cloud-native stack designed for high availability, security, and performance.
+    </p>
+
+    <h3>Frontend (The User Experience)</h3>
+    <ul>
+        <li><strong>Core Framework:</strong> <strong>React 18</strong> (with <strong>TypeScript</strong>) ensures a
+            responsive, bug-free user interface.</li>
+        <li><strong>Build System:</strong> <strong>Vite</strong> provides lightning-fast load times and optimized asset
+            delivery.</li>
+        <li><strong>Component Library:</strong> <strong>Ant Design (Enterprise)</strong> offers a consistent,
+            professional look-and-feel across 500+ screens.</li>
+        <li><strong>State Management:</strong> <strong>React Context API</strong> handles complex data flows (like valid
+            user sessions) efficiently.</li>
+        <li><strong>Visualization:</strong> <strong>Ant Design Charts</strong> & <strong>Recharts</strong> for turning
+            raw data into actionable clinical insights.</li>
+    </ul>
+
+    <h3>Backend (The Core Engine)</h3>
+    <ul>
+        <li><strong>Runtime:</strong> <strong>Node.js</strong> allows for high-concurrency handling, perfect for
+            real-time hospital environments.</li>
+        <li><strong>API Framework:</strong> <strong>Express.js</strong> provides a robust RESTful API architecture.</li>
+        <li><strong>Language:</strong> <strong>TypeScript</strong> is used throughout the stack to prevent data type
+            errors before they happen.</li>
+        <li><strong>Database:</strong> <strong>PostgreSQL</strong> (v15+) offers ACID-compliant, relational data storage
+            reliability.</li>
+        <li><strong>ORM:</strong> <strong>TypeORM</strong> abstracts complex database queries into clean, maintainable
+            code.</li>
+    </ul>
+
+    <h3>Security & Data Privacy</h3>
+    <ul>
+        <li><strong>Access Security:</strong> <strong>JSON Web Tokens (JWT)</strong> ensure stateless, secure
+            authentication. Every API call is verified against a secure signature.</li>
+        <li><strong>Data Encryption:</strong> Sensitive fields (like passwords) are hashed using
+            <strong>Bcrypt</strong>. Data in transit is encrypted via <strong>HTTPS/TLS</strong>.</li>
+        <li><strong>Input Validation:</strong> <strong>class-validator</strong> and <strong>JOI</strong> rigorous checks
+            prevent SQL injection and XSS attacks.</li>
+    </ul>
+
+    <h2>4. User Personas & "Day in the Life" Scenarios</h2>
+
+    <div class="persona-box">
+        <h3>👤 Persona: Dr. Arun (General Physician)</h3>
+        <ul>
+            <li><strong>Morning:</strong> Logs in to view his dashboard. Sees 15 appointments scheduled.</li>
+            <li><strong>Consultation:</strong> Opens the first patient's file. Reviews their diabetic history graph.
+            </li>
+            <li><strong>Action:</strong> Records current BP. Prescribes "Metformin 500mg". Orders "HbA1c" lab test.</li>
+            <li><strong>Outcome:</strong> Clicks "Finish". The prescription goes to Pharmacy, Lab Request goes to
+                Pathology.</li>
+        </ul>
+    </div>
+
+    <div class="persona-box">
+        <h3>👤 Persona: Ms. Sarah (Front Desk / Reception)</h3>
+        <ul>
+            <li><strong>Check-In:</strong> A patient arrives. Sarah searches them by phone number. clicks "Check-In".
+            </li>
+            <li><strong>Queue:</strong> The system assigns Token #24. The TV in the lobby announces "Token 24 to
+                Triage".</li>
+            <li><strong>Emergency:</strong> An ambulance arrives. Sarah quickly registers a "New Emergency Patient"
+                bypassing the queue.</li>
+        </ul>
+    </div>
+
+    <div class="persona-box">
+        <h3>👤 Persona: Mr. Suresh (Pharmacist)</h3>
+        <ul>
+            <li><strong>Notification:</strong> Sees a red badge on "Pending Prescriptions".</li>
+            <li><strong>Processing:</strong> Opens Dr. Arun's order. System warns "Metformin stock is low (10 strips
+                left)".</li>
+            <li><strong>Dispensing:</strong> Scans the medicine box. Clicks "Dispense". The invoice is auto-generated.
+            </li>
+            <li><strong>Inventory:</strong> System automatically deducts the stock quantity.</li>
+        </ul>
+    </div>
+
+    <h2>5. Future Roadmap & Innovation</h2>
+    <p>Ayphen Care is constantly evolving. Upcoming features in the pipeline include:</p>
+    <ul>
+        <li><strong>AI-Assisted Diagnostics:</strong> Integration with AI models to suggest preliminary diagnoses based
+            on symptoms and vitals.</li>
+        <li><strong>Insurance Claims Processing:</strong> Direct integration with TPA (Third Party Administrator) APIs
+            for cashless claim adjudication.</li>
+        <li><strong>IoT Integration:</strong> Auto-capture vitals from connected devices (Smart BP monitors, Weighing
+            scales).</li>
+        <li><strong>In-Patient Management (IPD):</strong> Complete bed management, OT scheduling, and discharge summary
+            generation.</li>
+    </ul>
+
+</body>
+
+</html>

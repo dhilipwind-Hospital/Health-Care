@@ -1,0 +1,122 @@
+body {
+  margin: 0;
+  font-family: 'Inter', 'Open Sans', 'Roboto', -apple-system, BlinkMacSystemFont,
+    'Segoe UI', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+    monospace;
+}
+
+/* Fix Ant Design Select Dropdown Issues (Transparency & Overlap) */
+/* Fix Ant Design Dropdowns (Transparency, Z-Index & Overlap) - GLOBAL FIX */
+.ant-select-dropdown,
+.ant-dropdown .ant-dropdown-menu,
+.ant-picker-dropdown,
+.ant-cascader-dropdown,
+.ant-tree-select-dropdown,
+.ant-auto-complete-dropdown {
+  background-color: #ffffff !important;
+  z-index: 10000 !important;
+  box-shadow: 0 6px 16px 0 rgba(0, 0, 0, 0.08), 0 3px 6px -4px rgba(0, 0, 0, 0.12), 0 9px 28px 8px rgba(0, 0, 0, 0.05) !important;
+}
+
+/* Fix Select Input Box to expand for multiline content */
+.ant-select-single .ant-select-selector {
+  height: auto !important;
+  min-height: 40px;
+  padding: 4px 11px !important;
+  display: flex;
+  align-items: center;
+}
+
+.ant-select-single .ant-select-selector .ant-select-selection-item,
+.ant-select-single .ant-select-selector .ant-select-selection-placeholder {
+  line-height: 1.5 !important;
+  white-space: normal !important;
+  height: auto !important;
+  margin: auto 0;
+  padding: 2px 0;
+}
+
+/* Specific fix for Select Options with multiline content */
+.ant-select-item-option {
+  height: auto !important;
+  min-height: 32px;
+  padding: 8px 12px !important;
+  display: flex !important;
+  align-items: center;
+}
+
+.ant-select-item-option-content {
+  white-space: normal !important;
+  line-height: 1.5 !important;
+}
+
+/* Ensure Dropdown Menu Items are visible */
+.ant-dropdown-menu-item {
+  background-color: transparent;
+}
+
+.ant-dropdown-menu-item:hover {
+  background-color: #f5f5f5 !important;
+}
+
+/* Print styles */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+
+  .print-scope-bills {
+    box-shadow: none !important;
+    border: none !important;
+  }
+
+  .print-scope-bills .ant-table-pagination {
+    display: none !important;
+  }
+
+  .print-scope-bills .ant-table {
+    font-size: 12px;
+  }
+
+  .print-scope-bills .ant-table-thead>tr>th,
+  .print-scope-bills .ant-table-tbody>tr>td {
+    padding: 6px 8px !important;
+  }
+
+  .print-scope-bills .ant-table-tbody>tr {
+    page-break-inside: avoid;
+  }
+
+  /* Medical Records print scope */
+  .print-scope-records {
+    box-shadow: none !important;
+    border: none !important;
+  }
+
+  .print-scope-records .ant-table-pagination {
+    display: none !important;
+  }
+
+  .print-scope-records .ant-table {
+    font-size: 12px;
+  }
+
+  .print-scope-records .ant-table-thead>tr>th,
+  .print-scope-records .ant-table-tbody>tr>td {
+    padding: 6px 8px !important;
+  }
+
+  .print-scope-records .ant-table-tbody>tr {
+    page-break-inside: avoid;
+  }
+
+  @page {
+    margin: 10mm;
+  }
+}
