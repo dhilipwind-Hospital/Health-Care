@@ -125,7 +125,7 @@ export const AppDataSource = new DataSource({
   ...getDatabaseConfig(),
   entities: [Organization, User, Role, SystemRoleCustomization, Notification, Service, Department, Appointment, RefreshToken, MedicalRecord, Bill, AvailabilitySlot, Referral, Report, EmergencyRequest, CallbackRequest, Plan, Policy, Claim, AppointmentHistory, Medicine, Prescription, PrescriptionItem, MedicineTransaction, LabTest, LabOrder, LabOrderItem, LabSample, LabResult, ConsultationNote, Ward, Room, Bed, Admission, NursingNote, VitalSign, MedicationAdministration, DoctorNote, DischargeSummary, Visit, QueueItem, Triage, VisitCounter, DoctorAvailability, AppointmentFeedback, PasswordResetToken, Reminder, Message, Feedback, HealthArticle, Allergy, Diagnosis, PurchaseOrder, Supplier, VitalSigns, TelemedicineSession, PatientAccessGrant, Location, StockMovement, StockAlert, SalesInquiry, DeathCertificate, BirthRegister, BillingPackage, Deposit, BloodDonor, BloodInventory, CrossMatchRequest, Transfusion, DialysisMachine, DialysisSession, DialysisPatientProfile, RadiologyOrder, RadiologyReport, RadiologyTemplate, OtRoom, Surgery, SurgicalChecklist, AnesthesiaRecord, AuditLog, ConsentRecord, MedicoLegalCase, DrugRegisterEntry, NdpsRegisterEntry, BiomedicalWasteEntry, IncidentReport, DietOrder, Asset, AssetMaintenanceLog, InfectionSurveillance, HandHygieneAudit, DutyRoster, LeaveRequest, TelemedicineConsultation, InsuranceCompany, InsuranceClaim, AbhaRecord, PcpndtFormF, PhysiotherapyOrder, PhysiotherapySession, MedicalRecordFile],
   migrations: [__dirname + '/../migrations/*.{ts,js}'],
-  synchronize: process.env.NODE_ENV !== 'production',
+  synchronize: true, // Enable for initial deployment to create tables
   logging: process.env.NODE_ENV === 'development',
 });
 
