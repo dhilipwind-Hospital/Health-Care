@@ -1,15 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Table, Input, Card, Tag, Space, Button, Tooltip } from 'antd';
 import { SearchOutlined, InfoCircleOutlined } from '@ant-design/icons';
-import axios from 'axios';
-
-// Use a local API instance until the global one is properly set up
-const api = axios.create({
-  baseURL: '/api',
-  headers: {
-    'Content-Type': 'application/json',
-  }
-});
+import api from '../../services/api';
 
 interface Medicine {
   id: string;

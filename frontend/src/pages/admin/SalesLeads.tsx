@@ -29,7 +29,7 @@ import {
     PhoneOutlined,
     GlobalOutlined
 } from '@ant-design/icons';
-import axios from 'axios';
+import api from '../../services/api';
 import moment from 'moment';
 
 const { Title, Text, Paragraph } = Typography;
@@ -79,9 +79,7 @@ const SalesLeads: React.FC = () => {
     const fetchInquiries = async () => {
         setLoading(true);
         try {
-            const token = localStorage.getItem('token');
-            const response = await axios.get('http://localhost:5001/api/sales-inquiry', {
-                headers: { Authorization: `Bearer ${token}` },
+            const response = await api.get('/sales-inquiry', {
                 params: {
                     page: pagination.current,
                     limit: pagination.pageSize,
@@ -106,10 +104,8 @@ const SalesLeads: React.FC = () => {
     const updateStatus = async (id: string, status: string) => {
         setStatusLoading(true);
         try {
-            const token = localStorage.getItem('token');
-            await axios.patch(`http://localhost:5001/api/sales-inquiry/${id}`,
-                { status },
-                { headers: { Authorization: `Bearer ${token}` } }
+            await api.patch(`/sales-inquiry/${id}`,
+                { status }
             );
 
             message.success(`Status updated to ${status}`);
@@ -135,10 +131,8 @@ const SalesLeads: React.FC = () => {
 
         setStatusLoading(true);
         try {
-            const token = localStorage.getItem('token');
-            await axios.patch(`http://localhost:5001/api/sales-inquiry/${selectedInquiry.id}`,
-                { notes: values.notes },
-                { headers: { Authorization: `Bearer ${token}` } }
+            await api.patch(`/sales-inquiry/${selectedInquiry.id}`,
+                { notes: values.notes }
             );
 
             message.success('Notes updated');

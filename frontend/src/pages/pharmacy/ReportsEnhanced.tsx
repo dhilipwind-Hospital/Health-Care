@@ -2,16 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Card, Table, Button, DatePicker, Space, Select, Row, Col, Statistic, Tabs, Radio, Divider } from 'antd';
 import { DownloadOutlined, PieChartOutlined, BarChartOutlined, LineChartOutlined, TableOutlined, DollarOutlined, MedicineBoxOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
 import { useAuth } from '../../contexts/AuthContext';
-import axios from 'axios';
+import api from '../../services/api';
 import dayjs from 'dayjs';
-
-// Use a local API instance until the global one is properly set up
-const api = axios.create({
-  baseURL: '/api',
-  headers: {
-    'Content-Type': 'application/json',
-  }
-});
 
 const { TabPane } = Tabs;
 const { Option } = Select;

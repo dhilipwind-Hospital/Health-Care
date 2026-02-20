@@ -1,11 +1,4 @@
-import axios from 'axios';
-
-const api = axios.create({
-  baseURL: '/api',
-  headers: {
-    'Content-Type': 'application/json',
-  }
-});
+import api from './api';
 
 // Medicine categories from around the world
 export const MEDICINE_CATEGORIES = [

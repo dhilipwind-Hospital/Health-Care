@@ -3,15 +3,7 @@ import { Card, Row, Col, Statistic, Table, Tag, Button, Input, Space, Alert, Mod
 import { SearchOutlined, MedicineBoxOutlined, WarningOutlined, ClockCircleOutlined, PlusOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { useAuth } from '../../contexts/AuthContext';
-import axios from 'axios';
-
-// Use a local API instance until the global one is properly set up
-const api = axios.create({
-  baseURL: '/api',
-  headers: {
-    'Content-Type': 'application/json',
-  }
-});
+import api from '../../services/api';
 
 const { Option } = Select;
 

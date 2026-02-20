@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Table, Button, Modal, Form, Input, Select, InputNumber, Switch, message, Space, Tag } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
-import axios from 'axios';
+import api from '../../services/api';
 import styled from 'styled-components';
 
 const { TextArea } = Input;
@@ -42,7 +42,7 @@ const TestCatalog: React.FC = () => {
   const fetchTests = async () => {
     try {
       setLoading(true);
-      const response = await axios.get('/api/lab/tests', {
+      const response = await api.get('/lab/tests', {
         params: { isActive: 'all', limit: 100 }
       });
       setTests(response.data.tests || []);
@@ -56,7 +56,7 @@ const TestCatalog: React.FC = () => {
 
   const fetchCategories = async () => {
     try {
-      const response = await axios.get('/api/lab/tests/categories');
+      const response = await api.get('/lab/tests/categories');
       setCategories(response.data || []);
     } catch (error) {
       console.error('Error fetching categories:', error);
@@ -78,10 +78,10 @@ const TestCatalog: React.FC = () => {
     try {
       setLoading(true);
       if (editingTest) {
-        await axios.put(`/api/lab/tests/${editingTest.id}`, values);
+        await api.put(`/lab/tests/${editingTest.id}`, values);
         message.success('Test updated successfully');
       } else {
-        await axios.post('/api/lab/tests', values);
+        await api.post('/lab/tests', values);
         message.success('Test created successfully');
       }
       setModalVisible(false);
@@ -101,7 +101,7 @@ const TestCatalog: React.FC = () => {
       content: 'Are you sure you want to delete this test? This will deactivate it.',
       onOk: async () => {
         try {
-          await axios.delete(`/api/lab/tests/${id}`);
+          await api.delete(`/lab/tests/${id}`);
           message.success('Test deleted successfully');
           fetchTests();
         } catch (error) {

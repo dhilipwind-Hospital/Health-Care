@@ -17,7 +17,7 @@ import {
   AimOutlined
 } from '@ant-design/icons';
 import { Button, Card, Row, Col, Typography, Space, Statistic, Modal, Form, Input, Select, message } from 'antd';
-import axios from 'axios';
+import api from '../services/api';
 import './SaaSLanding.css';
 
 
@@ -44,7 +44,7 @@ const SaaSLanding: React.FC = () => {
     try {
       // In a real app, use the configured axios instance URL
       // Assuming API_URL is available in environment or context, relying on proxy for now
-      await axios.post('http://localhost:5001/api/sales-inquiry', {
+      await api.post('/sales-inquiry', {
         ...values,
         source: 'landing_page'
       });

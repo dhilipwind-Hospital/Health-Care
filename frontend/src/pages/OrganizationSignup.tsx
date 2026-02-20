@@ -23,7 +23,7 @@ import {
   GlobalOutlined,
   CheckCircleOutlined,
 } from '@ant-design/icons';
-import axios from 'axios';
+import api from '../services/api';
 import './OrganizationSignup.css';
 
 const { Title, Paragraph, Text } = Typography;
@@ -96,8 +96,8 @@ const OrganizationSignupContent: React.FC = () => {
         address: fullAddress
       };
 
-      const response = await axios.post(
-        `/api/organizations`,
+      const response = await api.post(
+        `/organizations`,
         finalData
       );
 
