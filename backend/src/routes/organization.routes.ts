@@ -7,7 +7,8 @@ import {
   getOrganizationStats,
   createOrganization,
   listOrganizations,
-  deactivateOrganization
+  deactivateOrganization,
+  deleteOrganizationPermanently
 } from '../controllers/organization.controller';
 import { authenticate, authorize } from '../middleware/auth.middleware';
 
@@ -194,5 +195,8 @@ router.get('/all', authenticate, authorize(['super_admin']), listOrganizations);
 
 // DELETE /api/organizations/all/:id - Deactivate organization (authenticated, super admin only)
 router.delete('/all/:id', authenticate, authorize(['super_admin']), deactivateOrganization);
+
+// DELETE /api/organizations/all/:id/permanent - Permanently delete organization and all data (authenticated, super admin only)
+router.delete('/all/:id/permanent', authenticate, authorize(['super_admin']), deleteOrganizationPermanently);
 
 export default router;

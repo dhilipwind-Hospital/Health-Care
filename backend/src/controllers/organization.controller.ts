@@ -350,3 +350,128 @@ export const deactivateOrganization = async (req: Request, res: Response, next: 
     next(error);
   }
 };
+
+/**
+ * Permanently delete organization and ALL related data (Super Admin only)
+ * DELETE /api/organizations/:id/permanent
+ */
+export const deleteOrganizationPermanently = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { id } = req.params;
+
+    const orgRepository = AppDataSource.getRepository(Organization);
+    const organization = await orgRepository.findOne({ where: { id } });
+
+    if (!organization) {
+      throw new NotFoundException('Organization not found');
+    }
+
+    // Don't allow deleting default organization
+    if (organization.subdomain === 'default') {
+      throw new BadRequestException('Cannot delete default organization');
+    }
+
+    console.log(`🗑️ Starting cascade delete for organization: ${organization.name} (${id})`);
+
+    // Disable foreign key constraints temporarily
+    await AppDataSource.query('SET session_replication_role = replica;');
+
+    // Delete all related data in order (child tables first)
+    const tablesToClear = [
+      // Transactional data
+      { table: 'appointment_history', column: 'organization_id' },
+      { table: 'appointment_feedback', column: 'organization_id' },
+      { table: 'appointments', column: 'organization_id' },
+      { table: 'queue_items', column: 'organization_id' },
+      { table: 'visits', column: 'organization_id' },
+      { table: 'triage_records', column: 'organization_id' },
+      
+      // Lab data
+      { table: 'lab_results', column: 'organization_id' },
+      { table: 'lab_samples', column: 'organization_id' },
+      { table: 'lab_order_items', column: 'organization_id' },
+      { table: 'lab_orders', column: 'organization_id' },
+      { table: 'lab_tests', column: 'organization_id' },
+      
+      // Pharmacy data
+      { table: 'prescription_items', column: 'organization_id' },
+      { table: 'prescriptions', column: 'organization_id' },
+      { table: 'medicine_batches', column: 'organization_id' },
+      { table: 'medicines', column: 'organization_id' },
+      { table: 'purchase_order_items', column: 'organization_id' },
+      { table: 'purchase_orders', column: 'organization_id' },
+      { table: 'suppliers', column: 'organization_id' },
+      
+      // Billing data
+      { table: 'bill_items', column: 'organization_id' },
+      { table: 'bills', column: 'organization_id' },
+      { table: 'invoices', column: 'organization_id' },
+      { table: 'payments', column: 'organization_id' },
+      { table: 'deposits', column: 'organization_id' },
+      
+      // Patient data
+      { table: 'medical_record_files', column: 'organization_id' },
+      { table: 'medical_records', column: 'organization_id' },
+      { table: 'consultation_notes', column: 'organization_id' },
+      { table: 'diagnoses', column: 'organization_id' },
+      { table: 'allergies', column: 'organization_id' },
+      { table: 'vitals', column: 'organization_id' },
+      { table: 'patients', column: 'organization_id' },
+      
+      // Staff data
+      { table: 'doctor_availabilities', column: 'organization_id' },
+      { table: 'availability_slots', column: 'organization_id' },
+      { table: 'duty_rosters', column: 'organization_id' },
+      
+      // Organization structure
+      { table: 'services', column: 'organization_id' },
+      { table: 'departments', column: 'organization_id' },
+      { table: 'roles', column: 'organization_id' },
+      { table: 'system_role_customizations', column: 'organization_id' },
+      { table: 'locations', column: 'organization_id' },
+      
+      // Users (last before org)
+      { table: 'users', column: 'organization_id' },
+    ];
+
+    let deletedCounts: Record<string, number> = {};
+
+    for (const { table, column } of tablesToClear) {
+      try {
+        const result = await AppDataSource.query(
+          `DELETE FROM "${table}" WHERE "${column}" = $1`,
+          [id]
+        );
+        const count = result[1] || 0;
+        if (count > 0) {
+          deletedCounts[table] = count;
+          console.log(`  ✅ Deleted ${count} records from ${table}`);
+        }
+      } catch (error: any) {
+        // Table might not exist or column might be different
+        console.log(`  ⏭️ Skipped ${table}: ${error.message?.slice(0, 50)}`);
+      }
+    }
+
+    // Finally delete the organization itself
+    await orgRepository.delete(id);
+    console.log(`  ✅ Deleted organization: ${organization.name}`);
+
+    // Re-enable foreign key constraints
+    await AppDataSource.query('SET session_replication_role = DEFAULT;');
+
+    console.log(`🎉 Cascade delete completed for organization: ${organization.name}`);
+
+    res.json({
+      success: true,
+      message: `Organization "${organization.name}" and all related data deleted permanently`,
+      deletedCounts
+    });
+  } catch (error) {
+    // Re-enable foreign key constraints in case of error
+    try {
+      await AppDataSource.query('SET session_replication_role = DEFAULT;');
+    } catch {}
+    next(error);
+  }
+};
