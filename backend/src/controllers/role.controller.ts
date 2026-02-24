@@ -515,10 +515,13 @@ export class RoleController {
       const savedUser = await userRepository.save(newUser);
 
       // Send welcome email
+      console.log(`📧 [RoleController] Sending welcome email to ${userEmail} for role ${role}`);
       try {
         const organization = (req as any).tenant;
+        console.log(`📧 [RoleController] Organization: ${organization?.name || 'NOT FOUND'}`);
+        let emailSent = false;
         if (role === UserRole.NURSE) {
-          await EmailService.sendNurseWelcomeEmail(
+          emailSent = await EmailService.sendNurseWelcomeEmail(
             userEmail,
             `${savedUser.firstName} ${savedUser.lastName}`,
             tempPassword,
@@ -526,7 +529,7 @@ export class RoleController {
             organization?.subdomain || 'hospital'
           );
         } else if (role === UserRole.RECEPTIONIST) {
-          await EmailService.sendReceptionistWelcomeEmail(
+          emailSent = await EmailService.sendReceptionistWelcomeEmail(
             userEmail,
             `${savedUser.firstName} ${savedUser.lastName}`,
             tempPassword,
@@ -534,7 +537,7 @@ export class RoleController {
             organization?.subdomain || 'hospital'
           );
         } else if (role === UserRole.DOCTOR || role === 'staff') {
-          await EmailService.sendDoctorWelcomeEmail(
+          emailSent = await EmailService.sendDoctorWelcomeEmail(
             userEmail,
             `${savedUser.firstName} ${savedUser.lastName}`,
             tempPassword,
@@ -543,7 +546,7 @@ export class RoleController {
           );
         } else {
           // Use universal email for other roles
-          await EmailService.sendUniversalWelcomeEmail(
+          emailSent = await EmailService.sendUniversalWelcomeEmail(
             userEmail,
             `${savedUser.firstName} ${savedUser.lastName}`,
             tempPassword,
@@ -552,8 +555,9 @@ export class RoleController {
             role
           );
         }
+        console.log(`📧 [RoleController] Email ${emailSent ? 'SENT' : 'FAILED'} to ${userEmail}`);
       } catch (emailError) {
-        console.error('Error sending welcome email:', emailError);
+        console.error('❌ [RoleController] Error sending welcome email:', emailError);
         // Don't fail the user creation if email fails
       }
 
