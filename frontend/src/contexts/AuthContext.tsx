@@ -27,76 +27,111 @@ type AuthContextType = {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
+  // Try to load cached user from localStorage for instant display
+  const getCachedUser = (): User | null => {
+    try {
+      const cached = localStorage.getItem('cachedUser');
+      if (cached) return JSON.parse(cached);
+    } catch { }
+    return null;
+  };
+
+  const cacheUser = (userData: User | null) => {
+    try {
+      if (userData) {
+        localStorage.setItem('cachedUser', JSON.stringify(userData));
+      } else {
+        localStorage.removeItem('cachedUser');
+      }
+    } catch { }
+  };
+
+  const token = readToken();
+  const cachedUser = token ? getCachedUser() : null;
+
+  // If we have a cached user + token, skip loading spinner entirely
+  const [user, setUser] = useState<User | null>(cachedUser);
+  const [loading, setLoading] = useState<boolean>(token ? !cachedUser : false);
   const refreshTimer = useRef<number | null>(null);
   const navigate = useNavigate();
 
+  // Wrapper to update both state and cache
+  const updateUser = (userData: User | null) => {
+    setUser(userData);
+    cacheUser(userData);
+  };
+
   const refreshMe = async () => {
     try {
-      setLoading(true);
       const token = readToken();
       if (!token) {
-        setUser(null);
-        setLoading(false);
+        updateUser(null);
         return;
       }
       const res = await api.get('/users/me', { suppressErrorToast: true } as any);
       if (res?.data) {
-        setUser(res.data);
+        updateUser(res.data);
       } else {
-        setUser(null);
+        updateUser(null);
       }
     } catch {
-      setUser(null);
-    } finally {
-      setLoading(false);
+      updateUser(null);
     }
   };
 
   useEffect(() => {
-    // On initial load, if a token exists, fetch the current user
     const bootstrap = async () => {
-      setLoading(true);
-
       // Multi-location: Check for token in URL (Seamless switching)
       const params = new URLSearchParams(window.location.search);
       const urlToken = params.get('token');
       if (urlToken) {
-        // Save token and clean URL
-        writeTokens(urlToken, ''); // Refresh token might be missing but access token allows login
+        writeTokens(urlToken, '');
         window.history.replaceState({}, document.title, window.location.pathname);
       }
 
       const token = readToken();
       if (!token) {
+        updateUser(null);
         setLoading(false);
         return;
       }
+
+      // If we have cached user, we're already showing content — verify silently in background
+      const hasCached = !!cachedUser;
+
       try {
+        // Fetch fresh user data (silently if cached user is displayed)
         const res = await api.get('/users/me', { suppressErrorToast: true } as any);
         if (res?.data) {
-          setUser(res.data);
-          // Attempt to refresh soon after load to obtain expiresIn and schedule
-          try {
-            const rt = readRefreshToken();
-            if (!rt) throw new Error('no refresh token');
-            const r = await api.post('/auth/refresh-token', { refreshToken: rt } as any);
-            const accessToken = (r.data as any)?.accessToken;
-            const refreshToken = (r.data as any)?.refreshToken;
-            const expiresIn = Number((r.data as any)?.expiresIn) || 3600;
-            if (accessToken) {
-              writeTokens(accessToken, refreshToken);
-              scheduleRefresh(expiresIn);
-            }
-          } catch {
-            // ignore silent refresh error during bootstrap
+          updateUser(res.data);
+
+          // Silently refresh token in background (don't block UI)
+          const rt = readRefreshToken();
+          if (rt) {
+            api.post('/auth/refresh-token', { refreshToken: rt } as any)
+              .then((r: any) => {
+                const accessToken = r.data?.accessToken;
+                const refreshToken = r.data?.refreshToken;
+                const expiresIn = Number(r.data?.expiresIn) || 3600;
+                if (accessToken) {
+                  writeTokens(accessToken, refreshToken);
+                  scheduleRefresh(expiresIn);
+                }
+              })
+              .catch(() => {
+                // Silent fail — token refresh will retry on next API call
+              });
           }
         } else {
           clearAllTokens();
+          updateUser(null);
         }
       } catch (_e) {
-        clearAllTokens();
+        // If API call fails but we have cached user, keep showing cached data
+        if (!hasCached) {
+          clearAllTokens();
+          updateUser(null);
+        }
       } finally {
         setLoading(false);
       }
@@ -130,7 +165,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       } catch (e) {
         // On failure, logout gracefully
         clearAllTokens();
-        setUser(null);
+        updateUser(null);
         navigate('/login');
       }
     }, delayMs) as any;
@@ -153,7 +188,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       try {
         const me = await api.get('/users/me', { suppressErrorToast: true } as any);
         if (me?.data) {
-          setUser(me.data);
+          updateUser(me.data);
           const role = String(me.data?.role || '').toLowerCase();
           const hasOrganization = !!me.data?.organizationId;
 
@@ -213,7 +248,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     } catch { }
     clearAllTokens();
-    setUser(null);
+    updateUser(null);
     clearRefreshTimer();
     navigate('/login');
   };
