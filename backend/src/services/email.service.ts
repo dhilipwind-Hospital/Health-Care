@@ -1,3 +1,4 @@
+import { Resend } from 'resend';
 import nodemailer from 'nodemailer';
 import { NotificationType } from '../models/Notification';
 
@@ -9,42 +10,81 @@ export interface EmailOptions {
 }
 
 export class EmailService {
-  private static transporter: nodemailer.Transporter;
+  private static resend: Resend | null = null;
+  private static transporter: nodemailer.Transporter | null = null;
+  private static useResend: boolean = false;
 
-  // Initialize email transporter
+  // Initialize email service (Resend API or SMTP fallback)
   static initialize() {
-    // Configure SMTP transporter
-    this.transporter = nodemailer.createTransport({
-      host: process.env.SMTP_HOST || 'smtp.gmail.com',
-      port: parseInt(process.env.SMTP_PORT || '587'),
-      secure: process.env.SMTP_SECURE === 'true', // true for 465, false for other ports
-      auth: {
-        user: process.env.SMTP_USER || 'your-email@gmail.com',
-        pass: process.env.SMTP_PASS || 'your-app-password'
-      }
-    });
-
-    console.log('📧 Email service initialized');
+    // Prefer Resend API if RESEND_API_KEY is set (works on Render free tier)
+    if (process.env.RESEND_API_KEY) {
+      this.resend = new Resend(process.env.RESEND_API_KEY);
+      this.useResend = true;
+      console.log('📧 Email service initialized with Resend API');
+    } else if (process.env.SMTP_USER && process.env.SMTP_PASS) {
+      // Fallback to SMTP (may not work on Render free tier)
+      this.transporter = nodemailer.createTransport({
+        host: process.env.SMTP_HOST || 'smtp.gmail.com',
+        port: parseInt(process.env.SMTP_PORT || '587'),
+        secure: process.env.SMTP_SECURE === 'true',
+        auth: {
+          user: process.env.SMTP_USER,
+          pass: process.env.SMTP_PASS
+        }
+      });
+      this.useResend = false;
+      console.log('📧 Email service initialized with SMTP');
+    } else {
+      console.warn('⚠️ Email service not configured - set RESEND_API_KEY or SMTP credentials');
+    }
   }
 
-  // Send email
+  // Send email using Resend API or SMTP
   static async sendEmail(options: EmailOptions): Promise<boolean> {
     try {
-      if (!this.transporter) {
+      // Initialize if not already done
+      if (!this.resend && !this.transporter) {
         this.initialize();
       }
 
-      const mailOptions = {
-        from: `"${process.env.SMTP_FROM_NAME || 'Ayphen Care'}" <${process.env.SMTP_FROM_EMAIL || process.env.SMTP_USER}>`,
-        to: options.to,
-        subject: options.subject,
-        html: options.html,
-        text: options.text || options.html.replace(/<[^>]*>/g, '') // Strip HTML for text version
-      };
+      const fromEmail = process.env.EMAIL_FROM || process.env.SMTP_FROM_EMAIL || 'noreply@ayphencare.com';
+      const fromName = process.env.SMTP_FROM_NAME || 'Ayphen Care';
 
-      const info = await this.transporter.sendMail(mailOptions);
-      console.log('✅ Email sent:', info.messageId);
-      return true;
+      // Use Resend API if available
+      if (this.useResend && this.resend) {
+        const { data, error } = await this.resend.emails.send({
+          from: `${fromName} <${fromEmail}>`,
+          to: [options.to],
+          subject: options.subject,
+          html: options.html,
+          text: options.text || options.html.replace(/<[^>]*>/g, '')
+        });
+
+        if (error) {
+          console.error('❌ Resend error:', error);
+          return false;
+        }
+        console.log('✅ Email sent via Resend:', data?.id);
+        return true;
+      }
+
+      // Fallback to SMTP
+      if (this.transporter) {
+        const mailOptions = {
+          from: `"${fromName}" <${fromEmail}>`,
+          to: options.to,
+          subject: options.subject,
+          html: options.html,
+          text: options.text || options.html.replace(/<[^>]*>/g, '')
+        };
+
+        const info = await this.transporter.sendMail(mailOptions);
+        console.log('✅ Email sent via SMTP:', info.messageId);
+        return true;
+      }
+
+      console.error('❌ No email service configured');
+      return false;
     } catch (error) {
       console.error('❌ Error sending email:', error);
       return false;

@@ -289,7 +289,7 @@ export class Server {
       res.status(200).json({ status: 'ok', timestamp: new Date() });
     });
 
-    // Test email endpoint with detailed diagnostics
+    // Test email endpoint with Resend/SMTP support
     this.app.post('/api/test-email', async (req: Request, res: Response) => {
       try {
         const { email } = req.body;
@@ -297,31 +297,18 @@ export class Server {
           return res.status(400).json({ message: 'Email is required' });
         }
         
-        // Return config info for debugging
+        // Config info for debugging
         const config = {
-          SMTP_HOST: process.env.SMTP_HOST || 'NOT SET',
-          SMTP_PORT: process.env.SMTP_PORT || 'NOT SET',
-          SMTP_SECURE: process.env.SMTP_SECURE || 'NOT SET',
+          RESEND_API_KEY: process.env.RESEND_API_KEY ? '***configured***' : 'NOT SET',
+          EMAIL_FROM: process.env.EMAIL_FROM || 'NOT SET',
           SMTP_USER: process.env.SMTP_USER ? '***configured***' : 'NOT SET',
-          SMTP_PASS: process.env.SMTP_PASS ? '***configured***' : 'NOT SET',
-          SMTP_FROM_NAME: process.env.SMTP_FROM_NAME || 'NOT SET',
-          SMTP_FROM_EMAIL: process.env.SMTP_FROM_EMAIL || 'NOT SET',
+          provider: process.env.RESEND_API_KEY ? 'Resend API' : 'SMTP'
         };
         
-        // Create transporter directly for better error handling
-        const nodemailer = require('nodemailer');
-        const transporter = nodemailer.createTransport({
-          host: process.env.SMTP_HOST || 'smtp.gmail.com',
-          port: parseInt(process.env.SMTP_PORT || '587'),
-          secure: process.env.SMTP_SECURE === 'true',
-          auth: {
-            user: process.env.SMTP_USER,
-            pass: process.env.SMTP_PASS
-          }
-        });
+        const { EmailService } = require('./services/email.service');
+        EmailService.initialize();
         
-        const mailOptions = {
-          from: `"${process.env.SMTP_FROM_NAME || 'Ayphen Care'}" <${process.env.SMTP_FROM_EMAIL || process.env.SMTP_USER}>`,
+        const success = await EmailService.sendEmail({
           to: email,
           subject: '🧪 Test Email from Ayphen Care',
           html: `
@@ -331,32 +318,27 @@ export class Server {
               </div>
               <div style="background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px;">
                 <p>This is a test email from your Hospital Management System.</p>
-                <p>If you received this email, your SMTP configuration is working correctly!</p>
+                <p>If you received this email, your email configuration is working correctly!</p>
+                <p><strong>Provider:</strong> ${config.provider}</p>
                 <p><strong>Timestamp:</strong> ${new Date().toISOString()}</p>
               </div>
             </div>
           `
-        };
-        
-        const info = await transporter.sendMail(mailOptions);
-        res.status(200).json({ 
-          message: 'Test email sent successfully', 
-          email,
-          messageId: info.messageId,
-          config 
         });
+        
+        if (success) {
+          res.status(200).json({ message: 'Test email sent successfully', email, config });
+        } else {
+          res.status(500).json({ message: 'Failed to send test email', config });
+        }
       } catch (error: any) {
         console.error('Test email error:', error);
         res.status(500).json({ 
           message: 'Failed to send test email', 
           error: error.message,
-          code: error.code,
           config: {
-            SMTP_HOST: process.env.SMTP_HOST || 'NOT SET',
-            SMTP_PORT: process.env.SMTP_PORT || 'NOT SET',
-            SMTP_SECURE: process.env.SMTP_SECURE || 'NOT SET',
+            RESEND_API_KEY: process.env.RESEND_API_KEY ? '***configured***' : 'NOT SET',
             SMTP_USER: process.env.SMTP_USER ? '***configured***' : 'NOT SET',
-            SMTP_PASS: process.env.SMTP_PASS ? '***configured***' : 'NOT SET',
           }
         });
       }
