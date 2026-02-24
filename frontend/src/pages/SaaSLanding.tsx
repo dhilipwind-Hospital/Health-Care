@@ -14,9 +14,19 @@ import {
   HeartOutlined,
   TrophyOutlined,
   BulbOutlined,
-  AimOutlined
+  AimOutlined,
+  WhatsAppOutlined,
+  StarFilled,
+  QuestionCircleOutlined,
+  PlayCircleOutlined,
+  PlusOutlined,
+  MinusOutlined,
+  UserOutlined,
+  ScheduleOutlined,
+  DollarOutlined,
+  ExperimentOutlined
 } from '@ant-design/icons';
-import { Button, Card, Row, Col, Typography, Space, Statistic, Modal, Form, Input, Select, message } from 'antd';
+import { Button, Card, Row, Col, Typography, Space, Statistic, Modal, Form, Input, Select, message, Collapse } from 'antd';
 import api from '../services/api';
 import './SaaSLanding.css';
 
@@ -27,6 +37,7 @@ const { TextArea } = Input;
 
 const SaaSLanding: React.FC = () => {
   const [isModalVisible, setIsModalVisible] = React.useState(false);
+  const [isDemoModalVisible, setIsDemoModalVisible] = React.useState(false);
   const [loading, setLoading] = React.useState(false);
   const [form] = Form.useForm();
 
@@ -117,7 +128,7 @@ const SaaSLanding: React.FC = () => {
         <div className="hero-container">
           <div className="hero-content">
             <div className="hero-badge">
-              <RocketOutlined /> Trusted by 1000+ Hospitals Worldwide
+              <RocketOutlined /> Complete Hospital Management Platform
             </div>
             <Title level={1} className="hero-title">
               Modern Hospital Management
@@ -126,7 +137,7 @@ const SaaSLanding: React.FC = () => {
             </Title>
             <Paragraph className="hero-description">
               Complete multi-tenant SaaS platform for hospitals. Manage patients,
-              doctors, appointments, pharmacy, laboratory, and more - all in one place.
+              doctors, appointments, pharmacy, laboratory, and more — all in one place.
             </Paragraph>
             <Space size="large" className="hero-buttons">
               <Link to="/signup">
@@ -134,28 +145,61 @@ const SaaSLanding: React.FC = () => {
                   Start Free Trial
                 </Button>
               </Link>
-              <Button size="large" ghost>
+              <Button size="large" ghost icon={<PlayCircleOutlined />} onClick={() => setIsDemoModalVisible(true)}>
                 Watch Demo
               </Button>
             </Space>
             <div className="hero-stats">
-              <Statistic title="Active Hospitals" value={1000} suffix="+" />
-              <Statistic title="Patients Served" value={500000} suffix="+" />
+              <Statistic title="Modules" value={30} suffix="+" />
+              <Statistic title="User Roles" value={8} />
               <Statistic title="Uptime" value={99.9} suffix="%" />
             </div>
           </div>
           <div className="hero-image">
-            <div className="floating-card card-1">
-              <MedicineBoxOutlined style={{ fontSize: '48px', color: '#10B981' }} />
-              <Text strong>Multi-Tenant</Text>
-            </div>
-            <div className="floating-card card-2">
-              <SafetyOutlined style={{ fontSize: '48px', color: '#34D399' }} />
-              <Text strong>Secure & Compliant</Text>
-            </div>
-            <div className="floating-card card-3">
-              <ThunderboltOutlined style={{ fontSize: '48px', color: '#047857' }} />
-              <Text strong>Lightning Fast</Text>
+            {/* Dashboard Mockup */}
+            <div className="dashboard-mockup">
+              <div className="mockup-header">
+                <div className="mockup-dots">
+                  <span></span><span></span><span></span>
+                </div>
+                <div className="mockup-title">Ayphen Care — Dashboard</div>
+              </div>
+              <div className="mockup-body">
+                <div className="mockup-sidebar">
+                  <div className="sidebar-item active"><ScheduleOutlined /> Dashboard</div>
+                  <div className="sidebar-item"><UserOutlined /> Patients</div>
+                  <div className="sidebar-item"><MedicineBoxOutlined /> Pharmacy</div>
+                  <div className="sidebar-item"><ExperimentOutlined /> Laboratory</div>
+                </div>
+                <div className="mockup-content">
+                  <div className="mockup-cards">
+                    <div className="kpi-card kpi-blue">
+                      <div className="kpi-value">124</div>
+                      <div className="kpi-label">Patients Today</div>
+                    </div>
+                    <div className="kpi-card kpi-green">
+                      <div className="kpi-value">48</div>
+                      <div className="kpi-label">Appointments</div>
+                    </div>
+                    <div className="kpi-card kpi-purple">
+                      <div className="kpi-value">₹2.4L</div>
+                      <div className="kpi-label">Revenue</div>
+                    </div>
+                  </div>
+                  <div className="mockup-chart">
+                    <div className="chart-title">Weekly Patient Visits</div>
+                    <div className="chart-bars">
+                      <div className="chart-bar" style={{ height: '60%' }}></div>
+                      <div className="chart-bar" style={{ height: '80%' }}></div>
+                      <div className="chart-bar" style={{ height: '45%' }}></div>
+                      <div className="chart-bar" style={{ height: '90%' }}></div>
+                      <div className="chart-bar" style={{ height: '70%' }}></div>
+                      <div className="chart-bar" style={{ height: '55%' }}></div>
+                      <div className="chart-bar" style={{ height: '85%' }}></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -250,15 +294,15 @@ const SaaSLanding: React.FC = () => {
                 <div className="pricing-header">
                   <Title level={4}>Basic</Title>
                   <div className="pricing-price">
-                    <span className="currency">$</span>
-                    <span className="amount">99</span>
+                    <span className="currency">₹</span>
+                    <span className="amount">4,999</span>
                     <span className="period">/month</span>
                   </div>
                 </div>
                 <ul className="pricing-features">
                   <li><CheckCircleOutlined /> Up to 5 doctors</li>
-                  <li><CheckCircleOutlined /> Up to 100 patients</li>
-                  <li><CheckCircleOutlined /> Basic features</li>
+                  <li><CheckCircleOutlined /> Up to 500 patients</li>
+                  <li><CheckCircleOutlined /> OPD & Appointments</li>
                   <li><CheckCircleOutlined /> Email support</li>
                   <li><CheckCircleOutlined /> 5 GB storage</li>
                 </ul>
@@ -277,16 +321,16 @@ const SaaSLanding: React.FC = () => {
                 <div className="pricing-header">
                   <Title level={4}>Professional</Title>
                   <div className="pricing-price">
-                    <span className="currency">$</span>
-                    <span className="amount">299</span>
+                    <span className="currency">₹</span>
+                    <span className="amount">14,999</span>
                     <span className="period">/month</span>
                   </div>
                 </div>
                 <ul className="pricing-features">
                   <li><CheckCircleOutlined /> Up to 20 doctors</li>
-                  <li><CheckCircleOutlined /> Up to 1000 patients</li>
-                  <li><CheckCircleOutlined /> All features</li>
-                  <li><CheckCircleOutlined /> Priority support</li>
+                  <li><CheckCircleOutlined /> Up to 5,000 patients</li>
+                  <li><CheckCircleOutlined /> All modules included</li>
+                  <li><CheckCircleOutlined /> Priority WhatsApp support</li>
                   <li><CheckCircleOutlined /> 50 GB storage</li>
                   <li><CheckCircleOutlined /> Custom branding</li>
                 </ul>
@@ -304,19 +348,19 @@ const SaaSLanding: React.FC = () => {
                 <div className="pricing-header">
                   <Title level={4}>Enterprise</Title>
                   <div className="pricing-price">
-                    <span className="currency">$</span>
-                    <span className="amount">999</span>
+                    <span className="currency">₹</span>
+                    <span className="amount">49,999</span>
                     <span className="period">/month</span>
                   </div>
                 </div>
                 <ul className="pricing-features">
                   <li><CheckCircleOutlined /> Unlimited doctors</li>
                   <li><CheckCircleOutlined /> Unlimited patients</li>
-                  <li><CheckCircleOutlined /> All features</li>
-                  <li><CheckCircleOutlined /> Dedicated support</li>
+                  <li><CheckCircleOutlined /> All modules + API access</li>
+                  <li><CheckCircleOutlined /> Dedicated account manager</li>
                   <li><CheckCircleOutlined /> Unlimited storage</li>
-                  <li><CheckCircleOutlined /> Custom domain</li>
-                  <li><CheckCircleOutlined /> SLA guarantee</li>
+                  <li><CheckCircleOutlined /> Multi-location support</li>
+                  <li><CheckCircleOutlined /> 99.9% SLA guarantee</li>
                 </ul>
                 <div className="pricing-cta">
                   <Link to="/signup?plan=enterprise">
@@ -356,8 +400,9 @@ const SaaSLanding: React.FC = () => {
                     matters most — patient care.
                   </Paragraph>
                   <Paragraph className="mission-text">
-                    Founded in 2020, we've grown from a small startup to a trusted partner
-                    for hospitals worldwide, serving patients annually.
+                    Built by a passionate team of healthcare IT professionals, Ayphen Care
+                    is designed to streamline hospital operations from OPD to pharmacy,
+                    laboratory to billing — all under one unified platform.
                   </Paragraph>
                 </div>
               </Col>
@@ -367,8 +412,8 @@ const SaaSLanding: React.FC = () => {
                     <Col xs={12}>
                       <Card className="stat-card scroll-animate-stagger">
                         <Statistic
-                          title="Founded"
-                          value="2020"
+                          title="Modules"
+                          value="30+"
                           valueStyle={{ color: '#10B981' }}
                         />
                       </Card>
@@ -376,8 +421,8 @@ const SaaSLanding: React.FC = () => {
                     <Col xs={12}>
                       <Card className="stat-card scroll-animate-stagger">
                         <Statistic
-                          title="Team Members"
-                          value="50+"
+                          title="User Roles"
+                          value="8"
                           valueStyle={{ color: '#10B981' }}
                         />
                       </Card>
@@ -385,8 +430,8 @@ const SaaSLanding: React.FC = () => {
                     <Col xs={12}>
                       <Card className="stat-card scroll-animate-stagger">
                         <Statistic
-                          title="Countries"
-                          value="5+"
+                          title="Departments"
+                          value="10+"
                           valueStyle={{ color: '#10B981' }}
                         />
                       </Card>
@@ -484,9 +529,9 @@ const SaaSLanding: React.FC = () => {
                     for your healthcare organization.
                   </Paragraph>
                   <Space direction="vertical" size="middle" style={{ width: '100%' }}>
-                    <Text><strong>Email:</strong> hello@ayphencare.com</Text>
-                    <Text><strong>Phone:</strong> +1 (555) 123-4567</Text>
-                    <Text><strong>Address:</strong> 123 Health Street, San Francisco, CA 94102</Text>
+                    <Text><strong>Email:</strong> support@ayphen.com</Text>
+                    <Text><strong>Phone:</strong> +91-44-2345-6789</Text>
+                    <Text><strong>Location:</strong> Chennai, Tamil Nadu, India</Text>
                   </Space>
                   <div style={{ marginTop: '1.5rem' }}>
                     <Link to="/signup">
@@ -507,7 +552,7 @@ const SaaSLanding: React.FC = () => {
         <div className="cta-container scroll-animate">
           <Title level={2}>Ready to Transform Your Hospital?</Title>
           <Paragraph>
-            Join 1000+ hospitals already using our platform. Start your free 30-day trial today.
+            Start your free 14-day trial today. No credit card required.
           </Paragraph>
           <Space size="large">
             <Link to="/signup">
@@ -519,6 +564,124 @@ const SaaSLanding: React.FC = () => {
               Talk to Sales
             </Button>
           </Space>
+        </div>
+      </section>
+
+      {/* Testimonials Section */}
+      <section className="testimonials-section">
+        <div className="section-container">
+          <div className="section-header scroll-animate">
+            <Title level={2}>What Healthcare Professionals Say</Title>
+            <Paragraph>Trusted by hospitals and clinics across India</Paragraph>
+          </div>
+          <Row gutter={[32, 32]}>
+            <Col xs={24} md={8} className="scroll-animate-stagger">
+              <Card className="testimonial-card scroll-animate-card">
+                <div className="testimonial-stars">
+                  <StarFilled /><StarFilled /><StarFilled /><StarFilled /><StarFilled />
+                </div>
+                <Paragraph className="testimonial-text">
+                  "Ayphen Care transformed how we manage our hospital. The pharmacy and lab
+                  integration alone saved us hours every day. Highly recommended!"
+                </Paragraph>
+                <div className="testimonial-author">
+                  <div className="author-avatar">RK</div>
+                  <div>
+                    <Text strong>Dr. Rajesh Kumar</Text>
+                    <br />
+                    <Text type="secondary">Hospital Administrator</Text>
+                  </div>
+                </div>
+              </Card>
+            </Col>
+            <Col xs={24} md={8} className="scroll-animate-stagger">
+              <Card className="testimonial-card scroll-animate-card">
+                <div className="testimonial-stars">
+                  <StarFilled /><StarFilled /><StarFilled /><StarFilled /><StarFilled />
+                </div>
+                <Paragraph className="testimonial-text">
+                  "The multi-location support is incredible. We manage 2 branches from
+                  a single dashboard. Patient records flow seamlessly across locations."
+                </Paragraph>
+                <div className="testimonial-author">
+                  <div className="author-avatar">PV</div>
+                  <div>
+                    <Text strong>Dr. Priya Venkatesh</Text>
+                    <br />
+                    <Text type="secondary">Cardiologist</Text>
+                  </div>
+                </div>
+              </Card>
+            </Col>
+            <Col xs={24} md={8} className="scroll-animate-stagger">
+              <Card className="testimonial-card scroll-animate-card">
+                <div className="testimonial-stars">
+                  <StarFilled /><StarFilled /><StarFilled /><StarFilled /><StarFilled />
+                </div>
+                <Paragraph className="testimonial-text">
+                  "Billing used to be a nightmare. With Ayphen Care, GST invoices are
+                  auto-generated and our revenue tracking is finally accurate."
+                </Paragraph>
+                <div className="testimonial-author">
+                  <div className="author-avatar">SG</div>
+                  <div>
+                    <Text strong>Sanjay Gupta</Text>
+                    <br />
+                    <Text type="secondary">Hospital Accountant</Text>
+                  </div>
+                </div>
+              </Card>
+            </Col>
+          </Row>
+        </div>
+      </section>
+
+      {/* FAQ Section */}
+      <section className="faq-section">
+        <div className="section-container">
+          <div className="section-header scroll-animate">
+            <Title level={2}><QuestionCircleOutlined style={{ marginRight: 12 }} />Frequently Asked Questions</Title>
+            <Paragraph>Everything you need to know about Ayphen Care</Paragraph>
+          </div>
+          <div className="faq-container scroll-animate">
+            <Collapse
+              accordion
+              size="large"
+              expandIcon={({ isActive }) => isActive ? <MinusOutlined /> : <PlusOutlined />}
+              items={[
+                {
+                  key: '1',
+                  label: 'What modules are included in Ayphen Care?',
+                  children: <Paragraph>Ayphen Care includes 30+ modules: OPD Management, Appointments, Patient Registration, Pharmacy & Inventory, Laboratory, Billing & GST, Inpatient (IPD), Radiology, Blood Bank, Diet Management, OT Management, Telemedicine, Staff Management, and more. All modules work seamlessly together.</Paragraph>
+                },
+                {
+                  key: '2',
+                  label: 'Can I manage multiple hospital branches?',
+                  children: <Paragraph>Yes! Our multi-location architecture lets you manage unlimited branches from a single dashboard. Patient records, staff, and inventory sync across all locations in real-time. Each branch can have its own settings while sharing the organizational data.</Paragraph>
+                },
+                {
+                  key: '3',
+                  label: 'Is my patient data secure?',
+                  children: <Paragraph>Absolutely. We use enterprise-grade encryption (AES-256), role-based access control with 8 different user roles, audit logging, and regular security updates. Your data is hosted on Tier-1 cloud infrastructure with 99.9% uptime SLA.</Paragraph>
+                },
+                {
+                  key: '4',
+                  label: 'How long does it take to set up?',
+                  children: <Paragraph>You can get started in under 5 minutes! Sign up, create your organization, add your departments and staff — and you're ready to go. Our onboarding wizard guides you through every step. For larger hospitals, we offer dedicated setup assistance.</Paragraph>
+                },
+                {
+                  key: '5',
+                  label: 'Do you offer a free trial?',
+                  children: <Paragraph>Yes, we offer a 14-day free trial with full access to all features. No credit card required. You can explore every module, add staff, and test the complete workflow before making a decision.</Paragraph>
+                },
+                {
+                  key: '6',
+                  label: 'What kind of support do you provide?',
+                  children: <Paragraph>We provide email support for all plans, priority WhatsApp support for Professional plans, and a dedicated account manager for Enterprise customers. Our support team consists of healthcare IT specialists who understand hospital workflows.</Paragraph>
+                }
+              ]}
+            />
+          </div>
         </div>
       </section>
 
@@ -547,7 +710,7 @@ const SaaSLanding: React.FC = () => {
               label="Full Name"
               rules={[{ required: true, message: 'Please enter your full name' }]}
             >
-              <Input placeholder="John Doe" />
+              <Input placeholder="Dr. Rajesh Kumar" />
             </Form.Item>
 
             <Form.Item
@@ -558,7 +721,7 @@ const SaaSLanding: React.FC = () => {
                 { type: 'email', message: 'Please enter a valid email' }
               ]}
             >
-              <Input placeholder="john@hospital.com" />
+              <Input placeholder="admin@hospital.com" />
             </Form.Item>
 
             <Row gutter={16}>
@@ -567,7 +730,7 @@ const SaaSLanding: React.FC = () => {
                   name="phone"
                   label="Phone Number"
                 >
-                  <Input placeholder="+1 (555) 000-0000" />
+                  <Input placeholder="+91-98765-43210" />
                 </Form.Item>
               </Col>
               <Col span={12}>
@@ -590,15 +753,59 @@ const SaaSLanding: React.FC = () => {
               label="How can we help?"
               rules={[{ required: true, message: 'Please tell us how we can help' }]}
             >
-              <TextArea rows={4} placeholder="I'm interested in a demo for our Cardiology department..." />
+              <TextArea rows={4} placeholder="I'm interested in a demo for our hospital..." />
             </Form.Item>
 
             <Form.Item style={{ marginBottom: 0, marginTop: '1rem' }}>
-              <Button type="primary" htmlType="submit" block size="large" loading={loading} style={{ background: '#10B981', borderColor: '#10B981' }}>
+              <Button type="primary" htmlType="submit" block size="large" loading={loading} style={{ background: '#1E3A5F', borderColor: '#1E3A5F' }}>
                 Submit Request
               </Button>
             </Form.Item>
           </Form>
+        </div>
+      </Modal>
+
+      {/* Watch Demo Modal */}
+      <Modal
+        title="Watch Demo"
+        open={isDemoModalVisible}
+        onCancel={() => setIsDemoModalVisible(false)}
+        footer={null}
+        centered
+        width={600}
+      >
+        <div style={{ padding: '1rem 0' }}>
+          <Paragraph style={{ marginBottom: '1.5rem', color: '#666', fontSize: '1rem' }}>
+            Experience Ayphen Care with our live demo. Log in with any of these roles to explore the full platform:
+          </Paragraph>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            {[
+              { role: 'Admin', email: 'admin@chennaihms.com', password: 'Admin@123' },
+              { role: 'Doctor', email: 'dr.arun@chennaihms.com', password: 'Doctor@123' },
+              { role: 'Pharmacist', email: 'pharma.mohan@chennaihms.com', password: 'Pharma@123' },
+              { role: 'Lab Tech', email: 'lab.ganesh@chennaihms.com', password: 'Lab@123' },
+              { role: 'Patient', email: 'patient.ravi@chennaihms.com', password: 'Patient@123' },
+            ].map((item) => (
+              <div key={item.role} style={{
+                padding: '12px 16px',
+                background: '#f8fafc',
+                borderRadius: '12px',
+                border: '1px solid #e2e8f0',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center'
+              }}>
+                <div>
+                  <Text strong style={{ color: '#1E3A5F' }}>{item.role}</Text>
+                  <br />
+                  <Text type="secondary" style={{ fontSize: '13px' }}>{item.email} / {item.password}</Text>
+                </div>
+                <Link to="/login">
+                  <Button type="primary" size="small" style={{ background: '#1E3A5F', borderColor: '#1E3A5F' }}>Login</Button>
+                </Link>
+              </div>
+            ))}
+          </div>
         </div>
       </Modal>
 
@@ -628,26 +835,33 @@ const SaaSLanding: React.FC = () => {
               <Title level={5}>Company</Title>
               <ul className="footer-links">
                 <li><a href="#about">About Us</a></li>
-                <li><a href="#contact">Contact</a></li>
-                <li><a href="#careers">Careers</a></li>
-                <li><a href="#blog">Blog</a></li>
+                <li><a href="mailto:support@ayphen.com">Contact</a></li>
               </ul>
             </Col>
             <Col xs={24} md={6}>
-              <Title level={5}>Legal</Title>
+              <Title level={5}>Support</Title>
               <ul className="footer-links">
-                <li><a href="#privacy">Privacy Policy</a></li>
-                <li><a href="#terms">Terms of Service</a></li>
-                <li><a href="#security">Security</a></li>
-                <li><a href="#compliance">Compliance</a></li>
+                <li><a href="mailto:support@ayphen.com">Email Support</a></li>
+                <li><a href="tel:+914423456789">Phone Support</a></li>
               </ul>
             </Col>
           </Row>
           <div className="footer-bottom">
-            <Text>© 2025 Ayphen Care. All rights reserved.</Text>
+            <Text>© {new Date().getFullYear()} Ayphen Care. All rights reserved.</Text>
           </div>
         </div>
       </footer>
+
+      {/* WhatsApp Floating Button */}
+      <a
+        href="https://wa.me/914423456789?text=Hi%2C%20I'm%20interested%20in%20Ayphen%20Care%20HMS"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="whatsapp-float"
+        title="Chat with us on WhatsApp"
+      >
+        <WhatsAppOutlined />
+      </a>
     </div>
   );
 };
