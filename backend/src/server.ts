@@ -289,6 +289,38 @@ export class Server {
       res.status(200).json({ status: 'ok', timestamp: new Date() });
     });
 
+    // Test welcome email endpoint (for debugging)
+    this.app.post('/api/test-welcome-email', async (req: Request, res: Response) => {
+      try {
+        const { email, firstName, orgName } = req.body;
+        if (!email) {
+          return res.status(400).json({ message: 'Email is required' });
+        }
+        
+        const { EmailService } = require('./services/email.service');
+        EmailService.initialize();
+        
+        console.log(`📧 Testing sendUniversalWelcomeEmail to ${email}...`);
+        const success = await EmailService.sendUniversalWelcomeEmail(
+          email,
+          firstName || 'Test',
+          'TempPass@123',
+          orgName || 'Test Hospital',
+          'testhospital',
+          'admin'
+        );
+        
+        if (success) {
+          res.status(200).json({ message: 'Welcome email sent successfully', email });
+        } else {
+          res.status(500).json({ message: 'Failed to send welcome email' });
+        }
+      } catch (error: any) {
+        console.error('Test welcome email error:', error);
+        res.status(500).json({ message: 'Failed to send welcome email', error: error.message });
+      }
+    });
+
     // Test email endpoint with Resend/SMTP support
     this.app.post('/api/test-email', async (req: Request, res: Response) => {
       try {
