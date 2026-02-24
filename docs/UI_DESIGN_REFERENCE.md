@@ -422,6 +422,212 @@ Each card shows:
 
 ---
 
+### 5. Pharmacy Module
+
+#### Pharmacy Dispense Page
+**Screenshot Reference**: Pharmacy Dispense
+
+**Key Elements**:
+- Two-column layout: Prescription Queue (left) + Selected Prescription Details (right)
+- Search bar with "Scan Barcode" and "Manual Entry" buttons
+- Stats cards row at top
+
+**Stats Cards**:
+| Stat | Color | Subtitle |
+|------|-------|----------|
+| Pending Rx | Orange (#F59E0B) | X urgent refills |
+| Dispensed Today | Teal (#00D4AA) | +X% from yesterday |
+| Low / Out of Stock | Red (#EF4444) | X critical items |
+| Revenue Today | Green (#10B981) | X transactions |
+
+**Prescription Queue Table**:
+| Column | Description |
+|--------|-------------|
+| Rx # | Prescription number (e.g., RX-1042) |
+| Patient | Patient name + ID |
+| Doctor | Prescribing doctor |
+| Items | Number of medications |
+| Status | Pending/Ready/Verified/Urgent badges |
+| Time | Time since prescription |
+
+**Selected Prescription Panel**:
+- Patient name, Doctor name
+- Date, Priority badge
+- Prescribed Medications list with:
+  - Medicine name, dosage
+  - Instructions (route, timing)
+  - Stock status badge (In Stock/Low Stock)
+- Dispense Actions section:
+  - Pharmacist Notes textarea
+  - Total Amount display
+  - "Dispense Medications" primary button (teal)
+  - "Hold" and "Reject" secondary buttons
+
+**Current Implementation**: `/pharmacy/Prescriptions.tsx`, `/pharmacy/PrescriptionsEnhanced.tsx`
+
+**Improvements Needed**:
+- Add two-column layout with prescription details panel
+- Add barcode scanning functionality
+- Add stock status badges on medications
+- Add Hold/Reject actions
+
+---
+
+#### Inventory Management Page
+**Screenshot Reference**: Pharmacy Inventory
+
+**Key Elements**:
+- Stats cards for inventory overview
+- Stock list table with status badges
+- Search and "Add Stock" button
+
+**Stats Cards**:
+| Stat | Color | Subtitle |
+|------|-------|----------|
+| Total Items | Blue (#1E3A5F) | All categories |
+| Low Stock | Orange (#F59E0B) | Below minimum level |
+| Out of Stock | Red (#EF4444) | Needs reorder |
+| Expiring Soon | Yellow (#F59E0B) | Within 30 days |
+
+**Stock List Table**:
+| Column | Description |
+|--------|-------------|
+| Item Code | Pharmacy item code (e.g., PHR-0421) |
+| Medicine | Name + form + quantity per pack |
+| Category | Antibiotics/Antidiabetic/Analgesic |
+| Stock | Current quantity |
+| Min Level | Minimum stock level |
+| Expiry | Expiration date |
+| Status | Adequate/Low/Out/Expiring badges |
+
+**Status Badges**:
+- Adequate: Green
+- Low: Orange
+- Out: Red
+- Expiring: Yellow
+
+**Current Implementation**: `/pharmacy/Inventory.tsx`, `/pharmacy/InventoryEnhanced.tsx`
+
+**Improvements Needed**:
+- Add expiry tracking column
+- Add status badges (Adequate/Low/Out/Expiring)
+- Add category column
+- Add min level tracking
+
+---
+
+#### Purchase Orders Page
+**Screenshot Reference**: Pharmacy Purchase Orders
+
+**Key Elements**:
+- Stats cards for order overview
+- Filter tabs: All, Pending, Approved, Delivered
+- Purchase orders table
+
+**Stats Cards**:
+| Stat | Color | Subtitle |
+|------|-------|----------|
+| Open Orders | Blue (#0EA5E9) | X arriving today |
+| Delivered Today | Teal (#00D4AA) | All verified |
+| Pending Approval | Orange (#F59E0B) | Awaiting manager |
+| Total Spend | Green (#10B981) | This month |
+
+**Purchase Orders Table**:
+| Column | Description |
+|--------|-------------|
+| PO # | Purchase order number |
+| Supplier | Supplier name + location |
+| Items | Number of items |
+| Order Date | Date ordered |
+| Delivery | Expected delivery date |
+| Amount | Order amount (₹) |
+| Status | Delivered/In Transit/Pending/Approved badges |
+
+**Current Implementation**: `/pharmacy/PurchaseOrders.tsx`
+
+**Improvements Needed**:
+- Add stats cards
+- Add filter tabs
+- Add supplier location display
+- Add delivery date tracking
+
+---
+
+#### Returns & Adjustments Page
+**Screenshot Reference**: Pharmacy Returns
+
+**Key Elements**:
+- Stats cards for returns overview
+- Filter tabs: All, Pending, Processed, Rejected
+- Return requests table
+
+**Stats Cards**:
+| Stat | Color | Subtitle |
+|------|-------|----------|
+| Pending Returns | Orange (#F59E0B) | Awaiting processing |
+| Processed Today | Teal (#00D4AA) | Completed returns |
+| Expired Items | Red (#EF4444) | Need attention |
+| Credit Received | Green (#10B981) | This month |
+
+**Return Requests Table**:
+| Column | Description |
+|--------|-------------|
+| Return # | Return request number |
+| Item | Medicine name + batch number |
+| Reason | Expired/Damaged/Recall/Wrong Delivery |
+| Qty | Quantity returned |
+| Date | Return date |
+| Value | Return value (₹) |
+| Status | Processed/Pending/Approved/Rejected badges |
+
+**Current Implementation**: None (needs to be created)
+
+**Improvements Needed**:
+- Create Returns page
+- Add batch tracking
+- Add reason categorization
+- Add credit tracking
+
+---
+
+#### Reports & Analytics Page
+**Screenshot Reference**: Pharmacy Reports
+
+**Key Elements**:
+- Stats cards with comparison to last month
+- Two-column layout: Top Selling Medications + Quick Reports
+- Export Report button
+
+**Stats Cards**:
+| Stat | Color | Subtitle |
+|------|-------|----------|
+| Revenue | Green (#10B981) | +X% from last month |
+| Prescriptions Filled | Blue (#0EA5E9) | +X% from last month |
+| Avg. Turnaround | Teal (#00D4AA) | -X min from last month |
+| Return Rate | Red (#EF4444) | -X% from last month |
+
+**Top Selling Medications List**:
+- Ranked list (1-5)
+- Medicine name
+- Units sold
+- Revenue (₹)
+
+**Quick Reports Panel**:
+- Daily Sales Report
+- Stock Movement
+- Expiry Report
+- Supplier Summary
+
+**Current Implementation**: `/pharmacy/ReportsEnhanced.tsx`, `/pharmacy/InventoryReports.tsx`
+
+**Improvements Needed**:
+- Add comparison percentages
+- Add Quick Reports panel
+- Add top selling medications list
+- Add export functionality
+
+---
+
 ## Complete Role-Page Mapping
 
 | Role | Lunaris Screen | Our Current Page | Priority |
@@ -436,6 +642,11 @@ Each card shows:
 | **OT Staff** | Equipment | `/pages/ot/` (create) | Medium |
 | **OT Staff** | Live Monitor | `/pages/ot/` (create) | Medium |
 | **OT Staff** | Schedule | `/pages/ot/` (create) | Medium |
+| **Pharmacist** | Dispense | `/pharmacy/PrescriptionsEnhanced.tsx` | High |
+| **Pharmacist** | Inventory | `/pharmacy/InventoryEnhanced.tsx` | High |
+| **Pharmacist** | Purchase Orders | `/pharmacy/PurchaseOrders.tsx` | Medium |
+| **Pharmacist** | Returns | `/pharmacy/Returns.tsx` (create) | Medium |
+| **Pharmacist** | Reports | `/pharmacy/ReportsEnhanced.tsx` | Medium |
 
 ---
 
@@ -444,3 +655,4 @@ Each card shows:
 - Target: Modern, clean, professional healthcare UI
 - Focus on data visibility and quick actions
 - Mobile responsiveness to be considered in implementation
+- Pharmacy module requires two-column layouts for dispense workflow
