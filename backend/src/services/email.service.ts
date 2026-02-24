@@ -1294,7 +1294,18 @@ export class EmailService {
       }
     };
 
-    return configs[role] || {
+    // Normalize role to lowercase for matching
+    const normalizedRole = (role || '').toLowerCase().trim();
+    console.log(`📧 getRoleConfig called with role: "${role}", normalized: "${normalizedRole}"`);
+    
+    const config = configs[normalizedRole];
+    if (config) {
+      console.log(`📧 Found role config for: ${normalizedRole}`);
+      return config;
+    }
+    
+    console.log(`📧 No config found for role: ${normalizedRole}, using default. Available roles: ${Object.keys(configs).join(', ')}`);
+    return {
       color: '#666666',
       gradient: 'linear-gradient(135deg, #666666 0%, #424242 100%)',
       accentColor: '#999999',
