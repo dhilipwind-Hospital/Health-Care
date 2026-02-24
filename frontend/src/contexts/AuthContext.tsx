@@ -156,7 +156,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setUser(me.data);
           const role = String(me.data?.role || '').toLowerCase();
           const hasOrganization = !!me.data?.organizationId;
-          
+
           // Patients without organization need to choose a hospital first
           if (role === 'patient' && !hasOrganization) {
             navigate('/choose-hospital');
@@ -218,9 +218,95 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     navigate('/login');
   };
 
+  const loadingScreen = (
+    <div style={{
+      display: 'flex',
+      flexDirection: 'column',
+      justifyContent: 'center',
+      alignItems: 'center',
+      height: '100vh',
+      width: '100vw',
+      background: 'linear-gradient(135deg, #f0f4ff 0%, #e8edf5 50%, #f5f7fa 100%)',
+      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+    }}>
+      <div style={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        gap: '24px',
+        padding: '48px',
+        borderRadius: '20px',
+        background: 'rgba(255, 255, 255, 0.8)',
+        backdropFilter: 'blur(10px)',
+        boxShadow: '0 8px 32px rgba(0, 0, 0, 0.08)',
+      }}>
+        <div style={{
+          width: '56px',
+          height: '56px',
+          borderRadius: '16px',
+          background: 'linear-gradient(135deg, #1a5276 0%, #2980b9 100%)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          animation: 'pulse 2s ease-in-out infinite',
+        }}>
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
+          </svg>
+        </div>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{
+            fontSize: '20px',
+            fontWeight: 700,
+            color: '#1a5276',
+            letterSpacing: '-0.3px',
+          }}>
+            Ayphen Care
+          </div>
+          <div style={{
+            fontSize: '13px',
+            color: '#64748b',
+            marginTop: '6px',
+          }}>
+            Loading your workspace...
+          </div>
+        </div>
+        <div style={{
+          width: '120px',
+          height: '3px',
+          borderRadius: '2px',
+          background: '#e2e8f0',
+          overflow: 'hidden',
+          position: 'relative',
+        }}>
+          <div style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            height: '100%',
+            width: '40%',
+            borderRadius: '2px',
+            background: 'linear-gradient(90deg, #1a5276, #2980b9)',
+            animation: 'loadingBar 1.5s ease-in-out infinite',
+          }} />
+        </div>
+      </div>
+      <style>{`
+        @keyframes pulse {
+          0%, 100% { transform: scale(1); }
+          50% { transform: scale(1.08); }
+        }
+        @keyframes loadingBar {
+          0% { left: -40%; }
+          100% { left: 100%; }
+        }
+      `}</style>
+    </div>
+  );
+
   return (
     <AuthContext.Provider value={{ user, loading, login, register, logout, refreshMe }}>
-      {!loading && children}
+      {loading ? loadingScreen : children}
     </AuthContext.Provider>
   );
 };
