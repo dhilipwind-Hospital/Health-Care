@@ -178,7 +178,7 @@ export class EmailService {
     subdomain: string
   ): Promise<boolean> {
     const subject = `Welcome to ${organizationName} - Doctor Portal Access`;
-    const html = this.getDoctorWelcomeEmailTemplate(firstName, email, tempPassword, organizationName, subdomain);
+    const html = this.getUniversalWelcomeEmailTemplate(firstName, email, tempPassword, organizationName, subdomain, 'doctor');
 
     return await this.sendEmail({ to: email, subject, html });
   }
@@ -192,7 +192,7 @@ export class EmailService {
     subdomain: string
   ): Promise<boolean> {
     const subject = `Welcome to ${organizationName} - Nurse Portal Access`;
-    const html = this.getNurseWelcomeEmailTemplate(firstName, email, tempPassword, organizationName, subdomain);
+    const html = this.getUniversalWelcomeEmailTemplate(firstName, email, tempPassword, organizationName, subdomain, 'nurse');
 
     return await this.sendEmail({ to: email, subject, html });
   }
@@ -206,7 +206,7 @@ export class EmailService {
     subdomain: string
   ): Promise<boolean> {
     const subject = `Welcome to ${organizationName} - Receptionist Portal Access`;
-    const html = this.getReceptionistWelcomeEmailTemplate(firstName, email, tempPassword, organizationName, subdomain);
+    const html = this.getUniversalWelcomeEmailTemplate(firstName, email, tempPassword, organizationName, subdomain, 'receptionist');
 
     return await this.sendEmail({ to: email, subject, html });
   }
@@ -1182,6 +1182,54 @@ export class EmailService {
           { icon: '👥', title: 'Staff Management', description: 'Manage doctors, nurses, and support staff' },
           { icon: '📊', title: 'Reports & Analytics', description: 'Generate reports and analyze hospital performance' },
           { icon: '⚙️', title: 'Settings & Configuration', description: 'Configure hospital settings and preferences' }
+        ]
+      },
+      'doctor': {
+        color: '#10B981',
+        gradient: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
+        accentColor: '#34D399',
+        icon: '👨‍⚕️',
+        tipBackground: '#D1FAE5',
+        quickStart: 'Access your Doctor Dashboard to view appointments and patient records',
+        proTip: 'Use the Quick Actions panel to efficiently manage your daily patient consultations!',
+        responsibilities: [
+          { icon: '📅', title: 'Appointment Management', description: 'View and manage your patient appointments and schedule' },
+          { icon: '🩺', title: 'Patient Consultations', description: 'Conduct consultations, record diagnoses, and prescribe treatments' },
+          { icon: '📋', title: 'Medical Records', description: 'Access and update patient medical histories and records' },
+          { icon: '💊', title: 'Prescriptions', description: 'Create and manage patient prescriptions electronically' },
+          { icon: '🔬', title: 'Lab Orders', description: 'Order laboratory tests and review results' }
+        ]
+      },
+      'nurse': {
+        color: '#1890ff',
+        gradient: 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)',
+        accentColor: '#40A9FF',
+        icon: '👩‍⚕️',
+        tipBackground: '#E6F7FF',
+        quickStart: 'Access the Triage Station to start your nursing workflow',
+        proTip: 'After logging in, you\'ll be automatically redirected to the Triage Station where you can start processing patients immediately.',
+        responsibilities: [
+          { icon: '🩺', title: 'Triage Station', description: 'Assess patients, record vital signs, and assign priority levels' },
+          { icon: '🏥', title: 'Inpatient Care', description: 'Monitor admitted patients, administer medications, and document care' },
+          { icon: '📋', title: 'Patient Records', description: 'Update medical records and add nursing observations' },
+          { icon: '🛏️', title: 'Bed Management', description: 'Manage patient bed assignments and ward monitoring' },
+          { icon: '💉', title: 'Medication Administration', description: 'Administer prescribed medications and document administration' }
+        ]
+      },
+      'receptionist': {
+        color: '#13C2C2',
+        gradient: 'linear-gradient(135deg, #13C2C2 0%, #08979C 100%)',
+        accentColor: '#36CFC9',
+        icon: '👩‍💻',
+        tipBackground: '#E6FFFB',
+        quickStart: 'Access the Reception Dashboard to manage patient registrations and appointments',
+        proTip: 'Use the Quick Registration feature to efficiently register walk-in patients!',
+        responsibilities: [
+          { icon: '📝', title: 'Patient Registration', description: 'Register new patients and update existing patient information' },
+          { icon: '📅', title: 'Appointment Scheduling', description: 'Schedule, reschedule, and manage patient appointments' },
+          { icon: '📞', title: 'Front Desk Operations', description: 'Handle patient inquiries, phone calls, and visitor management' },
+          { icon: '💳', title: 'Billing Assistance', description: 'Assist with billing inquiries and payment processing' },
+          { icon: '📋', title: 'Queue Management', description: 'Manage patient queues and waiting times' }
         ]
       },
       'patient': {
