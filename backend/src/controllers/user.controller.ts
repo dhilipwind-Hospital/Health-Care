@@ -676,43 +676,46 @@ export class UserController {
       const saved = await repo.save(user);
 
       // Send welcome email for ALL roles (universal system)
+      console.log(`📧 Attempting to send welcome email - email: ${email}, role: ${role}, tenantId: ${tenantId}`);
       if (email && role) {
         try {
           const org = await AppDataSource.getRepository(Organization).findOne({
             where: { id: tenantId }
           });
+          console.log(`📧 Organization found: ${org?.name || 'NOT FOUND'}`);
 
+          let emailSent = false;
           // Use role-specific templates for existing roles, universal for others
           if (role === 'nurse') {
-            await EmailService.sendNurseWelcomeEmail(
+            emailSent = await EmailService.sendNurseWelcomeEmail(
               email,
               firstName,
               tempPassword,
               org?.name || 'Hospital',
               org?.subdomain || 'hospital'
             );
-            console.log(`📧 Nurse welcome email sent to ${email}`);
+            console.log(`📧 Nurse welcome email ${emailSent ? 'SENT' : 'FAILED'} to ${email}`);
           } else if (role === 'receptionist') {
-            await EmailService.sendReceptionistWelcomeEmail(
+            emailSent = await EmailService.sendReceptionistWelcomeEmail(
               email,
               firstName,
               tempPassword,
               org?.name || 'Hospital',
               org?.subdomain || 'hospital'
             );
-            console.log(`📧 Receptionist welcome email sent to ${email}`);
+            console.log(`📧 Receptionist welcome email ${emailSent ? 'SENT' : 'FAILED'} to ${email}`);
           } else if (role === 'doctor' || role === 'staff') {
-            await EmailService.sendDoctorWelcomeEmail(
+            emailSent = await EmailService.sendDoctorWelcomeEmail(
               email,
               firstName,
               tempPassword,
               org?.name || 'Hospital',
               org?.subdomain || 'hospital'
             );
-            console.log(`📧 ${role} welcome email sent to ${email}`);
+            console.log(`📧 ${role} welcome email ${emailSent ? 'SENT' : 'FAILED'} to ${email}`);
           } else {
             // Universal email for all other roles (super_admin, admin, patient, pharmacist, lab_technician, accountant)
-            await EmailService.sendUniversalWelcomeEmail(
+            emailSent = await EmailService.sendUniversalWelcomeEmail(
               email,
               firstName,
               tempPassword,
@@ -720,12 +723,14 @@ export class UserController {
               org?.subdomain || 'hospital',
               role
             );
-            console.log(`📧 ${role} welcome email sent to ${email}`);
+            console.log(`📧 ${role} welcome email ${emailSent ? 'SENT' : 'FAILED'} to ${email}`);
           }
         } catch (emailError) {
-          console.error('Error sending welcome email:', emailError);
+          console.error('❌ Error sending welcome email:', emailError);
           // Continue without failing the user creation
         }
+      } else {
+        console.log(`📧 Skipping email - email: ${email}, role: ${role}`);
       }
 
       const { password: _, ...rest } = saved as any;
