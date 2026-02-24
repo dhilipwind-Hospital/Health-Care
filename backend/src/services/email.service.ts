@@ -1130,9 +1130,7 @@ export class EmailService {
             <h3 style="color: #333; margin-top: 30px;">📞 Need Help?</h3>
             <p>If you have any questions about using the ${roleDisplayName.toLowerCase()} portal, please contact:</p>
             <ul>
-              <li>Your supervisor or department head</li>
-              <li>Hospital IT support team</li>
-              <li>Hospital administration</li>
+              ${(roleConfig.helpContacts || ['Your supervisor or department head', 'Hospital IT support team', 'Hospital administration']).map((contact: string) => `<li>${contact}</li>`).join('')}
             </ul>
 
             <p style="margin-top: 30px; padding: 15px; background: ${roleConfig.tipBackground}; border-radius: 5px; border-left: 4px solid ${roleConfig.color};">
@@ -1143,7 +1141,7 @@ export class EmailService {
             <p>© 2025 ${organizationName}. All rights reserved.</p>
             <p>This is an automated email. Please do not reply.</p>
             <p style="margin-top: 10px; color: #999;">
-              Welcome to the ${roleDisplayName.toLowerCase()} team! We're excited to have you on board. ${roleConfig.icon}
+              ${roleConfig.welcomeMessage || `Welcome to the ${roleDisplayName.toLowerCase()} team! We're excited to have you on board.`} ${roleConfig.icon}
             </p>
           </div>
         </div>
@@ -1236,10 +1234,16 @@ export class EmailService {
         color: '#2196f3',
         gradient: 'linear-gradient(135deg, #2196f3 0%, #1976d2 100%)',
         accentColor: '#64b5f6',
-        icon: '🤒',
+        icon: '🏥',
         tipBackground: '#e3f2fd',
         quickStart: 'Access your patient portal to view appointments and records',
         proTip: 'Keep your contact information updated and attend scheduled appointments!',
+        welcomeMessage: 'Welcome to our healthcare family!',
+        helpContacts: [
+          'Hospital reception desk',
+          'Your assigned doctor or nurse',
+          'Patient support helpline'
+        ],
         responsibilities: [
           { icon: '📅', title: 'Appointment Management', description: 'Book and manage your medical appointments' },
           { icon: '📋', title: 'Medical Records', description: 'View your medical history and test results' },
