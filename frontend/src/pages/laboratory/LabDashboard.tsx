@@ -1,22 +1,160 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Row, Col, Statistic, Table, Tag, Button, Tabs } from 'antd';
+import { Card, Row, Col, Table, Tag, Button, Segmented, Space, Input, Typography } from 'antd';
 import { 
   ExperimentOutlined, 
   ClockCircleOutlined, 
   CheckCircleOutlined,
-  WarningOutlined 
+  WarningOutlined,
+  SearchOutlined,
+  ReloadOutlined,
+  PlusOutlined,
+  EyeOutlined
 } from '@ant-design/icons';
 import api from '../../services/api';
 import styled from 'styled-components';
+import { useNavigate } from 'react-router-dom';
+import dayjs from 'dayjs';
 
-const { TabPane } = Tabs;
+const { Text } = Typography;
 
-const DashboardContainer = styled.div`
+const PageContainer = styled.div`
+  background: #F8FAFC;
+  min-height: 100vh;
   padding: 24px;
 `;
 
-const StatsCard = styled(Card)`
+const PageHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   margin-bottom: 24px;
+  
+  .title-section {
+    h2 {
+      margin: 0;
+      font-size: 24px;
+      font-weight: 600;
+      color: #1E3A5F;
+    }
+    
+    .subtitle {
+      color: #666;
+      font-size: 14px;
+    }
+  }
+`;
+
+const StatsRow = styled(Row)`
+  margin-bottom: 24px;
+`;
+
+const StatCard = styled(Card)`
+  border-radius: 12px;
+  border: 1px solid rgba(30, 58, 95, 0.1);
+  box-shadow: 0 2px 8px rgba(30, 58, 95, 0.06);
+  
+  .ant-card-body {
+    padding: 20px;
+  }
+  
+  .stat-label {
+    font-size: 12px;
+    text-transform: uppercase;
+    color: #666;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+  }
+  
+  .stat-value {
+    font-size: 36px;
+    font-weight: 700;
+    line-height: 1.2;
+  }
+  
+  .stat-subtitle {
+    font-size: 12px;
+    color: #888;
+    margin-top: 4px;
+  }
+  
+  &.pending .stat-value { color: #F59E0B; }
+  &.validated .stat-value { color: #10B981; }
+  &.abnormal .stat-value { color: #F97316; }
+  &.critical .stat-value { color: #EF4444; }
+`;
+
+const OrdersCard = styled(Card)`
+  border-radius: 12px;
+  border: 1px solid rgba(30, 58, 95, 0.1);
+  box-shadow: 0 2px 8px rgba(30, 58, 95, 0.06);
+  
+  .ant-card-head {
+    border-bottom: 1px solid rgba(30, 58, 95, 0.08);
+    padding: 16px 20px;
+    
+    .ant-card-head-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: #1E3A5F;
+    }
+  }
+`;
+
+const StatusBadge = styled(Tag)<{ $status?: string }>`
+  border-radius: 12px;
+  padding: 2px 10px;
+  font-size: 12px;
+  font-weight: 500;
+  border: none;
+  
+  ${({ $status }) => {
+    switch ($status) {
+      case 'completed':
+        return 'background: #D1FAE5; color: #059669;';
+      case 'in_progress':
+        return 'background: #DBEAFE; color: #2563EB;';
+      case 'critical':
+        return 'background: #FEE2E2; color: #DC2626;';
+      case 'pending':
+      case 'ordered':
+        return 'background: #FEF3C7; color: #D97706;';
+      default:
+        return 'background: #F3F4F6; color: #6B7280;';
+    }
+  }}
+`;
+
+const ResultBadge = styled(Tag)<{ $result?: string }>`
+  border-radius: 12px;
+  padding: 2px 10px;
+  font-size: 12px;
+  font-weight: 500;
+  border: none;
+  
+  ${({ $result }) => {
+    switch ($result) {
+      case 'normal':
+        return 'background: #D1FAE5; color: #059669;';
+      case 'abnormal':
+        return 'background: #FEF3C7; color: #D97706;';
+      case 'critical':
+        return 'background: #FEE2E2; color: #DC2626;';
+      default:
+        return 'background: #F3F4F6; color: #6B7280;';
+    }
+  }}
+`;
+
+const ActionButton = styled(Button)`
+  border-radius: 6px;
+  border: 1px solid #00D4AA;
+  color: #00D4AA;
+  
+  &:hover {
+    background: #00D4AA;
+    color: white;
+    border-color: #00D4AA;
+  }
 `;
 
 interface LabOrder {
@@ -168,94 +306,94 @@ const LabDashboard: React.FC = () => {
     }
   ];
 
+  const navigate = useNavigate();
+  const [filter, setFilter] = useState<string>('All');
+
+  const filteredOrders = React.useMemo(() => {
+    const allOrders = [...pendingOrders, ...completedOrders];
+    switch (filter) {
+      case 'Pending':
+        return pendingOrders.filter(o => o.status === 'ordered' || o.status === 'sample_collected');
+      case 'Critical':
+        return allOrders.filter(o => o.isUrgent);
+      default:
+        return allOrders;
+    }
+  }, [pendingOrders, completedOrders, filter]);
+
   return (
-    <DashboardContainer>
-      <h1>🔬 Laboratory Dashboard</h1>
+    <PageContainer>
+      <PageHeader>
+        <div className="title-section">
+          <h2>Lab Orders</h2>
+          <div className="subtitle">Track and manage laboratory test orders</div>
+        </div>
+        <Space>
+          <Input 
+            placeholder="Search lab orders..." 
+            prefix={<SearchOutlined />} 
+            style={{ width: 200, borderRadius: 8 }}
+          />
+          <Button icon={<ReloadOutlined />} onClick={() => { fetchPendingOrders(); fetchCompletedOrders(); }} loading={loading}>
+            Refresh
+          </Button>
+          <Button type="primary" icon={<PlusOutlined />} onClick={() => navigate('/laboratory/order')} style={{ background: '#00D4AA', borderColor: '#00D4AA' }}>
+            New Lab Order
+          </Button>
+        </Space>
+      </PageHeader>
 
-      <Row gutter={16} style={{ marginBottom: 24 }}>
-        <Col span={6}>
-          <StatsCard>
-            <Statistic
-              title="Pending Orders"
-              value={stats.pending}
-              prefix={<ClockCircleOutlined />}
-              valueStyle={{ color: '#1890ff' }}
-            />
-          </StatsCard>
+      <StatsRow gutter={16}>
+        <Col xs={24} sm={12} md={6}>
+          <StatCard className="pending">
+            <div className="stat-label">PENDING RESULTS</div>
+            <div className="stat-value">{stats.pending + stats.inProgress}</div>
+            <div className="stat-subtitle">Awaiting processing</div>
+          </StatCard>
         </Col>
-        <Col span={6}>
-          <StatsCard>
-            <Statistic
-              title="In Progress"
-              value={stats.inProgress}
-              prefix={<ExperimentOutlined />}
-              valueStyle={{ color: '#fa8c16' }}
-            />
-          </StatsCard>
+        <Col xs={24} sm={12} md={6}>
+          <StatCard className="validated">
+            <div className="stat-label">COMPLETED TODAY</div>
+            <div className="stat-value">{stats.completed}</div>
+            <div className="stat-subtitle">Results validated</div>
+          </StatCard>
         </Col>
-        <Col span={6}>
-          <StatsCard>
-            <Statistic
-              title="Completed Today"
-              value={stats.completed}
-              prefix={<CheckCircleOutlined />}
-              valueStyle={{ color: '#52c41a' }}
-            />
-          </StatsCard>
+        <Col xs={24} sm={12} md={6}>
+          <StatCard className="abnormal">
+            <div className="stat-label">IN PROGRESS</div>
+            <div className="stat-value">{stats.inProgress}</div>
+            <div className="stat-subtitle">Being processed</div>
+          </StatCard>
         </Col>
-        <Col span={6}>
-          <StatsCard>
-            <Statistic
-              title="Urgent"
-              value={stats.urgent}
-              prefix={<WarningOutlined />}
-              valueStyle={{ color: '#ff4d4f' }}
-            />
-          </StatsCard>
+        <Col xs={24} sm={12} md={6}>
+          <StatCard className="critical">
+            <div className="stat-label">CRITICAL</div>
+            <div className="stat-value">{stats.urgent}</div>
+            <div className="stat-subtitle">Immediate action required</div>
+          </StatCard>
         </Col>
-      </Row>
+      </StatsRow>
 
-      <Card title="Lab Orders">
-        <Tabs defaultActiveKey="all">
-          <TabPane tab={`All Orders (${pendingOrders.length + completedOrders.length})`} key="all">
-            <Table
-              columns={columns}
-              dataSource={[...pendingOrders, ...completedOrders]}
-              rowKey="id"
-              loading={loading}
-              pagination={{ pageSize: 10 }}
-            />
-          </TabPane>
-          <TabPane tab="Urgent" key="urgent">
-            <Table
-              columns={columns}
-              dataSource={pendingOrders.filter(o => o.isUrgent)}
-              rowKey="id"
-              loading={loading}
-              pagination={{ pageSize: 10 }}
-            />
-          </TabPane>
-          <TabPane tab="Sample Collection" key="sample">
-            <Table
-              columns={columns}
-              dataSource={pendingOrders.filter(o => o.status === 'ordered')}
-              rowKey="id"
-              loading={loading}
-              pagination={{ pageSize: 10 }}
-            />
-          </TabPane>
-          <TabPane tab={`Completed (${completedOrders.length})`} key="completed">
-            <Table
-              columns={columns}
-              dataSource={completedOrders}
-              rowKey="id"
-              loading={loading}
-              pagination={{ pageSize: 10 }}
-            />
-          </TabPane>
-        </Tabs>
-      </Card>
-    </DashboardContainer>
+      <OrdersCard 
+        title="Lab Orders"
+        extra={
+          <Segmented
+            options={['All', 'Pending', 'Critical']}
+            value={filter}
+            onChange={(val) => setFilter(val as string)}
+          />
+        }
+      >
+        <Table
+          columns={columns}
+          dataSource={filteredOrders}
+          rowKey="id"
+          loading={loading}
+          pagination={{ pageSize: 10 }}
+          locale={{ emptyText: 'No lab orders found' }}
+        />
+      </OrdersCard>
+    </PageContainer>
   );
 };
 
