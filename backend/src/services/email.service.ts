@@ -42,16 +42,21 @@ export class EmailService {
   // Send email using Resend API or SMTP
   static async sendEmail(options: EmailOptions): Promise<boolean> {
     try {
-      // Initialize if not already done
+      // Always try to initialize if not already done
       if (!this.resend && !this.transporter) {
+        console.log('📧 Email service not initialized, initializing now...');
         this.initialize();
       }
 
-      const fromEmail = process.env.EMAIL_FROM || process.env.SMTP_FROM_EMAIL || 'noreply@ayphencare.com';
+      const fromEmail = process.env.EMAIL_FROM || process.env.SMTP_FROM_EMAIL || 'onboarding@resend.dev';
       const fromName = process.env.SMTP_FROM_NAME || 'Ayphen Care';
 
+      console.log(`📧 Attempting to send email to: ${options.to}, subject: ${options.subject}`);
+      console.log(`📧 Using provider: ${this.useResend ? 'Resend API' : 'SMTP'}, resend: ${!!this.resend}, transporter: ${!!this.transporter}`);
+
       // Use Resend API if available
-      if (this.useResend && this.resend) {
+      if (this.resend) {
+        console.log('📧 Sending via Resend API...');
         const { data, error } = await this.resend.emails.send({
           from: `${fromName} <${fromEmail}>`,
           to: [options.to],
@@ -61,7 +66,7 @@ export class EmailService {
         });
 
         if (error) {
-          console.error('❌ Resend error:', error);
+          console.error('❌ Resend error:', JSON.stringify(error));
           return false;
         }
         console.log('✅ Email sent via Resend:', data?.id);
@@ -70,6 +75,7 @@ export class EmailService {
 
       // Fallback to SMTP
       if (this.transporter) {
+        console.log('📧 Sending via SMTP...');
         const mailOptions = {
           from: `"${fromName}" <${fromEmail}>`,
           to: options.to,
@@ -83,7 +89,7 @@ export class EmailService {
         return true;
       }
 
-      console.error('❌ No email service configured');
+      console.error('❌ No email service configured - RESEND_API_KEY:', !!process.env.RESEND_API_KEY, 'SMTP_USER:', !!process.env.SMTP_USER);
       return false;
     } catch (error) {
       console.error('❌ Error sending email:', error);
