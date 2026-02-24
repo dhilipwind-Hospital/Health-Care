@@ -248,13 +248,21 @@ export class AuthController {
       await user.hashPassword();
       await userRepository.save(user);
 
-      // Send welcome email (don't wait for it)
-      // Send welcome email
+      // Send welcome email with role-specific content
       try {
+        const orgName = (req as any).tenant?.name || 'Ayphen Care';
+        const subdomain = (req as any).tenant?.subdomain || 'ayphencare';
         // Use fire-and-forget but log failure
-        EmailService.sendWelcomeEmail(user.email, user.firstName)
-          .then(sent => sent ? console.log(`✅ Welcome email sent to ${user.email}`) : console.error(`❌ Failed to send welcome email to ${user.email}`))
-          .catch(err => console.error(`❌ Error sending welcome email to ${user.email}:`, err));
+        EmailService.sendUniversalWelcomeEmail(
+          user.email,
+          user.firstName,
+          '', // No temp password for self-registered patients
+          orgName,
+          subdomain,
+          'patient'
+        )
+          .then(sent => sent ? console.log(`✅ Patient welcome email sent to ${user.email}`) : console.error(`❌ Failed to send patient welcome email to ${user.email}`))
+          .catch(err => console.error(`❌ Error sending patient welcome email to ${user.email}:`, err));
       } catch (emailError) {
         console.error('Email service not available:', emailError);
       }

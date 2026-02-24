@@ -212,11 +212,15 @@ const LoginNewContent: React.FC = () => {
   useEffect(() => {
     if (user) {
       const role = String(user.role || '').toLowerCase();
-      if (role === 'admin' || role === 'super_admin') navigate('/', { replace: true });
-      else if (role === 'doctor') navigate('/doctor/my-schedule', { replace: true });
+      if (role === 'admin' || role === 'super_admin') navigate('/dashboard', { replace: true });
+      else if (role === 'doctor') navigate('/dashboard', { replace: true });
+      else if (role === 'nurse') navigate('/dashboard', { replace: true });
+      else if (role === 'receptionist') navigate('/dashboard', { replace: true });
       else if (role === 'lab_technician' || role === 'lab_supervisor') navigate('/laboratory/dashboard', { replace: true });
       else if (role === 'pharmacist') navigate('/pharmacy', { replace: true });
-      else navigate('/', { replace: true });
+      else if (role === 'accountant') navigate('/billing/management', { replace: true });
+      else if (role === 'patient') navigate('/portal', { replace: true });
+      else navigate('/dashboard', { replace: true });
     }
   }, [user, navigate]);
 

@@ -54,7 +54,7 @@ const ChooseHospital: React.FC = () => {
       await refreshMe();
       const role = String((user as any)?.role || '').toLowerCase();
       if (role === 'patient') navigate('/portal');
-      else navigate('/');
+      else navigate('/dashboard');
       message.success('Hospital selected');
     } catch (e: any) {
       message.error(e?.response?.data?.message || 'Failed to select hospital');

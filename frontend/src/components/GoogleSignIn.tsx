@@ -132,21 +132,21 @@ const GoogleSignIn: React.FC<GoogleSignInProps> = ({
           if (meRes.ok) {
             const me = await meRes.json();
             const role = String(me?.role || '').toLowerCase();
-            if (role === 'admin' || role === 'super_admin') navigate('/', { replace: true });
-            else if (role === 'doctor') navigate('/queue/doctor', { replace: true });
-            else if (role === 'nurse') navigate('/queue/triage', { replace: true });
-            else if (role === 'receptionist') navigate('/queue/reception', { replace: true });
+            if (role === 'admin' || role === 'super_admin') navigate('/dashboard', { replace: true });
+            else if (role === 'doctor') navigate('/dashboard', { replace: true });
+            else if (role === 'nurse') navigate('/dashboard', { replace: true });
+            else if (role === 'receptionist') navigate('/dashboard', { replace: true });
             else if (role === 'pharmacist') navigate('/pharmacy', { replace: true });
             else if (role === 'lab_technician') navigate('/laboratory/dashboard', { replace: true });
             else if (role === 'accountant') navigate('/billing/management', { replace: true });
             else if (role === 'patient') navigate('/portal', { replace: true });
-            else navigate('/', { replace: true });
+            else navigate('/dashboard', { replace: true });
           } else {
-            // Fallback to home if profile fetch fails
-            navigate('/', { replace: true });
+            // Fallback to dashboard if profile fetch fails
+            navigate('/dashboard', { replace: true });
           }
         } catch {
-          navigate('/', { replace: true });
+          navigate('/dashboard', { replace: true });
         }
 
         if (onSuccess) {
