@@ -27,7 +27,34 @@ type AuthContextType = {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  // Try to load cached user from localStorage for instant display
+  // ---- Helper: Decode JWT payload to get expiry ----
+  const getTokenExpiry = (token: string): number | null => {
+    try {
+      const payload = token.split('.')[1];
+      const decoded = JSON.parse(atob(payload));
+      return decoded.exp ? decoded.exp * 1000 : null; // Convert to ms
+    } catch {
+      return null;
+    }
+  };
+
+  const isTokenValid = (token: string | null): boolean => {
+    if (!token) return false;
+    const expiry = getTokenExpiry(token);
+    if (!expiry) return false;
+    // Valid if more than 5 minutes (300s) until expiry
+    return expiry > Date.now() + 5 * 60 * 1000;
+  };
+
+  const isTokenNearExpiry = (token: string | null): boolean => {
+    if (!token) return true;
+    const expiry = getTokenExpiry(token);
+    if (!expiry) return true;
+    // Near expiry if less than 10 minutes remaining
+    return expiry < Date.now() + 10 * 60 * 1000;
+  };
+
+  // ---- Cached user in localStorage ----
   const getCachedUser = (): User | null => {
     try {
       const cached = localStorage.getItem('cachedUser');
@@ -47,15 +74,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const token = readToken();
-  const cachedUser = token ? getCachedUser() : null;
+  const tokenValid = isTokenValid(token);
+  const cachedUser = (token && tokenValid) ? getCachedUser() : null;
 
-  // If we have a cached user + token, skip loading spinner entirely
+  // If token is valid AND we have cached user → no loading at all
   const [user, setUser] = useState<User | null>(cachedUser);
   const [loading, setLoading] = useState<boolean>(token ? !cachedUser : false);
   const refreshTimer = useRef<number | null>(null);
   const navigate = useNavigate();
 
-  // Wrapper to update both state and cache
   const updateUser = (userData: User | null) => {
     setUser(userData);
     cacheUser(userData);
@@ -89,45 +116,63 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         window.history.replaceState({}, document.title, window.location.pathname);
       }
 
-      const token = readToken();
-      if (!token) {
+      const currentToken = readToken();
+      if (!currentToken) {
         updateUser(null);
         setLoading(false);
         return;
       }
 
-      // If we have cached user, we're already showing content — verify silently in background
-      const hasCached = !!cachedUser;
+      const valid = isTokenValid(currentToken);
+      const hasCached = !!getCachedUser();
 
+      // ✅ FAST PATH: Token is valid + cached user exists → skip ALL API calls
+      if (valid && hasCached) {
+        setLoading(false);
+        // Schedule a refresh based on token expiry (background, no UI blocking)
+        const expiry = getTokenExpiry(currentToken);
+        if (expiry) {
+          const remainingSeconds = Math.floor((expiry - Date.now()) / 1000);
+          scheduleRefresh(remainingSeconds);
+        }
+        return; // ← No API calls at all!
+      }
+
+      // 🔄 SLOW PATH: No cache or token expired → must call APIs
       try {
-        // Fetch fresh user data (silently if cached user is displayed)
         const res = await api.get('/users/me', { suppressErrorToast: true } as any);
         if (res?.data) {
           updateUser(res.data);
 
-          // Silently refresh token in background (don't block UI)
-          const rt = readRefreshToken();
-          if (rt) {
-            api.post('/auth/refresh-token', { refreshToken: rt } as any)
-              .then((r: any) => {
-                const accessToken = r.data?.accessToken;
-                const refreshToken = r.data?.refreshToken;
-                const expiresIn = Number(r.data?.expiresIn) || 3600;
-                if (accessToken) {
-                  writeTokens(accessToken, refreshToken);
-                  scheduleRefresh(expiresIn);
-                }
-              })
-              .catch(() => {
-                // Silent fail — token refresh will retry on next API call
-              });
+          // Refresh token in background if near expiry
+          if (isTokenNearExpiry(currentToken)) {
+            const rt = readRefreshToken();
+            if (rt) {
+              api.post('/auth/refresh-token', { refreshToken: rt } as any)
+                .then((r: any) => {
+                  const accessToken = r.data?.accessToken;
+                  const refreshToken = r.data?.refreshToken;
+                  const expiresIn = Number(r.data?.expiresIn) || 3600;
+                  if (accessToken) {
+                    writeTokens(accessToken, refreshToken);
+                    scheduleRefresh(expiresIn);
+                  }
+                })
+                .catch(() => { });
+            }
+          } else {
+            // Token is still fresh, just schedule next refresh
+            const expiry = getTokenExpiry(currentToken);
+            if (expiry) {
+              const remainingSeconds = Math.floor((expiry - Date.now()) / 1000);
+              scheduleRefresh(remainingSeconds);
+            }
           }
         } else {
           clearAllTokens();
           updateUser(null);
         }
       } catch (_e) {
-        // If API call fails but we have cached user, keep showing cached data
         if (!hasCached) {
           clearAllTokens();
           updateUser(null);
