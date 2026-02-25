@@ -402,12 +402,12 @@ const PurchaseOrders: React.FC = () => {
                   title: 'Unit Price', 
                   dataIndex: 'unitPrice', 
                   key: 'unitPrice',
-                  render: (price: number) => `$${Number(price || 0).toFixed(2)}`
+                  render: (price: number) => `₹${Number(price || 0).toFixed(2)}`
                 },
                 { 
                   title: 'Total', 
                   key: 'total',
-                  render: (record: any) => `$${(Number(record.quantity || 0) * Number(record.unitPrice || 0)).toFixed(2)}`
+                  render: (record: any) => `₹${(Number(record.quantity || 0) * Number(record.unitPrice || 0)).toFixed(2)}`
                 }
               ]}
             />

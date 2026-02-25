@@ -259,7 +259,21 @@ const BookAppointmentStepper: React.FC = () => {
     const service = matchingService;
     if (!service || !service.id) {
       console.error('No matching service found for doctor:', selectedDoctor);
+      console.error('Available services:', services);
       messageApi.error('No service available for this doctor. Please try another doctor or contact support.');
+      return;
+    }
+
+    // Validate UUIDs
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(service.id)) {
+      console.error('Invalid service ID format:', service.id);
+      messageApi.error('Invalid service ID. Please refresh and try again.');
+      return;
+    }
+    if (!uuidRegex.test(selectedDoctor.id)) {
+      console.error('Invalid doctor ID format:', selectedDoctor.id);
+      messageApi.error('Invalid doctor ID. Please refresh and try again.');
       return;
     }
 
@@ -283,9 +297,16 @@ const BookAppointmentStepper: React.FC = () => {
         },
       };
 
-      console.log('Booking payload:', payload);
+      console.log('=== BOOKING PAYLOAD ===');
+      console.log('Service ID:', payload.serviceId);
+      console.log('Doctor ID:', payload.doctorId);
+      console.log('Start Time:', payload.startTime);
+      console.log('End Time:', payload.endTime);
+      console.log('Full Payload:', JSON.stringify(payload, null, 2));
 
       const response = await api.post('/appointments', payload);
+
+      console.log('Booking response:', response.data);
 
       setBookingDetails({
         doctor: `Dr. ${selectedDoctor.firstName} ${selectedDoctor.lastName}`,
@@ -302,7 +323,10 @@ const BookAppointmentStepper: React.FC = () => {
         navigate('/appointments');
       }, 2000);
     } catch (error: any) {
-      console.error('Booking error:', error?.response?.data || error);
+      console.error('=== BOOKING ERROR ===');
+      console.error('Error response:', error?.response?.data);
+      console.error('Error status:', error?.response?.status);
+      console.error('Full error:', error);
       const errorMsg = error?.response?.data?.message || error?.response?.data?.error || 'Failed to book appointment';
       messageApi.error(errorMsg);
     } finally {

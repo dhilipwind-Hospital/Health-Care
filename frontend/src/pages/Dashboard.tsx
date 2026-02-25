@@ -480,7 +480,7 @@ const Dashboard: React.FC = () => {
               prefix={<DollarOutlined />}
               precision={0}
               valueStyle={{ color: '#10B981' }}
-              suffix="USD"
+              suffix="INR"
             />
           </Card>
         </Col>

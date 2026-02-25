@@ -334,8 +334,8 @@ const BillingManagement: React.FC = () => {
                 { title: 'Description', dataIndex: 'description', key: 'description' },
                 { title: 'Department', dataIndex: 'department', key: 'department' },
                 { title: 'Qty', dataIndex: 'quantity', key: 'quantity', width: 60 },
-                { title: 'Unit Price', dataIndex: 'unitPrice', key: 'unitPrice', render: (price: number) => `$${price}` },
-                { title: 'Total', dataIndex: 'total', key: 'total', render: (total: number) => `$${total}` }
+                { title: 'Unit Price', dataIndex: 'unitPrice', key: 'unitPrice', render: (price: number) => `₹${price}` },
+                { title: 'Total', dataIndex: 'total', key: 'total', render: (total: number) => `₹${total}` }
               ]}
             />
           </Card>

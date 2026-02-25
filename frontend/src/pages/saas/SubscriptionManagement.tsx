@@ -409,7 +409,7 @@ const SubscriptionManagement: React.FC = () => {
                 title="Monthly Revenue"
                 value={totalRevenue}
                 prefix={<DollarOutlined style={{ color: '#10B981' }} />}
-                suffix="USD"
+                suffix="INR"
               />
             </Card>
           </Col>

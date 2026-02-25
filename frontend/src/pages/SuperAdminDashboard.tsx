@@ -161,7 +161,7 @@ const SuperAdminDashboard: React.FC = () => {
     const [stats, setStats] = useState({
         organizations: { total: 0, active: 0, inactive: 0 },
         users: { total: 0, doctors: 0, patients: 0 },
-        financials: { totalRevenue: 0, currency: 'USD' },
+        financials: { totalRevenue: 0, currency: 'INR' },
         systemHealth: '100%'
     });
     const [pendingOrgs, setPendingOrgs] = useState<any[]>([]);
@@ -326,7 +326,7 @@ const SuperAdminDashboard: React.FC = () => {
         },
         {
             title: 'Total Revenue',
-            value: new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(stats.financials.totalRevenue),
+            value: new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(stats.financials.totalRevenue),
             trend: 'Lifetime Earnings',
             trendType: 'up',
             icon: <DollarOutlined />,

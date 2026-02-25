@@ -91,8 +91,8 @@ router.get('/plans', async (req, res) => {
       {
         id: 'basic',
         name: 'Basic',
-        price: 99,
-        currency: 'USD',
+        price: 8250,
+        currency: 'INR',
         interval: 'month',
         features: [
           'Up to 5 doctors',
@@ -109,8 +109,8 @@ router.get('/plans', async (req, res) => {
       {
         id: 'professional',
         name: 'Professional',
-        price: 299,
-        currency: 'USD',
+        price: 24900,
+        currency: 'INR',
         interval: 'month',
         popular: true,
         features: [
@@ -133,8 +133,8 @@ router.get('/plans', async (req, res) => {
       {
         id: 'enterprise',
         name: 'Enterprise',
-        price: 999,
-        currency: 'USD',
+        price: 83250,
+        currency: 'INR',
         interval: 'month',
         features: [
           'Unlimited doctors',

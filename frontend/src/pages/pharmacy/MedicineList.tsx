@@ -138,8 +138,8 @@ const MedicineList: React.FC = () => {
           <p><strong>Strength:</strong> {medicine.strength}</p>
           <p><strong>Current Stock:</strong> {medicine.currentStock}</p>
           <p><strong>Reorder Level:</strong> {medicine.reorderLevel}</p>
-          <p><strong>Unit Price:</strong> ${Number(medicine.unitPrice || 0).toFixed(2)}</p>
-          <p><strong>Selling Price:</strong> ${Number(medicine.sellingPrice || 0).toFixed(2)}</p>
+          <p><strong>Unit Price:</strong> ₹{Number(medicine.unitPrice || 0).toFixed(2)}</p>
+          <p><strong>Selling Price:</strong> ₹{Number(medicine.sellingPrice || 0).toFixed(2)}</p>
           <p><strong>Batch Number:</strong> {medicine.batchNumber}</p>
           <p><strong>Expiry Date:</strong> {medicine.expiryDate}</p>
           {medicine.description && <p><strong>Description:</strong> {medicine.description}</p>}

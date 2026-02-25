@@ -1042,8 +1042,8 @@ const InventoryEnhanced: React.FC = () => {
                 
                 <Col span={12}>
                   <Descriptions title="Pricing" column={1} bordered size="small">
-                    <Descriptions.Item label="Unit Price">${viewMedicine.unitPrice?.toFixed(2) || 'N/A'}</Descriptions.Item>
-                    <Descriptions.Item label="Selling Price">${viewMedicine.sellingPrice?.toFixed(2) || 'N/A'}</Descriptions.Item>
+                    <Descriptions.Item label="Unit Price">₹{viewMedicine.unitPrice?.toFixed(2) || 'N/A'}</Descriptions.Item>
+                    <Descriptions.Item label="Selling Price">₹{viewMedicine.sellingPrice?.toFixed(2) || 'N/A'}</Descriptions.Item>
                   </Descriptions>
                 </Col>
                 
