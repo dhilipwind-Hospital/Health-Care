@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Form, Input, Button, Typography, Checkbox, App } from 'antd';
+import { Form, Input, Button, Typography, Checkbox, message } from 'antd';
 import { MailOutlined, LockOutlined, EyeInvisibleOutlined, EyeOutlined, GoogleOutlined, FacebookOutlined, CloseOutlined } from '@ant-design/icons';
 import { useAuth } from '../contexts/AuthContext';
 import GoogleSignIn from '../components/GoogleSignIn';
@@ -201,12 +201,11 @@ const SocialButton = styled(Button)`
   }
 `;
 
-const LoginFixedContent: React.FC = () => {
+const LoginFixed: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const { login, user } = useAuth();
   const navigate = useNavigate();
   const [loginForm] = Form.useForm();
-  const { message } = App.useApp();
 
   // If already logged in, redirect based on role
   useEffect(() => {
@@ -330,14 +329,6 @@ const LoginFixedContent: React.FC = () => {
         </SocialButtons>
       </Modal>
     </PageContainer>
-  );
-};
-
-const LoginFixed: React.FC = () => {
-  return (
-    <App>
-      <LoginFixedContent />
-    </App>
   );
 };
 
