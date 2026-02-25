@@ -233,11 +233,21 @@ const BookAppointmentStepper: React.FC = () => {
   // Find matching service for doctor's department
   const matchingService = useMemo(() => {
     if (!selectedDoctor) return null;
-    // Find a service in the doctor's department, or just use the first service
+    // Find a service in the doctor's department
     const deptService = services.find(
       (s) => s.department?.id === selectedDoctor.department?.id
     );
-    return deptService || services[0] || null;
+    if (deptService) return deptService;
+    // If no department-matching service, try finding a "General Consultation" service
+    const generalService = services.find(
+      (s) => s.name?.toLowerCase().includes('general') || s.name?.toLowerCase().includes('consultation')
+    );
+    // Only use a non-department service if the doctor has no department set (avoids backend 400 error)
+    if (!selectedDoctor.department?.id) {
+      return generalService || services[0] || null;
+    }
+    // Doctor has a department but no matching service — return null (will show error)
+    return generalService || null;
   }, [selectedDoctor, services]);
 
   const handleSubmit = async () => {
@@ -269,8 +279,6 @@ const BookAppointmentStepper: React.FC = () => {
         notes: notes,
         preferences: {
           urgency: 'routine',
-          departmentId: selectedDoctor.department?.id,
-          priority: 'routine',
         },
       };
 
