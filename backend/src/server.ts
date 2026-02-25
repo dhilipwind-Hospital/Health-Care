@@ -14,6 +14,8 @@ import { UserRole } from './types/roles';
 import { Appointment, AppointmentStatus } from './models/Appointment';
 import { Service } from './models/Service';
 import { Department } from './models/Department';
+import { Organization } from './models/Organization';
+import { Location } from './models/Location';
 import { Report } from './models/Report';
 import { MedicalRecord, RecordType } from './models/MedicalRecord';
 import { Bill, BillStatus } from './models/Bill';
@@ -384,6 +386,224 @@ export class Server {
             SMTP_USER: process.env.SMTP_USER ? '***configured***' : 'NOT SET',
           }
         });
+      }
+    });
+
+    // Seed Cuddalore HMS organization (one-time use, production-safe)
+    this.app.post('/api/seed-cuddalore-hms', async (req: Request, res: Response) => {
+      try {
+        const orgRepo = AppDataSource.getRepository(Organization);
+        const locationRepo = AppDataSource.getRepository(Location);
+        const userRepo = AppDataSource.getRepository(User);
+        const deptRepo = AppDataSource.getRepository(Department);
+        const serviceRepo = AppDataSource.getRepository(Service);
+
+        // Check if organization already exists
+        const existingOrg = await orgRepo.findOne({ where: { subdomain: 'cuddalore-hms' } });
+        if (existingOrg) {
+          return res.status(200).json({ message: 'Cuddalore HMS already exists', organizationId: existingOrg.id });
+        }
+
+        // Create organization
+        const organization = orgRepo.create({
+          name: 'Cuddalore HMS',
+          subdomain: 'cuddalore-hms',
+          description: 'Cuddalore Hospital Management System - Comprehensive healthcare services',
+          email: 'info@cuddalore-hms.com',
+          phone: '+91 4142 234567',
+          isActive: true,
+          settings: {
+            subscription: { plan: 'enterprise', status: 'active', startDate: new Date() },
+            features: { pharmacy: true, laboratory: true, inpatient: true, radiology: true },
+            limits: { maxUsers: 200, maxPatients: 5000, maxStorage: 50 },
+            branding: { primaryColor: '#1a5276', secondaryColor: '#e91e63' }
+          }
+        });
+        await orgRepo.save(organization);
+        const orgId = organization.id;
+
+        // Create location
+        const location = locationRepo.create({
+          organizationId: orgId,
+          name: 'Cuddalore HMS - Main Hospital',
+          code: 'CDL',
+          address: '123 Gandhi Road, Near Bus Stand',
+          city: 'Cuddalore',
+          state: 'Tamil Nadu',
+          country: 'India',
+          phone: '+91 4142 234567',
+          email: 'main@cuddalore-hms.com',
+          isMainBranch: true,
+          isActive: true,
+          settings: { capacity: { beds: 150, opds: 40, emergencyBeds: 15 } }
+        });
+        await locationRepo.save(location);
+
+        // Create departments
+        const deptConfigs = [
+          { name: 'General Medicine', description: 'Primary care and internal medicine' },
+          { name: 'Cardiology', description: 'Heart and cardiovascular care' },
+          { name: 'Orthopedics', description: 'Bone, joint, and muscle care' },
+          { name: 'Pediatrics', description: 'Child healthcare services' },
+          { name: 'Gynecology & Obstetrics', description: "Women's health and maternity" },
+          { name: 'Neurology', description: 'Brain and nervous system care' },
+          { name: 'Dermatology', description: 'Skin care and treatment' },
+          { name: 'Ophthalmology', description: 'Eye care and vision services' },
+          { name: 'ENT', description: 'Ear, Nose, and Throat care' },
+          { name: 'Emergency', description: '24/7 Emergency services' },
+          { name: 'Radiology', description: 'Diagnostic imaging services' },
+          { name: 'Pathology', description: 'Laboratory diagnostic services' }
+        ];
+
+        const createdDepts: Map<string, any> = new Map();
+        for (const dc of deptConfigs) {
+          const dept = deptRepo.create({ name: dc.name, description: dc.description, status: 'active', organizationId: orgId } as any);
+          await deptRepo.save(dept);
+          createdDepts.set(dc.name, dept);
+        }
+
+        // Create services for each department
+        const servicesByDept: Record<string, { name: string; price: number }[]> = {
+          'General Medicine': [{ name: 'General Consultation', price: 300 }, { name: 'Health Checkup', price: 1500 }],
+          'Cardiology': [{ name: 'Cardiology Consultation', price: 500 }, { name: 'ECG', price: 300 }, { name: '2D Echo', price: 1500 }],
+          'Orthopedics': [{ name: 'Orthopedic Consultation', price: 400 }, { name: 'Physiotherapy', price: 350 }],
+          'Pediatrics': [{ name: 'Pediatric Consultation', price: 350 }, { name: 'Immunization', price: 600 }],
+          'Gynecology & Obstetrics': [{ name: 'Gynecology Consultation', price: 400 }, { name: 'Prenatal Care', price: 500 }],
+          'Neurology': [{ name: 'Neurology Consultation', price: 600 }, { name: 'EEG', price: 1500 }],
+          'Dermatology': [{ name: 'Dermatology Consultation', price: 400 }, { name: 'Skin Treatment', price: 500 }],
+          'Ophthalmology': [{ name: 'Eye Examination', price: 350 }, { name: 'Vision Test', price: 400 }],
+          'ENT': [{ name: 'ENT Consultation', price: 350 }, { name: 'Hearing Test', price: 500 }],
+          'Emergency': [{ name: 'Emergency Consultation', price: 800 }, { name: 'Trauma Care', price: 1500 }],
+          'Radiology': [{ name: 'X-Ray', price: 400 }, { name: 'Ultrasound', price: 800 }, { name: 'CT Scan', price: 3500 }],
+          'Pathology': [{ name: 'Blood Test', price: 300 }, { name: 'Urine Analysis', price: 200 }]
+        };
+
+        for (const [deptName, services] of Object.entries(servicesByDept)) {
+          const dept = createdDepts.get(deptName);
+          if (!dept) continue;
+          for (const svc of services) {
+            const service = serviceRepo.create({
+              name: svc.name,
+              description: `${svc.name} service`,
+              status: 'active',
+              averageDuration: 30,
+              price: svc.price,
+              department: dept,
+              departmentId: dept.id,
+              organizationId: orgId
+            } as any);
+            await serviceRepo.save(service);
+          }
+        }
+
+        // Create Admin
+        const adminUser = userRepo.create({
+          email: 'admin@cuddalore-hms.com',
+          firstName: 'Admin',
+          lastName: 'Cuddalore',
+          phone: '+91 9876500001',
+          password: 'Admin@123',
+          role: UserRole.ADMIN,
+          organizationId: orgId,
+          isActive: true
+        });
+        await adminUser.hashPassword();
+        await userRepo.save(adminUser);
+
+        // Create doctors
+        const doctors = [
+          { firstName: 'Senthil', lastName: 'Kumar', dept: 'General Medicine', phone: '+91 9876500101' },
+          { firstName: 'Rajesh', lastName: 'Venkataraman', dept: 'Cardiology', phone: '+91 9876500103' },
+          { firstName: 'Karthik', lastName: 'Rajan', dept: 'Orthopedics', phone: '+91 9876500105' },
+          { firstName: 'Meera', lastName: 'Balasubramanian', dept: 'Pediatrics', phone: '+91 9876500107' },
+          { firstName: 'Saranya', lastName: 'Mohan', dept: 'Gynecology & Obstetrics', phone: '+91 9876500109' },
+          { firstName: 'Suresh', lastName: 'Iyer', dept: 'Neurology', phone: '+91 9876500111' },
+          { firstName: 'Deepa', lastName: 'Natarajan', dept: 'Dermatology', phone: '+91 9876500112' },
+          { firstName: 'Ganesh', lastName: 'Pillai', dept: 'Ophthalmology', phone: '+91 9876500113' },
+          { firstName: 'Ramya', lastName: 'Gopal', dept: 'ENT', phone: '+91 9876500114' },
+          { firstName: 'Vijay', lastName: 'Anand', dept: 'Emergency', phone: '+91 9876500115' }
+        ];
+
+        for (const doc of doctors) {
+          const dept = createdDepts.get(doc.dept);
+          const email = `dr.${doc.firstName.toLowerCase()}.${doc.lastName.toLowerCase()}@cuddalore-hms.com`;
+          const doctor = userRepo.create({
+            email,
+            firstName: `Dr. ${doc.firstName}`,
+            lastName: doc.lastName,
+            phone: doc.phone,
+            password: 'Demo@123',
+            role: UserRole.DOCTOR,
+            organizationId: orgId,
+            departmentId: dept?.id,
+            isActive: true
+          });
+          await doctor.hashPassword();
+          await userRepo.save(doctor);
+        }
+
+        // Create other staff
+        const staffConfigs = [
+          { role: UserRole.NURSE, email: 'nurse.radha@cuddalore-hms.com', firstName: 'Radha', lastName: 'Krishnamurthy' },
+          { role: UserRole.NURSE, email: 'nurse.geetha@cuddalore-hms.com', firstName: 'Geetha', lastName: 'Venkat' },
+          { role: UserRole.RECEPTIONIST, email: 'reception1@cuddalore-hms.com', firstName: 'Priyanka', lastName: 'Sharma' },
+          { role: UserRole.RECEPTIONIST, email: 'reception2@cuddalore-hms.com', firstName: 'Sneha', lastName: 'Reddy' },
+          { role: UserRole.PHARMACIST, email: 'pharmacist1@cuddalore-hms.com', firstName: 'Murali', lastName: 'Krishna' },
+          { role: UserRole.PHARMACIST, email: 'pharmacist2@cuddalore-hms.com', firstName: 'Bala', lastName: 'Murugan' },
+          { role: UserRole.LAB_TECHNICIAN, email: 'lab1@cuddalore-hms.com', firstName: 'Selvam', lastName: 'Raj' },
+          { role: UserRole.LAB_TECHNICIAN, email: 'lab2@cuddalore-hms.com', firstName: 'Mani', lastName: 'Kandan' },
+          { role: UserRole.ACCOUNTANT, email: 'accountant1@cuddalore-hms.com', firstName: 'Ravi', lastName: 'Chandran' }
+        ];
+
+        for (const staff of staffConfigs) {
+          const user = userRepo.create({
+            email: staff.email,
+            firstName: staff.firstName,
+            lastName: staff.lastName,
+            phone: '+91 9876500000',
+            password: 'Demo@123',
+            role: staff.role,
+            organizationId: orgId,
+            isActive: true
+          });
+          await user.hashPassword();
+          await userRepo.save(user);
+        }
+
+        // Create sample patients
+        const patients = [
+          { firstName: 'Ravi', lastName: 'Kumar', email: 'patient.ravi1@gmail.com', phone: '+91 9876600001' },
+          { firstName: 'Sita', lastName: 'Devi', email: 'patient.sita2@gmail.com', phone: '+91 9876600002' },
+          { firstName: 'Krishna', lastName: 'Moorthy', email: 'patient.krishna3@gmail.com', phone: '+91 9876600003' }
+        ];
+
+        for (const pat of patients) {
+          const patient = userRepo.create({
+            email: pat.email,
+            firstName: pat.firstName,
+            lastName: pat.lastName,
+            phone: pat.phone,
+            password: 'Patient@123',
+            role: UserRole.PATIENT,
+            organizationId: orgId,
+            isActive: true
+          });
+          await patient.hashPassword();
+          await userRepo.save(patient);
+        }
+
+        res.status(201).json({
+          message: 'Cuddalore HMS created successfully',
+          organizationId: orgId,
+          admin: 'admin@cuddalore-hms.com / Admin@123',
+          doctors: doctors.length,
+          staff: staffConfigs.length,
+          patients: patients.length,
+          departments: deptConfigs.length
+        });
+      } catch (error: any) {
+        console.error('Seed Cuddalore HMS error:', error);
+        res.status(500).json({ message: 'Failed to seed Cuddalore HMS', error: error.message });
       }
     });
 
