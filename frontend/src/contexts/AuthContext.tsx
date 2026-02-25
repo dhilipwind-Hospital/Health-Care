@@ -108,76 +108,96 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     const bootstrap = async () => {
-      // Multi-location: Check for token in URL (Seamless switching)
-      const params = new URLSearchParams(window.location.search);
-      const urlToken = params.get('token');
-      if (urlToken) {
-        writeTokens(urlToken, '');
-        window.history.replaceState({}, document.title, window.location.pathname);
-      }
-
-      const currentToken = readToken();
-      if (!currentToken) {
-        updateUser(null);
+      // Safety timeout - ensure loading is set to false after 10 seconds max
+      const safetyTimeout = setTimeout(() => {
+        console.warn('Auth bootstrap timeout - forcing loading to false');
         setLoading(false);
-        return;
-      }
+      }, 10000);
 
-      const valid = isTokenValid(currentToken);
-      const hasCached = !!getCachedUser();
-
-      // ✅ FAST PATH: Token is valid + cached user exists → skip ALL API calls
-      if (valid && hasCached) {
-        setLoading(false);
-        // Schedule a refresh based on token expiry (background, no UI blocking)
-        const expiry = getTokenExpiry(currentToken);
-        if (expiry) {
-          const remainingSeconds = Math.floor((expiry - Date.now()) / 1000);
-          scheduleRefresh(remainingSeconds);
-        }
-        return; // ← No API calls at all!
-      }
-
-      // 🔄 SLOW PATH: No cache or token expired → must call APIs
       try {
-        const res = await api.get('/users/me', { suppressErrorToast: true } as any);
-        if (res?.data) {
-          updateUser(res.data);
+        // Multi-location: Check for token in URL (Seamless switching)
+        const params = new URLSearchParams(window.location.search);
+        const urlToken = params.get('token');
+        if (urlToken) {
+          writeTokens(urlToken, '');
+          window.history.replaceState({}, document.title, window.location.pathname);
+        }
 
-          // Refresh token in background if near expiry
-          if (isTokenNearExpiry(currentToken)) {
-            const rt = readRefreshToken();
-            if (rt) {
-              api.post('/auth/refresh-token', { refreshToken: rt } as any)
-                .then((r: any) => {
-                  const accessToken = r.data?.accessToken;
-                  const refreshToken = r.data?.refreshToken;
-                  const expiresIn = Number(r.data?.expiresIn) || 3600;
-                  if (accessToken) {
-                    writeTokens(accessToken, refreshToken);
-                    scheduleRefresh(expiresIn);
-                  }
-                })
-                .catch(() => { });
-            }
-          } else {
-            // Token is still fresh, just schedule next refresh
-            const expiry = getTokenExpiry(currentToken);
-            if (expiry) {
-              const remainingSeconds = Math.floor((expiry - Date.now()) / 1000);
-              scheduleRefresh(remainingSeconds);
-            }
+        const currentToken = readToken();
+        if (!currentToken) {
+          updateUser(null);
+          setLoading(false);
+          clearTimeout(safetyTimeout);
+          return;
+        }
+
+        const valid = isTokenValid(currentToken);
+        const hasCached = !!getCachedUser();
+
+        // ✅ FAST PATH: Token is valid + cached user exists → skip ALL API calls
+        if (valid && hasCached) {
+          setLoading(false);
+          clearTimeout(safetyTimeout);
+          // Schedule a refresh based on token expiry (background, no UI blocking)
+          const expiry = getTokenExpiry(currentToken);
+          if (expiry) {
+            const remainingSeconds = Math.floor((expiry - Date.now()) / 1000);
+            scheduleRefresh(remainingSeconds);
           }
-        } else {
+          return; // ← No API calls at all!
+        }
+
+        // If token is invalid, clear it and stop loading
+        if (!valid) {
+          console.log('Token invalid or expired, clearing auth state');
           clearAllTokens();
           updateUser(null);
+          setLoading(false);
+          clearTimeout(safetyTimeout);
+          return;
         }
-      } catch (_e) {
-        if (!hasCached) {
+
+        // 🔄 SLOW PATH: No cache but valid token → must call APIs
+        try {
+          const res = await api.get('/users/me', { suppressErrorToast: true } as any);
+          if (res?.data) {
+            updateUser(res.data);
+
+            // Refresh token in background if near expiry
+            if (isTokenNearExpiry(currentToken)) {
+              const rt = readRefreshToken();
+              if (rt) {
+                api.post('/auth/refresh-token', { refreshToken: rt } as any)
+                  .then((r: any) => {
+                    const accessToken = r.data?.accessToken;
+                    const refreshToken = r.data?.refreshToken;
+                    const expiresIn = Number(r.data?.expiresIn) || 3600;
+                    if (accessToken) {
+                      writeTokens(accessToken, refreshToken);
+                      scheduleRefresh(expiresIn);
+                    }
+                  })
+                  .catch(() => { });
+              }
+            } else {
+              // Token is still fresh, just schedule next refresh
+              const expiry = getTokenExpiry(currentToken);
+              if (expiry) {
+                const remainingSeconds = Math.floor((expiry - Date.now()) / 1000);
+                scheduleRefresh(remainingSeconds);
+              }
+            }
+          } else {
+            clearAllTokens();
+            updateUser(null);
+          }
+        } catch (_e) {
+          console.error('Auth bootstrap API error:', _e);
           clearAllTokens();
           updateUser(null);
         }
       } finally {
+        clearTimeout(safetyTimeout);
         setLoading(false);
       }
     };
