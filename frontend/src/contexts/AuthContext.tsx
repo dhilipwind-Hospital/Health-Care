@@ -229,42 +229,48 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       writeTokens(accessToken, data?.refreshToken);
       const expiresIn = Number(data?.expiresIn) || 3600;
       scheduleRefresh(expiresIn);
-      // Always fetch current profile to ensure role and context are accurate
-      try {
-        const me = await api.get('/users/me', { suppressErrorToast: true } as any);
-        if (me?.data) {
-          updateUser(me.data);
-          const role = String(me.data?.role || '').toLowerCase();
-          const hasOrganization = !!me.data?.organizationId;
+      // Use user data from login response directly (avoids redundant /users/me round-trip)
+      const loginUser = data?.user;
+      if (loginUser) {
+        // Merge available locations/branches from login response
+        const fullUser = {
+          ...loginUser,
+          availableLocations: data?.availableLocations || [],
+          availableBranches: data?.availableBranches || [],
+        };
+        updateUser(fullUser);
+        const role = String(fullUser?.role || '').toLowerCase();
+        const hasOrganization = !!fullUser?.organizationId || !!fullUser?.organization?.id;
 
-          // Patients without organization need to choose a hospital first
-          if (role === 'patient' && !hasOrganization) {
-            navigate('/choose-hospital');
-          } else if (role === 'admin' || role === 'super_admin') {
-            navigate('/dashboard');
-          } else if (role === 'doctor') {
-            navigate('/dashboard'); // Unified dashboard
-          } else if (role === 'nurse') {
-            navigate('/dashboard');
-          } else if (role === 'receptionist') {
-            navigate('/dashboard');
-          } else if (role === 'pharmacist') {
-            navigate('/pharmacy');
-          } else if (role === 'lab_technician') {
-            navigate('/laboratory/dashboard');
-          } else if (role === 'accountant') {
-            navigate('/billing/management');
-          } else if (role === 'patient') {
-            navigate('/portal');
-          } else {
-            navigate('/dashboard');
-          }
+        // Patients without organization need to choose a hospital first
+        if (role === 'patient' && !hasOrganization) {
+          navigate('/choose-hospital');
+        } else if (role === 'admin' || role === 'super_admin') {
+          navigate('/dashboard');
+        } else if (role === 'doctor') {
+          navigate('/dashboard');
+        } else if (role === 'nurse') {
+          navigate('/dashboard');
+        } else if (role === 'receptionist') {
+          navigate('/dashboard');
+        } else if (role === 'pharmacist') {
+          navigate('/pharmacy');
+        } else if (role === 'lab_technician') {
+          navigate('/laboratory/dashboard');
+        } else if (role === 'accountant') {
+          navigate('/billing/management');
+        } else if (role === 'patient') {
+          navigate('/portal');
         } else {
-          message.error('Failed to retrieve user profile');
+          navigate('/dashboard');
         }
-      } catch (e) {
-        console.error('Profile fetch failed:', e);
-        // Stay on login page so user sees the error
+
+        // Background: refresh full profile for any additional fields
+        api.get('/users/me', { suppressErrorToast: true } as any)
+          .then((me: any) => { if (me?.data) updateUser(me.data); })
+          .catch(() => { /* silent - login user data is sufficient */ });
+      } else {
+        message.error('Failed to retrieve user profile');
       }
     } catch (error: any) {
       message.error(error?.response?.data?.message || error?.message || 'Login failed');

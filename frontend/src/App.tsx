@@ -433,7 +433,7 @@ const App: React.FC = () => {
         { path: '/assets', element: <SaaSLayout><RequireRole roles={['admin', 'super_admin']}><AssetManagement /></RequireRole></SaaSLayout> },
         { path: '/infection-control', element: <SaaSLayout><RequireRole roles={['admin', 'super_admin', 'doctor', 'nurse']}><InfectionControlManagement /></RequireRole></SaaSLayout> },
         { path: '/duty-roster', element: <SaaSLayout><RequireRole roles={['admin', 'super_admin']}><DutyRosterManagement /></RequireRole></SaaSLayout> },
-        { path: '/telemedicine', element: <SaaSLayout><RequireRole roles={['admin', 'super_admin', 'doctor', 'patient']}><TelemedicineManagement /></RequireRole></SaaSLayout> },
+
         { path: '/abha', element: <SaaSLayout><RequireRole roles={['admin', 'super_admin', 'receptionist']}><AbhaManagement /></RequireRole></SaaSLayout> },
         { path: '/pcpndt', element: <SaaSLayout><RequireRole roles={['admin', 'super_admin', 'doctor']}><PcpndtFormManagement /></RequireRole></SaaSLayout> },
         { path: '/insurance-tpa', element: <SaaSLayout><RequireRole roles={['admin', 'super_admin', 'accountant']}><InsuranceTpaManagement /></RequireRole></SaaSLayout> },

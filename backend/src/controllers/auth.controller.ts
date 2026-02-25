@@ -62,15 +62,81 @@ export class AuthController {
       // Generate JWT tokens
       const tokens = generateTokens(user);
 
-      // Create refresh token in database
+      // Create refresh token in database AND fetch branch data IN PARALLEL
       const refreshTokenRepository = AppDataSource.getRepository(RefreshToken);
-      const refreshToken = refreshTokenRepository.create({
+      const refreshTokenEntity = refreshTokenRepository.create({
         token: tokens.refreshToken,
         user: user,
         expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
         createdByIp: req.ip
       });
-      await refreshTokenRepository.save(refreshToken);
+
+      // Start branch/location fetch concurrently with refresh token save
+      const branchPromise = (async () => {
+        let availableLocations: any[] = [];
+        let availableBranches: any[] = [];
+
+        if (user.role === 'admin' || user.role === 'super_admin') {
+          const userRepository = AppDataSource.getRepository(User);
+          const locationRepo = AppDataSource.getRepository(Location);
+
+          // Run both queries in parallel
+          const [allUserAccounts, branchResults] = await Promise.all([
+            userRepository.find({
+              where: { email },
+              relations: ['organization']
+            }),
+            user.role === 'super_admin'
+              ? locationRepo.find({
+                where: { isActive: true },
+                relations: ['organization'],
+                order: { organizationId: 'ASC', isMainBranch: 'DESC', name: 'ASC' },
+                take: 50 // Limit to avoid loading thousands of locations
+              })
+              : user.organizationId && !user.locationId
+                ? locationRepo.find({
+                  where: { organizationId: user.organizationId, isActive: true },
+                  order: { isMainBranch: 'DESC', name: 'ASC' }
+                })
+                : user.locationId
+                  ? locationRepo.findOne({
+                    where: { id: user.locationId, isActive: true }
+                  }).then(b => b ? [b] : [])
+                  : Promise.resolve([])
+          ]);
+
+          availableLocations = allUserAccounts
+            .filter(u => u.organization && u.isActive)
+            .map(u => ({
+              id: u.organization!.id,
+              name: u.organization!.name,
+              subdomain: u.organization!.subdomain,
+              city: u.city || u.organization!.address
+            }));
+
+          availableBranches = branchResults.map((branch: any) => ({
+            id: branch.id,
+            name: branch.name,
+            code: branch.code,
+            city: branch.city,
+            isMainBranch: branch.isMainBranch,
+            ...(user.role === 'super_admin' ? {
+              organizationId: branch.organizationId,
+              organizationName: branch.organization?.name || ''
+            } : {})
+          }));
+        }
+
+        return { availableLocations, availableBranches };
+      })();
+
+      // Save refresh token and fetch branches IN PARALLEL
+      const [, branchData] = await Promise.all([
+        refreshTokenRepository.save(refreshTokenEntity),
+        branchPromise
+      ]);
+
+      const { availableLocations, availableBranches } = branchData;
 
       // Prepare user data for response (exclude password)
       const { password: _, ...userData } = user;
@@ -82,78 +148,6 @@ export class AuthController {
         sameSite: 'strict',
         maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
       });
-
-      // Find all associated organizations for this email (ADMIN ONLY)
-      let availableLocations: any[] = [];
-      let availableBranches: any[] = []; // NEW: Branches within current organization
-      console.log(`[AuthDebug] Login MultiLog Check for ${user.email}, Role: ${user.role}`);
-
-      if (user.role === 'admin' || user.role === 'super_admin') {
-        const allUserAccounts = await userRepository.find({
-          where: { email }, // Note: 'email' var is from req body, but verified via user lookup
-          relations: ['organization']
-        });
-
-        console.log(`[AuthDebug] Login Found ${allUserAccounts.length} accounts.`);
-
-        availableLocations = allUserAccounts
-          .filter(u => u.organization && u.isActive)
-          .map(u => ({
-            id: u.organization!.id,
-            name: u.organization!.name,
-            subdomain: u.organization!.subdomain,
-            city: u.city || u.organization!.address
-          }));
-
-        // Fetch branches (Locations)
-        const locationRepo = AppDataSource.getRepository(Location);
-
-        if (user.role === 'super_admin') {
-          // Super Admin: fetch ALL locations across ALL organizations
-          const allBranches = await locationRepo.find({
-            where: { isActive: true },
-            relations: ['organization'],
-            order: { organizationId: 'ASC', isMainBranch: 'DESC', name: 'ASC' }
-          });
-          availableBranches = allBranches.map(branch => ({
-            id: branch.id,
-            name: branch.name,
-            code: branch.code,
-            city: branch.city,
-            isMainBranch: branch.isMainBranch,
-            organizationId: branch.organizationId,
-            organizationName: (branch as any).organization?.name || ''
-          }));
-        } else if (user.organizationId) {
-          // Org Admin: fetch branches within their organization
-          if (!user.locationId) {
-            const allBranches = await locationRepo.find({
-              where: { organizationId: user.organizationId, isActive: true },
-              order: { isMainBranch: 'DESC', name: 'ASC' }
-            });
-            availableBranches = allBranches.map(branch => ({
-              id: branch.id,
-              name: branch.name,
-              code: branch.code,
-              city: branch.city,
-              isMainBranch: branch.isMainBranch
-            }));
-          } else {
-            const assignedBranch = await locationRepo.findOne({
-              where: { id: user.locationId, isActive: true }
-            });
-            if (assignedBranch) {
-              availableBranches = [{
-                id: assignedBranch.id,
-                name: assignedBranch.name,
-                code: assignedBranch.code,
-                city: assignedBranch.city,
-                isMainBranch: assignedBranch.isMainBranch
-              }];
-            }
-          }
-        }
-      }
 
       return res.json({
         message: 'Login successful',

@@ -957,8 +957,8 @@ const SaaSLayout: React.FC<{ children?: React.ReactNode }> = ({ children }) => {
       });
     }
 
-    // Telemedicine - for doctors and patients
-    if (isDoctor || isPatient || isAdmin) {
+    // Telemedicine - for doctors and admin only (patients don't have route access)
+    if (isDoctor || isAdmin) {
       items.push({
         key: 'telemedicine',
         icon: <VideoCameraOutlined />,
