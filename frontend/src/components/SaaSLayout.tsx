@@ -217,6 +217,11 @@ const SaaSLayout: React.FC<{ children?: React.ReactNode }> = ({ children }) => {
     window.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior });
   }, [location.pathname]);
 
+  // Close mobile drawer on navigation
+  useEffect(() => {
+    if (isMobile) setMobileDrawerOpen(false);
+  }, [location.pathname]);
+
   const role = String(user?.role || '').toLowerCase();
   const isSuperAdmin = role === 'super_admin';
   const isAdmin = role === 'admin' || isSuperAdmin;
@@ -1424,10 +1429,6 @@ const SaaSLayout: React.FC<{ children?: React.ReactNode }> = ({ children }) => {
 
   const activeKey = getActiveKey();
 
-  // Close mobile drawer on navigation
-  useEffect(() => {
-    if (isMobile) setMobileDrawerOpen(false);
-  }, [location.pathname]);
 
   // Shared sidebar content (used in both Sider and Drawer)
   const sidebarInlineStyles = `
