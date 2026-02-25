@@ -685,6 +685,20 @@ const PremiumDashboard: React.FC = () => {
 
   const orgName = (user as any)?.organization?.name || 'Hospital';
 
+  // Helper function to format time ago - defined before useEffect that uses it
+  const formatTimeAgo = (date: Date): string => {
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMins / 60);
+    const diffDays = Math.floor(diffHours / 24);
+
+    if (diffMins < 1) return 'Just now';
+    if (diffMins < 60) return `${diffMins} min ago`;
+    if (diffHours < 24) return `${diffHours} hr ago`;
+    return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
+  };
+
   // Fetch real data from APIs
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -948,21 +962,6 @@ const PremiumDashboard: React.FC = () => {
       todayAppointments: filteredAppointments,
     };
   }, [rawData, selectedLocation]);
-
-
-  // Helper function to format time ago
-  const formatTimeAgo = (date: Date): string => {
-    const now = new Date();
-    const diffMs = now.getTime() - date.getTime();
-    const diffMins = Math.floor(diffMs / 60000);
-    const diffHours = Math.floor(diffMins / 60);
-    const diffDays = Math.floor(diffHours / 24);
-
-    if (diffMins < 1) return 'Just now';
-    if (diffMins < 60) return `${diffMins} min ago`;
-    if (diffHours < 24) return `${diffHours} hr ago`;
-    return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
-  };
 
   // Format time
   const formatTime = (dateStr: string) => {
