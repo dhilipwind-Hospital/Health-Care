@@ -1,4 +1,4 @@
-import React, { useState, useEffect, lazy, Suspense } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Row, Col, Typography, Badge, Button, Spin, Avatar, Progress, Space, Table, Tag } from 'antd';
 import {
   UserOutlined,
@@ -20,6 +20,7 @@ import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import patientService from '../services/patientService';
 import styled, { keyframes } from 'styled-components';
+import Chart from 'react-apexcharts';
 
 // ============= ANIMATIONS =============
 const fadeInUp = keyframes`
@@ -1306,12 +1307,11 @@ const PremiumDashboard: React.FC = () => {
                 </div>
                 <div className="card-body" style={{ padding: '8px 16px' }}>
                   {data.departmentPerformance.length > 0 || data.departments.length > 0 ? (() => {
-                    const ApexChart = require('react-apexcharts').default;
                     const deptData = data.departmentPerformance.length > 0
                       ? data.departmentPerformance
                       : data.departments.map((d: any) => ({ department: d.name, appointments: 0, patients: 0 }));
                     return (
-                      <ApexChart
+                      <Chart
                         type="bar"
                         height={260}
                         options={{
@@ -1352,11 +1352,10 @@ const PremiumDashboard: React.FC = () => {
                 </div>
                 <div className="card-body" style={{ padding: '8px 16px' }}>
                   {(() => {
-                    const ApexChart = require('react-apexcharts').default;
                     const occupied = data.occupiedBeds || 0;
                     const available = Math.max(0, (data.totalBeds || 0) - occupied);
                     return (
-                      <ApexChart
+                      <Chart
                         type="donut"
                         height={260}
                         options={{
