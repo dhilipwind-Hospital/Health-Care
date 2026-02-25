@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { Row, Col, Typography, Badge, Button, Spin, Avatar, Progress, Space, Table, Tag } from 'antd';
 import {
   UserOutlined,
@@ -12,6 +12,8 @@ import {
   PlusOutlined,
   DashboardOutlined,
   CheckCircleOutlined,
+  BarChartOutlined,
+  PieChartOutlined,
 } from '@ant-design/icons';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
@@ -701,6 +703,7 @@ const PremiumDashboard: React.FC = () => {
           admissionsRes,
           labOrdersRes,
           patientsRes,
+          billingRes,
         ] = await Promise.all([
           // Analytics Dashboard Stats
           api.get('/analytics/dashboard-stats', { params: { locationId: selectedLocation?.id } }).catch(() => ({ data: {} })),
@@ -724,6 +727,8 @@ const PremiumDashboard: React.FC = () => {
           api.get('/lab/orders', { params: { status: 'ordered', limit: 100, locationId: selectedLocation?.id } }).catch(() => ({ data: { data: [], total: 0 } })),
           // Patients list
           api.get('/users', { params: { role: 'patient', limit: 50, locationId: selectedLocation?.id } }).catch(() => ({ data: { total: 0, data: [] } })),
+          // Billing data for real revenue
+          api.get('/billing', { params: { limit: 500, locationId: selectedLocation?.id } }).catch(() => ({ data: { data: [] } })),
         ]);
 
 
@@ -804,8 +809,25 @@ const PremiumDashboard: React.FC = () => {
         const labTestsPendingCount = labOrdersRes.data?.total ||
           (labOrdersRes.data?.data ? labOrdersRes.data.data.length : 0);
 
-        // Estimate Revenue (e.g., $400 per appointment)
-        const estimatedRevenue = todayAppts.length * 400;
+        // Calculate actual revenue from billing data
+        const allBills = billingRes.data?.data || [];
+        const todayStr = today.toISOString().split('T')[0];
+        const actualRevenue = allBills.reduce((sum: number, bill: any) => {
+          // Sum paid amounts from bills created today, or all paid bills if no date filter available
+          const billDate = (bill.issueDate || bill.billDate || bill.createdAt || '').split('T')[0];
+          const isPaid = (bill.status || '').toLowerCase() === 'paid';
+          const amount = bill.paidAmount || bill.totalAmount || bill.total || 0;
+          if (isPaid) {
+            if (billDate === todayStr) return sum + amount;
+          }
+          return sum;
+        }, 0);
+        // Fallback: if no paid bills found for today, show total paid across all time for display
+        const totalPaidRevenue = allBills.reduce((sum: number, bill: any) => {
+          const isPaid = (bill.status || '').toLowerCase() === 'paid';
+          return isPaid ? sum + (bill.paidAmount || bill.totalAmount || bill.total || 0) : sum;
+        }, 0);
+        const revenueToDisplay = actualRevenue > 0 ? actualRevenue : totalPaidRevenue;
 
         setRawData({
           totalPatients: stats.totalPatients || 0,
@@ -826,7 +848,7 @@ const PremiumDashboard: React.FC = () => {
             a.type === 'surgery' || a.service?.name?.toLowerCase().includes('surgery')
           ).length,
           labTestsPending: labTestsPendingCount,
-          revenueToday: estimatedRevenue,
+          revenueToday: revenueToDisplay,
           alerts: alertsFromNotifications,
           recentActivities,
         });
@@ -1272,6 +1294,107 @@ const PremiumDashboard: React.FC = () => {
             </Col>
           </Row>
 
+          {/* Charts Row */}
+          <Row gutter={[16, 16]} style={{ marginTop: 16 }}>
+            {/* Department Performance Chart */}
+            <Col xs={24} lg={14}>
+              <GlassCard>
+                <div className="card-header">
+                  <div className="card-title">
+                    <BarChartOutlined className="title-icon" />
+                    Department Performance
+                  </div>
+                </div>
+                <div className="card-body" style={{ padding: '8px 16px' }}>
+                  {data.departmentPerformance.length > 0 || data.departments.length > 0 ? (() => {
+                    const ApexChart = require('react-apexcharts').default;
+                    const deptData = data.departmentPerformance.length > 0
+                      ? data.departmentPerformance
+                      : data.departments.map((d: any) => ({ department: d.name, appointments: 0, patients: 0 }));
+                    return (
+                      <ApexChart
+                        type="bar"
+                        height={260}
+                        options={{
+                          chart: { toolbar: { show: false }, fontFamily: 'Inter, sans-serif' },
+                          plotOptions: { bar: { borderRadius: 6, columnWidth: '50%' } },
+                          colors: ['#10B981', '#1E3A5F'],
+                          xaxis: {
+                            categories: deptData.slice(0, 6).map((d: any) => (d.department || d.name || '').split(' ').slice(0, 2).join(' ')),
+                            labels: { style: { fontSize: '11px', colors: '#888' } }
+                          },
+                          yaxis: { labels: { style: { fontSize: '11px', colors: '#888' } } },
+                          legend: { position: 'top', horizontalAlign: 'right', fontSize: '12px' },
+                          grid: { borderColor: 'rgba(30,58,95,0.08)' },
+                          dataLabels: { enabled: false },
+                          tooltip: { theme: 'light' }
+                        }}
+                        series={[
+                          { name: 'Appointments', data: deptData.slice(0, 6).map((d: any) => d.appointments || d.totalAppointments || 0) },
+                          { name: 'Patients', data: deptData.slice(0, 6).map((d: any) => d.patients || d.totalPatients || 0) }
+                        ]}
+                      />
+                    );
+                  })() : (
+                    <div style={{ textAlign: 'center', padding: 40, color: '#888' }}>No department data</div>
+                  )}
+                </div>
+              </GlassCard>
+            </Col>
+
+            {/* Bed Occupancy Donut */}
+            <Col xs={24} lg={10}>
+              <GlassCard>
+                <div className="card-header">
+                  <div className="card-title">
+                    <PieChartOutlined className="title-icon" />
+                    Bed Occupancy
+                  </div>
+                </div>
+                <div className="card-body" style={{ padding: '8px 16px' }}>
+                  {(() => {
+                    const ApexChart = require('react-apexcharts').default;
+                    const occupied = data.occupiedBeds || 0;
+                    const available = Math.max(0, (data.totalBeds || 0) - occupied);
+                    return (
+                      <ApexChart
+                        type="donut"
+                        height={260}
+                        options={{
+                          labels: ['Occupied', 'Available'],
+                          colors: ['#1E3A5F', '#10B981'],
+                          chart: { fontFamily: 'Inter, sans-serif' },
+                          legend: { position: 'bottom', fontSize: '13px' },
+                          plotOptions: {
+                            pie: {
+                              donut: {
+                                size: '70%',
+                                labels: {
+                                  show: true,
+                                  total: {
+                                    show: true,
+                                    label: 'Total Beds',
+                                    fontSize: '14px',
+                                    color: '#888',
+                                    formatter: () => String(data.totalBeds || 0)
+                                  }
+                                }
+                              }
+                            }
+                          },
+                          dataLabels: { enabled: true, formatter: (val: number) => `${val.toFixed(0)}%` },
+                          stroke: { width: 2, colors: ['#fff'] },
+                          tooltip: { theme: 'light' }
+                        }}
+                        series={[occupied, available]}
+                      />
+                    );
+                  })()}
+                </div>
+              </GlassCard>
+            </Col>
+          </Row>
+
           {/* Bottom Stats */}
           <BottomStats>
             <div className="stat-item">
@@ -1292,7 +1415,7 @@ const PremiumDashboard: React.FC = () => {
             </div>
             <div className="stat-item">
               <div className="stat-label">Revenue Today</div>
-              <div className="stat-value revenue">${(data.revenueToday / 1000).toFixed(1)}K</div>
+              <div className="stat-value revenue">₹{data.revenueToday >= 100000 ? `${(data.revenueToday / 100000).toFixed(1)}L` : data.revenueToday >= 1000 ? `${(data.revenueToday / 1000).toFixed(1)}K` : data.revenueToday.toLocaleString('en-IN')}</div>
             </div>
           </BottomStats>
         </>

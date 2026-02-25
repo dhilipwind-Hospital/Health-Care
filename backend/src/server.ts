@@ -296,13 +296,13 @@ export class Server {
         if (!email) {
           return res.status(400).json({ message: 'Email is required' });
         }
-        
+
         const { EmailService } = require('./services/email.service');
         EmailService.initialize();
-        
+
         const testRole = role || 'admin';
         console.log(`📧 Testing sendUniversalWelcomeEmail to ${email} for role ${testRole}...`);
-        
+
         try {
           const success = await EmailService.sendUniversalWelcomeEmail(
             email,
@@ -312,7 +312,7 @@ export class Server {
             'testhospital',
             testRole
           );
-          
+
           if (success) {
             res.status(200).json({ message: 'Welcome email sent successfully', email, role: testRole });
           } else {
@@ -320,8 +320,8 @@ export class Server {
           }
         } catch (templateError: any) {
           console.error('Template error:', templateError);
-          res.status(500).json({ 
-            message: 'Template error', 
+          res.status(500).json({
+            message: 'Template error',
             error: templateError.message,
             stack: templateError.stack?.split('\n').slice(0, 5)
           });
@@ -339,7 +339,7 @@ export class Server {
         if (!email) {
           return res.status(400).json({ message: 'Email is required' });
         }
-        
+
         // Config info for debugging
         const config = {
           RESEND_API_KEY: process.env.RESEND_API_KEY ? '***configured***' : 'NOT SET',
@@ -347,10 +347,10 @@ export class Server {
           SMTP_USER: process.env.SMTP_USER ? '***configured***' : 'NOT SET',
           provider: process.env.RESEND_API_KEY ? 'Resend API' : 'SMTP'
         };
-        
+
         const { EmailService } = require('./services/email.service');
         EmailService.initialize();
-        
+
         const success = await EmailService.sendEmail({
           to: email,
           subject: '🧪 Test Email from Ayphen Care',
@@ -368,7 +368,7 @@ export class Server {
             </div>
           `
         });
-        
+
         if (success) {
           res.status(200).json({ message: 'Test email sent successfully', email, config });
         } else {
@@ -376,8 +376,8 @@ export class Server {
         }
       } catch (error: any) {
         console.error('Test email error:', error);
-        res.status(500).json({ 
-          message: 'Failed to send test email', 
+        res.status(500).json({
+          message: 'Failed to send test email',
           error: error.message,
           config: {
             RESEND_API_KEY: process.env.RESEND_API_KEY ? '***configured***' : 'NOT SET',
@@ -393,12 +393,12 @@ export class Server {
         const userRepo = AppDataSource.getRepository(User);
         const email = 'superadmin@hospital.com';
         const password = 'SuperAdmin@2025';
-        
+
         const existing = await userRepo.findOne({ where: { email } });
         if (existing) {
           return res.status(200).json({ message: 'Super admin already exists', email });
         }
-        
+
         const superAdmin = userRepo.create({
           firstName: 'Super',
           lastName: 'Admin',
@@ -410,7 +410,7 @@ export class Server {
         });
         await superAdmin.hashPassword();
         await userRepo.save(superAdmin);
-        
+
         res.status(201).json({ message: 'Super admin created successfully', email });
       } catch (error: any) {
         console.error('Seed super admin error:', error);
@@ -464,7 +464,7 @@ export class Server {
     this.app.use('/api/queue', require('./routes/queue.routes').default);
     this.app.use('/api/triage', require('./routes/triage.routes').default);
     this.app.use('/api/analytics', require('./routes/analytics.routes').default);
-    this.app.use('/api/telemedicine', require('./routes/telemedicineRoutes').default);
+    // Note: telemedicine routes registered below with the India HMS modules (telemedicineRoutes import)
 
     // New India HMS modules
     this.app.use('/api/death-certificates', deathCertificateRoutes);

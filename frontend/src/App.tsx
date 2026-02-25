@@ -13,27 +13,18 @@ import { publicTheme, defaultTheme } from './themes/publicTheme';
 import PublicLayout from './components/PublicLayout';
 import HomeReference from './pages/public/HomeReference';
 import About from './pages/public/About';
-import Departments from './pages/public/Departments';
 import DepartmentsNew from './pages/public/DepartmentsNew';
 import Doctors from './pages/public/Doctors';
-import Services from './pages/public/Services';
 import ServicesNew from './pages/public/ServicesNew';
 import RequestCallback from './pages/public/RequestCallback';
 import HealthPackages from './pages/public/HealthPackages';
 import Announcements from './pages/public/Announcements';
-import BookAppointment from './pages/public/BookAppointment';
-import BookAppointmentEnhanced from './pages/public/BookAppointmentEnhanced';
 import BookAppointmentWizard from './pages/public/BookAppointmentWizard';
-import Emergency from './pages/public/Emergency';
 import EmergencyNew from './pages/public/EmergencyNew';
 import FirstAid from './pages/public/FirstAid';
 import Insurance from './pages/public/Insurance';
-import Login from './pages/Login';
-import LoginNew from './pages/LoginNew';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
-import RegisterPage from './pages/RegisterPage';
-import RegisterStepper from './pages/RegisterStepper';
 import Dashboard from './pages/Dashboard';
 import PatientList from './pages/patients/PatientList';
 import PatientForm from './pages/patients/PatientForm';
@@ -64,8 +55,7 @@ import BillingHistory from './pages/portal/BillingHistory';
 import SymptomChecker from './pages/portal/SymptomChecker';
 import ViewDoctorAvailability from './pages/availability/ViewDoctorAvailability';
 import Records from './pages/Records';
-import Pharmacy from './pages/Pharmacy';
-import PharmacyDashboard from './pages/PharmacyDashboard';
+// Pharmacy imports (PharmacistDashboard is used instead of legacy Pharmacy/PharmacyDashboard)
 import MedicineList from './pages/pharmacy/MedicineList';
 import InventoryDashboard from './pages/pharmacy/InventoryDashboard';
 import StockAlerts from './pages/pharmacy/StockAlerts';
@@ -137,9 +127,7 @@ import AppointmentReminders from './pages/communication/AppointmentReminders';
 import AmbulanceManagement from './pages/emergency/AmbulanceManagement';
 import AmbulanceAdvanced from './pages/emergency/AmbulanceAdvanced';
 import ManualDispatch from './pages/emergency/ManualDispatch';
-import ReceptionQueue from './pages/queue/ReceptionQueue';
 import ReceptionQueueEnhanced from './pages/queue/ReceptionQueueEnhanced';
-import TriageStation from './pages/queue/TriageStation';
 import TriageStationEnhanced from './pages/queue/TriageStationEnhanced';
 import DoctorConsole from './pages/queue/DoctorConsole';
 import TVDisplay from './pages/queue/TVDisplay';
@@ -274,23 +262,18 @@ const App: React.FC = () => {
         { path: '/home', element: <PublicLayout><HomeReference /></PublicLayout> },
         { path: '/about', element: <PublicLayout><About /></PublicLayout> },
         { path: '/departments', element: <PublicLayout><DepartmentsNew /></PublicLayout> },
-        { path: '/departments-old', element: <PublicLayout><Departments /></PublicLayout> },
         { path: '/doctors', element: <PublicLayout><Doctors /></PublicLayout> },
         { path: '/health-packages', element: <PublicLayout><HealthPackages /></PublicLayout> },
         { path: '/services', element: <PublicLayout><ServicesNew /></PublicLayout> },
-        { path: '/services-old', element: <PublicLayout><Services /></PublicLayout> },
         { path: '/insurance', element: <PublicLayout><Insurance /></PublicLayout> },
         { path: '/appointments/book', element: <PublicLayout><BookAppointmentWizard /></PublicLayout> },
         { path: '/emergency', element: <PublicLayout><EmergencyNew /></PublicLayout> },
-        { path: '/emergency-old', element: <PublicLayout><Emergency /></PublicLayout> },
         { path: '/first-aid', element: <PublicLayout><FirstAid /></PublicLayout> },
         { path: '/request-callback', element: <PublicLayout><RequestCallback /></PublicLayout> },
         { path: '/login', element: <LoginFixed /> },
-        { path: '/login-old', element: <LoginNew /> },
         { path: '/forgot-password', element: <ForgotPassword /> },
         { path: '/reset-password', element: <ResetPassword /> },
         { path: '/register', element: <RegisterFixed /> },
-        { path: '/register-old', element: <RegisterStepper /> },
         { path: '/test-phone-auth', element: <PhoneAuthTest /> },
 
         // Public access grant approval/rejection (email links)

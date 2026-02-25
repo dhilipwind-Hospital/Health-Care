@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Card, Table, Button, Space, Tag, Row, Col, Typography, Input, Select, Modal, Form, message, Tabs, Statistic, DatePicker, Progress } from 'antd';
 import api from '../../services/api';
-import { 
-  PlusOutlined, 
-  EditOutlined, 
-  DeleteOutlined, 
+import { exportToCSV } from '../../utils/exportCSV';
+import {
+  PlusOutlined,
+  EditOutlined,
+  DeleteOutlined,
   EyeOutlined,
   SearchOutlined,
   DollarOutlined,
@@ -219,24 +220,24 @@ const BillingManagement: React.FC = () => {
       key: 'actions',
       render: (record: Invoice) => (
         <Space>
-          <Button 
-            type="text" 
-            icon={<EyeOutlined />} 
+          <Button
+            type="text"
+            icon={<EyeOutlined />}
             onClick={() => handleViewInvoice(record)}
           />
-          <Button 
-            type="text" 
-            icon={<EditOutlined />} 
+          <Button
+            type="text"
+            icon={<EditOutlined />}
             onClick={() => handleEditInvoice(record)}
           />
-          <Button 
-            type="text" 
-            icon={<PrinterOutlined />} 
+          <Button
+            type="text"
+            icon={<PrinterOutlined />}
             onClick={() => handlePrintInvoice(record)}
           />
           {record.status === 'Sent' && (
-            <Button 
-              type="text" 
+            <Button
+              type="text"
               style={{ color: '#52c41a' }}
               onClick={() => handleMarkPaid(record)}
             >
@@ -350,7 +351,118 @@ const BillingManagement: React.FC = () => {
   };
 
   const handlePrintInvoice = (invoice: Invoice) => {
-    message.success(`Printing invoice ${invoice.invoiceNumber}`);
+    const printWindow = window.open('', '_blank', 'width=800,height=600');
+    if (!printWindow) {
+      message.error('Please allow pop-ups to print invoices');
+      return;
+    }
+
+    const services = invoice.services || [];
+    const orgName = 'Ayphen Care Hospital';
+    const itemsHtml = services.map((s: any, i: number) => `
+      <tr>
+        <td style="padding:8px;border-bottom:1px solid #eee;">${i + 1}</td>
+        <td style="padding:8px;border-bottom:1px solid #eee;">${s.description || s.name || 'Item'}</td>
+        <td style="padding:8px;border-bottom:1px solid #eee;text-align:center;">${s.quantity || 1}</td>
+        <td style="padding:8px;border-bottom:1px solid #eee;text-align:right;">₹${(s.unitPrice || s.price || 0).toFixed(2)}</td>
+        <td style="padding:8px;border-bottom:1px solid #eee;text-align:right;">₹${(s.total || s.amount || 0).toFixed(2)}</td>
+      </tr>
+    `).join('');
+
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Invoice ${invoice.invoiceNumber}</title>
+        <style>
+          body { font-family: 'Segoe UI', Arial, sans-serif; padding: 40px; color: #333; max-width: 800px; margin: 0 auto; }
+          .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 30px; border-bottom: 3px solid #10B981; padding-bottom: 20px; }
+          .logo { font-size: 24px; font-weight: 700; color: #10B981; }
+          .logo small { display: block; font-size: 12px; color: #666; font-weight: 400; }
+          .invoice-info { text-align: right; }
+          .invoice-info h2 { margin: 0; color: #10B981; font-size: 28px; }
+          .details { display: flex; justify-content: space-between; margin-bottom: 30px; }
+          .details div { flex: 1; }
+          .details h4 { color: #10B981; margin-bottom: 8px; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; }
+          .details p { margin: 4px 0; font-size: 14px; }
+          table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+          thead th { background: #f8f9fa; padding: 10px 8px; text-align: left; font-size: 12px; text-transform: uppercase; color: #666; border-bottom: 2px solid #10B981; }
+          .totals { text-align: right; margin-top: 20px; }
+          .totals .row { display: flex; justify-content: flex-end; gap: 40px; padding: 6px 0; font-size: 14px; }
+          .totals .total-row { font-weight: 700; font-size: 18px; color: #10B981; border-top: 2px solid #10B981; padding-top: 10px; margin-top: 10px; }
+          .footer { margin-top: 40px; text-align: center; font-size: 12px; color: #999; border-top: 1px solid #eee; padding-top: 20px; }
+          .status-badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+          .status-paid { background: #e8f5e9; color: #2e7d32; }
+          .status-sent { background: #e3f2fd; color: #1565c0; }
+          .status-overdue { background: #fce4ec; color: #c62828; }
+          .status-draft { background: #f5f5f5; color: #666; }
+          @media print { body { padding: 20px; } }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <div class="logo">
+            🏥 ${orgName}
+            <small>Hospital Management System</small>
+          </div>
+          <div class="invoice-info">
+            <h2>INVOICE</h2>
+            <p><strong>${invoice.invoiceNumber}</strong></p>
+            <span class="status-badge status-${(invoice.status || 'draft').toLowerCase()}">${invoice.status || 'Draft'}</span>
+          </div>
+        </div>
+
+        <div class="details">
+          <div>
+            <h4>Bill To</h4>
+            <p><strong>${invoice.patientName || 'Patient'}</strong></p>
+            <p>${invoice.patientEmail || ''}</p>
+          </div>
+          <div style="text-align:right;">
+            <h4>Invoice Details</h4>
+            <p><strong>Issue Date:</strong> ${invoice.issueDate || '-'}</p>
+            <p><strong>Due Date:</strong> ${invoice.dueDate || '-'}</p>
+            ${invoice.paidDate ? `<p><strong>Paid Date:</strong> ${invoice.paidDate}</p>` : ''}
+          </div>
+        </div>
+
+        <table>
+          <thead>
+            <tr>
+              <th style="width:40px;">#</th>
+              <th>Description</th>
+              <th style="text-align:center;width:60px;">Qty</th>
+              <th style="text-align:right;width:100px;">Unit Price</th>
+              <th style="text-align:right;width:100px;">Amount</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${itemsHtml || '<tr><td colspan="5" style="padding:20px;text-align:center;color:#999;">No items</td></tr>'}
+          </tbody>
+        </table>
+
+        <div class="totals">
+          <div class="row"><span>Subtotal:</span> <span>₹${(invoice.subtotal || 0).toFixed(2)}</span></div>
+          <div class="row"><span>Tax:</span> <span>₹${(invoice.tax || 0).toFixed(2)}</span></div>
+          <div class="row"><span>Discount:</span> <span>-₹${(invoice.discount || 0).toFixed(2)}</span></div>
+          <div class="row total-row"><span>Total:</span> <span>₹${(invoice.total || 0).toFixed(2)}</span></div>
+        </div>
+
+        ${invoice.notes ? `<div style="margin-top:20px;padding:12px;background:#f8f9fa;border-radius:8px;font-size:13px;"><strong>Notes:</strong> ${invoice.notes}</div>` : ''}
+
+        <div class="footer">
+          <p>${orgName} • Generated on ${new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' })}</p>
+          <p>This is a computer-generated invoice.</p>
+        </div>
+      </body>
+      </html>
+    `);
+
+    printWindow.document.close();
+    printWindow.focus();
+    setTimeout(() => {
+      printWindow.print();
+    }, 300);
   };
 
   const handleMarkPaid = (invoice: Invoice) => {
@@ -358,8 +470,8 @@ const BillingManagement: React.FC = () => {
       title: 'Mark Invoice as Paid',
       content: `Mark invoice ${invoice.invoiceNumber} as paid?`,
       onOk: () => {
-        setInvoices(invoices.map(inv => 
-          inv.id === invoice.id 
+        setInvoices(invoices.map(inv =>
+          inv.id === invoice.id
             ? { ...inv, status: 'Paid' as const, paidDate: new Date().toISOString().split('T')[0] }
             : inv
         ));
@@ -636,16 +748,39 @@ const BillingManagement: React.FC = () => {
                 </Select>
                 <RangePicker />
               </Space>
-              <Button 
-                type="primary" 
-                icon={<PlusOutlined />}
-                onClick={handleAddInvoice}
-                style={{ background: '#10B981', borderColor: '#10B981' }}
-              >
-                Create Invoice
-              </Button>
+              <Space>
+                <Button
+                  type="primary"
+                  icon={<PlusOutlined />}
+                  onClick={handleAddInvoice}
+                  style={{ background: '#10B981', borderColor: '#10B981' }}
+                >
+                  Create Invoice
+                </Button>
+                <Button
+                  icon={<DownloadOutlined />}
+                  onClick={() => {
+                    exportToCSV(invoices, [
+                      { header: 'Invoice #', key: 'invoiceNumber' },
+                      { header: 'Patient', key: 'patientName' },
+                      { header: 'Email', key: 'patientEmail' },
+                      { header: 'Issue Date', key: 'issueDate' },
+                      { header: 'Due Date', key: 'dueDate' },
+                      { header: 'Subtotal', key: 'subtotal' },
+                      { header: 'Tax', key: 'tax' },
+                      { header: 'Discount', key: 'discount' },
+                      { header: 'Total', key: 'total' },
+                      { header: 'Status', key: 'status' },
+                      { header: 'Paid Date', key: 'paidDate' },
+                    ], 'billing_invoices');
+                    message.success('Invoices exported to CSV');
+                  }}
+                >
+                  Export CSV
+                </Button>
+              </Space>
             </div>
-            
+
             <Table
               columns={invoiceColumns}
               dataSource={invoices}
@@ -653,7 +788,7 @@ const BillingManagement: React.FC = () => {
               pagination={{
                 pageSize: 10,
                 showSizeChanger: true,
-                showTotal: (total, range) => 
+                showTotal: (total, range) =>
                   `${range[0]}-${range[1]} of ${total} invoices`,
               }}
             />
@@ -677,7 +812,7 @@ const BillingManagement: React.FC = () => {
                 </Select>
                 <RangePicker />
               </Space>
-              <Button 
+              <Button
                 type="primary"
                 icon={<PlusOutlined />}
                 style={{ background: '#10B981', borderColor: '#10B981' }}
@@ -689,7 +824,7 @@ const BillingManagement: React.FC = () => {
                 Record Payment
               </Button>
             </div>
-            
+
             <Table
               columns={paymentColumns}
               dataSource={payments}
@@ -697,7 +832,7 @@ const BillingManagement: React.FC = () => {
               pagination={{
                 pageSize: 10,
                 showSizeChanger: true,
-                showTotal: (total, range) => 
+                showTotal: (total, range) =>
                   `${range[0]}-${range[1]} of ${total} payments`,
               }}
             />
@@ -724,10 +859,10 @@ const BillingManagement: React.FC = () => {
           <Row gutter={16}>
             <Col span={12}>
               <Form.Item name="patientId" label="Patient" rules={[{ required: true }]}>
-                <Select 
-                  showSearch 
-                  placeholder="Select patient" 
-                  optionFilterProp="children" 
+                <Select
+                  showSearch
+                  placeholder="Select patient"
+                  optionFilterProp="children"
                   filterOption={(input, option) => (option?.children as unknown as string)?.toLowerCase().includes(input.toLowerCase())}
                   onChange={(value) => {
                     const patient = patients.find(p => p.id === value);
@@ -748,7 +883,7 @@ const BillingManagement: React.FC = () => {
               </Form.Item>
             </Col>
           </Row>
-          
+
           <Row gutter={16}>
             <Col span={12}>
               <Form.Item name="issueDate" label="Issue Date" rules={[{ required: true }]}>
@@ -761,12 +896,12 @@ const BillingManagement: React.FC = () => {
               </Form.Item>
             </Col>
           </Row>
-          
+
           {/* Invoice Items */}
-          <Card 
-            title={<span>Invoice Items {loadingBillables && <Text type="secondary" style={{ fontSize: 12 }}>(Loading billable items...)</Text>}</span>} 
-            size="small" 
-            style={{ marginBottom: 16 }} 
+          <Card
+            title={<span>Invoice Items {loadingBillables && <Text type="secondary" style={{ fontSize: 12 }}>(Loading billable items...)</Text>}</span>}
+            size="small"
+            style={{ marginBottom: 16 }}
             extra={<Button type="dashed" icon={<PlusOutlined />} onClick={addInvoiceItem}>Add Item</Button>}
           >
             {invoiceItems.length === 0 && !loadingBillables && (
@@ -848,25 +983,25 @@ const BillingManagement: React.FC = () => {
           <Row gutter={16}>
             <Col span={12}>
               <Form.Item label="Tax Rate (%)">
-                <Input 
-                  type="number" 
-                  min={0} 
-                  max={100} 
-                  placeholder="0" 
+                <Input
+                  type="number"
+                  min={0}
+                  max={100}
+                  placeholder="0"
                   value={taxRate}
-                  onChange={(e) => setTaxRate(parseFloat(e.target.value) || 0)} 
+                  onChange={(e) => setTaxRate(parseFloat(e.target.value) || 0)}
                 />
               </Form.Item>
             </Col>
             <Col span={12}>
               <Form.Item label="Discount Rate (%)">
-                <Input 
-                  type="number" 
-                  min={0} 
-                  max={100} 
-                  placeholder="0" 
+                <Input
+                  type="number"
+                  min={0}
+                  max={100}
+                  placeholder="0"
                   value={discountRate}
-                  onChange={(e) => setDiscountRate(parseFloat(e.target.value) || 0)} 
+                  onChange={(e) => setDiscountRate(parseFloat(e.target.value) || 0)}
                 />
               </Form.Item>
             </Col>
@@ -911,26 +1046,26 @@ const BillingManagement: React.FC = () => {
           <Button key="cancel" onClick={() => setIsPaymentModalVisible(false)}>
             Cancel
           </Button>,
-          <Button 
-            key="save" 
-            type="primary" 
-            style={{ background: '#10B981', borderColor: '#10B981' }} 
+          <Button
+            key="save"
+            type="primary"
+            style={{ background: '#10B981', borderColor: '#10B981' }}
             onClick={async () => {
               try {
                 const values = await paymentForm.validateFields();
                 setSavingPayment(true);
-                
+
                 await api.post(`/billing/${values.invoiceId}/payment`, {
                   amount: parseFloat(values.amount),
                   paymentMethod: values.paymentMethod,
                   reference: values.reference,
                   notes: values.notes,
                 });
-                
+
                 message.success('Payment recorded successfully');
                 setIsPaymentModalVisible(false);
                 paymentForm.resetFields();
-                
+
                 // Reload invoices and payments
                 const [invoicesRes, paymentsRes] = await Promise.all([
                   api.get('/billing'),
@@ -952,7 +1087,7 @@ const BillingManagement: React.FC = () => {
               } finally {
                 setSavingPayment(false);
               }
-            }} 
+            }}
             loading={savingPayment}
           >
             Save Payment
@@ -960,14 +1095,14 @@ const BillingManagement: React.FC = () => {
         ]}
       >
         <Form form={paymentForm} layout="vertical">
-          <Form.Item 
-            name="invoiceId" 
-            label="Select Invoice" 
+          <Form.Item
+            name="invoiceId"
+            label="Select Invoice"
             rules={[{ required: true, message: 'Please select an invoice' }]}
           >
-            <Select 
-              showSearch 
-              placeholder="Select invoice to pay" 
+            <Select
+              showSearch
+              placeholder="Select invoice to pay"
               optionFilterProp="children"
               onChange={(value) => {
                 const invoice = invoices.find(inv => inv.id === value);
@@ -986,18 +1121,18 @@ const BillingManagement: React.FC = () => {
                 ))}
             </Select>
           </Form.Item>
-          
-          <Form.Item 
-            name="amount" 
-            label="Payment Amount (₹)" 
+
+          <Form.Item
+            name="amount"
+            label="Payment Amount (₹)"
             rules={[{ required: true, message: 'Please enter amount' }]}
           >
             <Input type="number" min={0} placeholder="Enter payment amount" />
           </Form.Item>
-          
-          <Form.Item 
-            name="paymentMethod" 
-            label="Payment Method" 
+
+          <Form.Item
+            name="paymentMethod"
+            label="Payment Method"
             rules={[{ required: true, message: 'Please select payment method' }]}
             initialValue="Cash"
           >
@@ -1011,11 +1146,11 @@ const BillingManagement: React.FC = () => {
               <Option value="Cheque">Cheque</Option>
             </Select>
           </Form.Item>
-          
+
           <Form.Item name="reference" label="Reference / Transaction ID">
             <Input placeholder="Enter reference number or transaction ID" />
           </Form.Item>
-          
+
           <Form.Item name="notes" label="Notes">
             <Input.TextArea rows={2} placeholder="Any additional notes" />
           </Form.Item>

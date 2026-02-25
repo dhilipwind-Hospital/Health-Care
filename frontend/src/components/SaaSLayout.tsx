@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Layout, Menu, Button, Dropdown, Avatar, Space, Typography, theme, Breadcrumb, Badge, Divider, Select, message } from 'antd';
+import { Layout, Menu, Button, Dropdown, Avatar, Space, Typography, theme, Breadcrumb, Badge, Divider, Select, message, Drawer } from 'antd';
 import api from '../services/api';
 import {
   MenuFoldOutlined,
@@ -194,6 +194,20 @@ const SaaSLayout: React.FC<{ children?: React.ReactNode }> = ({ children }) => {
   });
 
   useKeyboardShortcuts();
+
+  // Mobile detection
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
+
+  useEffect(() => {
+    const handleResize = () => {
+      const mobile = window.innerWidth < 768;
+      setIsMobile(mobile);
+      if (!mobile) setMobileDrawerOpen(false);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   useEffect(() => {
     try { localStorage.setItem('hms_sider_collapsed', collapsed ? '1' : '0'); } catch { }
@@ -1410,191 +1424,217 @@ const SaaSLayout: React.FC<{ children?: React.ReactNode }> = ({ children }) => {
 
   const activeKey = getActiveKey();
 
-  return (
-    <StyledLayout className="app-layout">
-      <Sider
-        trigger={null}
-        collapsible
-        collapsed={collapsed}
-        width={280}
-        theme="light"
-        breakpoint="lg"
-        collapsedWidth={60}
-        onBreakpoint={(broken) => { if (broken) setCollapsed(true); }}
-      >
-        <style>{`
-          .ant-layout-sider {
-            background: #1E3A5F !important;
-            border-right: none;
-          }
-          .ant-menu {
-            background: transparent !important;
-            border-inline-end: none !important;
-          }
-          /* Menu Item Default State */
-          .ant-menu-light .ant-menu-item,
-          .ant-menu-dark .ant-menu-item {
-            margin: 4px 12px !important;
-            border-radius: 8px !important;
-            width: calc(100% - 24px) !important;
-            transition: all 0.3s ease;
-            color: rgba(255, 255, 255, 0.7) !important;
-          }
-          /* Submenu Title Default State */
-          .ant-menu-light .ant-menu-submenu-title,
-          .ant-menu-dark .ant-menu-submenu-title {
-            margin: 4px 12px !important;
-            border-radius: 8px !important;
-            width: calc(100% - 24px) !important;
-            color: rgba(255, 255, 255, 0.7) !important;
-          }
-          
-          /* Active/Selected State - Blue highlight */
-          .ant-menu-light .ant-menu-item-selected,
-          .ant-menu-dark .ant-menu-item-selected {
-            background: #3B82F6 !important;
-            color: #fff !important;
-            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3) !important;
-            font-weight: 500;
-          }
-          
-          /* Force icon and text to white when selected */
-          .ant-menu-light .ant-menu-item-selected .ant-menu-item-icon,
-          .ant-menu-light .ant-menu-item-selected a,
-          .ant-menu-light .ant-menu-item-selected span,
-          .ant-menu-dark .ant-menu-item-selected .ant-menu-item-icon,
-          .ant-menu-dark .ant-menu-item-selected a,
-          .ant-menu-dark .ant-menu-item-selected span { 
-            color: #fff !important; 
-          }
+  // Close mobile drawer on navigation
+  useEffect(() => {
+    if (isMobile) setMobileDrawerOpen(false);
+  }, [location.pathname]);
 
-          /* Hover State */
-          .ant-menu-light .ant-menu-item:hover:not(.ant-menu-item-selected),
-          .ant-menu-dark .ant-menu-item:hover:not(.ant-menu-item-selected) {
-            color: #fff !important;
-            background: rgba(255, 255, 255, 0.1) !important;
-            transform: translateX(4px);
-          }
-          
-          .ant-menu-light .ant-menu-submenu-title:hover,
-          .ant-menu-dark .ant-menu-submenu-title:hover {
-            color: #fff !important;
-            background: rgba(255, 255, 255, 0.1) !important;
-          }
-          
-          .ant-menu-sub {
-            background: rgba(0, 0, 0, 0.2) !important;
-          }
-          
-          /* Submenu arrow color */
-          .ant-menu-submenu-arrow::before,
-          .ant-menu-submenu-arrow::after {
-            background: rgba(255, 255, 255, 0.7) !important;
-          }
-          
-          /* Menu icons */
-          .ant-menu-item .anticon,
-          .ant-menu-submenu-title .anticon {
-            color: rgba(255, 255, 255, 0.7) !important;
-          }
-          
-          .ant-menu-item-selected .anticon {
-            color: #fff !important;
-          }
-        `}</style>
+  // Shared sidebar content (used in both Sider and Drawer)
+  const sidebarInlineStyles = `
+    .ant-layout-sider {
+      background: #1E3A5F !important;
+      border-right: none;
+    }
+    .ant-menu {
+      background: transparent !important;
+      border-inline-end: none !important;
+    }
+    .ant-menu-light .ant-menu-item,
+    .ant-menu-dark .ant-menu-item {
+      margin: 4px 12px !important;
+      border-radius: 8px !important;
+      width: calc(100% - 24px) !important;
+      transition: all 0.3s ease;
+      color: rgba(255, 255, 255, 0.7) !important;
+    }
+    .ant-menu-light .ant-menu-submenu-title,
+    .ant-menu-dark .ant-menu-submenu-title {
+      margin: 4px 12px !important;
+      border-radius: 8px !important;
+      width: calc(100% - 24px) !important;
+      color: rgba(255, 255, 255, 0.7) !important;
+    }
+    .ant-menu-light .ant-menu-item-selected,
+    .ant-menu-dark .ant-menu-item-selected {
+      background: #3B82F6 !important;
+      color: #fff !important;
+      box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3) !important;
+      font-weight: 500;
+    }
+    .ant-menu-light .ant-menu-item-selected .ant-menu-item-icon,
+    .ant-menu-light .ant-menu-item-selected a,
+    .ant-menu-light .ant-menu-item-selected span,
+    .ant-menu-dark .ant-menu-item-selected .ant-menu-item-icon,
+    .ant-menu-dark .ant-menu-item-selected a,
+    .ant-menu-dark .ant-menu-item-selected span { 
+      color: #fff !important; 
+    }
+    .ant-menu-light .ant-menu-item:hover:not(.ant-menu-item-selected),
+    .ant-menu-dark .ant-menu-item:hover:not(.ant-menu-item-selected) {
+      color: #fff !important;
+      background: rgba(255, 255, 255, 0.1) !important;
+      transform: translateX(4px);
+    }
+    .ant-menu-light .ant-menu-submenu-title:hover,
+    .ant-menu-dark .ant-menu-submenu-title:hover {
+      color: #fff !important;
+      background: rgba(255, 255, 255, 0.1) !important;
+    }
+    .ant-menu-sub {
+      background: rgba(0, 0, 0, 0.2) !important;
+    }
+    .ant-menu-submenu-arrow::before,
+    .ant-menu-submenu-arrow::after {
+      background: rgba(255, 255, 255, 0.7) !important;
+    }
+    .ant-menu-item .anticon,
+    .ant-menu-submenu-title .anticon {
+      color: rgba(255, 255, 255, 0.7) !important;
+    }
+    .ant-menu-item-selected .anticon {
+      color: #fff !important;
+    }
+  `;
 
-        {/* Sidebar Header with Hamburger */}
-        <div style={{ 
-          display: 'flex', 
-          alignItems: 'center', 
-          justifyContent: collapsed ? 'center' : 'space-between',
-          padding: collapsed ? '16px 8px' : '16px',
-          borderBottom: '1px solid rgba(255, 255, 255, 0.1)'
-        }}>
-          {!collapsed && (
-            <Title
-              level={4}
-              style={{ margin: 0, color: '#ffffff', maxWidth: 180, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}
-            >
-              {displayOrgName}
-            </Title>
-          )}
+  const sidebarHeaderContent = (
+    <>
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: collapsed && !isMobile ? 'center' : 'space-between',
+        padding: collapsed && !isMobile ? '16px 8px' : '16px',
+        borderBottom: '1px solid rgba(255, 255, 255, 0.1)'
+      }}>
+        {(!collapsed || isMobile) && (
+          <Title
+            level={4}
+            style={{ margin: 0, color: '#ffffff', maxWidth: 180, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}
+          >
+            {displayOrgName}
+          </Title>
+        )}
+        {!isMobile && (
           <Button
             type="text"
             icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
             onClick={() => setCollapsed(!collapsed)}
-            style={{
-              fontSize: '16px',
-              color: 'rgba(255, 255, 255, 0.8)',
-              width: 32,
-              height: 32,
-            }}
+            style={{ fontSize: '16px', color: 'rgba(255, 255, 255, 0.8)', width: 32, height: 32 }}
           />
-        </div>
-
-        {!collapsed && (
-          <OrganizationInfo>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-              <span style={{ fontSize: '12px', color: 'rgba(255, 255, 255, 0.7)' }}>{displayUsers}/{displayMaxUsers} users</span>
-              {(isSuperAdmin || isAdmin) && (
-                <Badge
-                  count={displayPlan}
-                  style={{ backgroundColor: '#10B981', fontSize: '10px' }}
-                />
-              )}
-            </div>
-            <div style={{ fontSize: '12px', color: '#3B82F6', fontWeight: 500 }}>
-              {role === 'super_admin' ? 'PLATFORM ADMIN' : role.toUpperCase()}
-            </div>
-          </OrganizationInfo>
         )}
+      </div>
 
-        <Menu
-          theme="light"
-          mode="inline"
-          selectedKeys={activeKey ? [activeKey] : []}
-          onClick={(info) => {
-            // Find item in menuItems or in children (including nested children)
-            let targetItem: any = menuItems.find(mi => mi.key === info.key);
-            if (!targetItem) {
-              // Check in children
-              for (const item of menuItems) {
-                if ((item as any).children) {
-                  targetItem = (item as any).children.find((child: any) => child.key === info.key);
-                  if (targetItem) break;
-                  // Check in nested children
-                  for (const child of (item as any).children) {
-                    if ((child as any).children) {
-                      targetItem = (child as any).children.find((grandchild: any) => grandchild.key === info.key);
-                      if (targetItem) break;
-                    }
-                  }
-                  if (targetItem) break;
-                }
-              }
+      {(!collapsed || isMobile) && (
+        <OrganizationInfo>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+            <span style={{ fontSize: '12px', color: 'rgba(255, 255, 255, 0.7)' }}>{displayUsers}/{displayMaxUsers} users</span>
+            {(isSuperAdmin || isAdmin) && (
+              <Badge
+                count={displayPlan}
+                style={{ backgroundColor: '#10B981', fontSize: '10px' }}
+              />
+            )}
+          </div>
+          <div style={{ fontSize: '12px', color: '#3B82F6', fontWeight: 500 }}>
+            {role === 'super_admin' ? 'PLATFORM ADMIN' : role.toUpperCase()}
+          </div>
+        </OrganizationInfo>
+      )}
+    </>
+  );
+
+  const menuOnClick = (info: any) => {
+    // Find item in menuItems or in children (including nested children)
+    let targetItem: any = menuItems.find(mi => mi.key === info.key);
+    if (!targetItem) {
+      for (const item of menuItems) {
+        if ((item as any).children) {
+          targetItem = (item as any).children.find((child: any) => child.key === info.key);
+          if (targetItem) break;
+          for (const child of (item as any).children) {
+            if ((child as any).children) {
+              targetItem = (child as any).children.find((grandchild: any) => grandchild.key === info.key);
+              if (targetItem) break;
             }
-            if (targetItem && targetItem.path) navigate(targetItem.path);
-          }}
-          items={menuItems.map(item => ({
-            key: item.key,
-            icon: item.icon,
-            label: <span title={item.label}>{item.label}</span>,
-            children: (item as any).children?.map((child: any) => ({
-              key: child.key,
-              label: <span title={child.label}>{child.label}</span>,
-              children: (child as any).children?.map((grandchild: any) => ({
-                key: grandchild.key,
-                label: <span title={grandchild.label}>{grandchild.label}</span>,
-              })),
-            })),
-          }))}
-        />
-      </Sider>
+          }
+          if (targetItem) break;
+        }
+      }
+    }
+    if (targetItem && targetItem.path) navigate(targetItem.path);
+  };
+
+  const menuItemsMapped = menuItems.map(item => ({
+    key: item.key,
+    icon: item.icon,
+    label: <span title={item.label}>{item.label}</span>,
+    children: (item as any).children?.map((child: any) => ({
+      key: child.key,
+      label: <span title={child.label}>{child.label}</span>,
+      children: (child as any).children?.map((grandchild: any) => ({
+        key: grandchild.key,
+        label: <span title={grandchild.label}>{grandchild.label}</span>,
+      })),
+    })),
+  }));
+
+  return (
+    <StyledLayout className="app-layout">
+      {/* Mobile Drawer */}
+      {isMobile && (
+        <Drawer
+          placement="left"
+          width={280}
+          open={mobileDrawerOpen}
+          onClose={() => setMobileDrawerOpen(false)}
+          styles={{ body: { padding: 0, background: '#1E3A5F' }, header: { display: 'none' } }}
+        >
+          <style>{sidebarInlineStyles}</style>
+          {sidebarHeaderContent}
+          <Menu
+            theme="light"
+            mode="inline"
+            selectedKeys={activeKey ? [activeKey] : []}
+            onClick={menuOnClick}
+            items={menuItemsMapped}
+          />
+        </Drawer>
+      )}
+
+      {/* Desktop Sider */}
+      {!isMobile && (
+        <Sider
+          trigger={null}
+          collapsible
+          collapsed={collapsed}
+          width={280}
+          theme="light"
+          breakpoint="lg"
+          collapsedWidth={60}
+          onBreakpoint={(broken) => { if (broken) setCollapsed(true); }}
+        >
+          <style>{sidebarInlineStyles}</style>
+          {sidebarHeaderContent}
+          <Menu
+            theme="light"
+            mode="inline"
+            selectedKeys={activeKey ? [activeKey] : []}
+            onClick={menuOnClick}
+            items={menuItemsMapped}
+          />
+        </Sider>
+      )}
 
       <Layout>
         <StyledHeader>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            {/* Breadcrumb placeholder - actual breadcrumb below */}
+            {isMobile && (
+              <Button
+                type="text"
+                icon={<MenuUnfoldOutlined />}
+                onClick={() => setMobileDrawerOpen(true)}
+                style={{ fontSize: '20px', color: '#1E3A5F', width: 40, height: 40 }}
+              />
+            )}
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             {((user as any)?.availableLocations?.length > 0 || (user as any)?.availableBranches?.length > 0) && (
@@ -1706,8 +1746,8 @@ const SaaSLayout: React.FC<{ children?: React.ReactNode }> = ({ children }) => {
           <Breadcrumb
             items={generateBreadcrumbs(location.pathname).map(item => ({
               title: item.path ? (
-                <span 
-                  style={{ cursor: 'pointer', color: '#3B82F6' }} 
+                <span
+                  style={{ cursor: 'pointer', color: '#3B82F6' }}
                   onClick={() => item.path && navigate(item.path)}
                 >
                   {item.title}

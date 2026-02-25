@@ -41,6 +41,7 @@ import styled from 'styled-components';
 import { Patient } from '../../types/patient';
 import patientService from '../../services/patientService';
 import { debounce } from 'lodash';
+import { exportToCSV } from '../../utils/exportCSV';
 
 const { Title, Text } = Typography;
 const { Search } = Input;
@@ -318,6 +319,23 @@ const PatientList: React.FC = () => {
       document.body.removeChild(a);
     } catch (error) {
       console.error('Error exporting patients:', error);
+      // Fallback: use client-side CSV export from currently loaded data
+      if (format === 'csv' && state.data.length > 0) {
+        exportToCSV(state.data, [
+          { header: 'First Name', key: 'firstName' },
+          { header: 'Last Name', key: 'lastName' },
+          { header: 'Email', key: 'email' },
+          { header: 'Phone', key: 'phone' },
+          { header: 'Gender', key: 'gender' },
+          { header: 'Blood Group', key: 'bloodGroup' },
+          { header: 'Date of Birth', key: 'dateOfBirth' },
+          { header: 'Status', key: 'status', formatter: (val: any, rec: any) => val || (rec.isActive ? 'Active' : 'Inactive') },
+          { header: 'Last Visit', key: 'lastVisit' },
+        ], 'patients');
+        message.success('Patients exported to CSV (client-side)');
+      } else {
+        message.error('Failed to export patients');
+      }
     }
   };
 
