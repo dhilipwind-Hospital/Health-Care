@@ -1,5 +1,5 @@
-import React, { useEffect } from 'react';
-import { Card, Row, Col, Statistic, Typography, Table, Tag, Button, Empty, message } from 'antd';
+import React, { useEffect, lazy, Suspense } from 'react';
+import { Card, Row, Col, Statistic, Typography, Table, Tag, Button, Empty, message, Spin } from 'antd';
 import {
   UserOutlined,
   CalendarOutlined,
@@ -13,7 +13,7 @@ import { useSelectedBranch } from '../hooks/useSelectedBranch';
 import styled from 'styled-components';
 import { useOrganizationData } from '../hooks/useOrganizationData';
 
-import PremiumDashboard from './PremiumDashboard';
+const PremiumDashboard = lazy(() => import('./PremiumDashboard'));
 
 const { Title } = Typography;
 
@@ -427,7 +427,11 @@ const Dashboard: React.FC = () => {
   // Show Premium Dashboard for all admins (including super_admin fallback if header not caught)
   // Super Admins will see data from the first active organization (set by tenant middleware)
   if (isAdmin && !orgLoading) {
-    return <PremiumDashboard />;
+    return (
+      <Suspense fallback={<div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}><Spin size="large" /></div>}>
+        <PremiumDashboard />
+      </Suspense>
+    );
   }
 
   // For doctors and other roles, show the original dashboard
