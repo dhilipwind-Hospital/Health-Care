@@ -257,8 +257,9 @@ const BookAppointmentStepper: React.FC = () => {
     }
 
     const service = matchingService;
-    if (!service) {
-      messageApi.error('No service available. Please contact administrator.');
+    if (!service || !service.id) {
+      console.error('No matching service found for doctor:', selectedDoctor);
+      messageApi.error('No service available for this doctor. Please try another doctor or contact support.');
       return;
     }
 
@@ -282,6 +283,8 @@ const BookAppointmentStepper: React.FC = () => {
         },
       };
 
+      console.log('Booking payload:', payload);
+
       const response = await api.post('/appointments', payload);
 
       setBookingDetails({
@@ -293,8 +296,15 @@ const BookAppointmentStepper: React.FC = () => {
         confirmationId: response.data?.id || 'N/A',
       });
       setShowSuccess(true);
+      
+      // Refresh appointments list after successful booking
+      setTimeout(() => {
+        navigate('/appointments');
+      }, 2000);
     } catch (error: any) {
-      messageApi.error(error?.response?.data?.message || 'Failed to book appointment');
+      console.error('Booking error:', error?.response?.data || error);
+      const errorMsg = error?.response?.data?.message || error?.response?.data?.error || 'Failed to book appointment';
+      messageApi.error(errorMsg);
     } finally {
       setSubmitting(false);
     }
