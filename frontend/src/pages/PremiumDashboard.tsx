@@ -1626,9 +1626,9 @@ const PremiumDashboard: React.FC = () => {
                   dataIndex: 'firstName',
                   render: (_, record: any) => (
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                      <Avatar src={record.profilePicture} style={{ backgroundColor: '#fdedef', color: '#10B981' }}>{record.firstName[0]}</Avatar>
+                      <Avatar src={record.profilePicture} style={{ backgroundColor: '#fdedef', color: '#10B981' }}>{record.firstName?.[0] || 'D'}</Avatar>
                       <div>
-                        <Typography.Text strong style={{ display: 'block' }}>Dr. {record.firstName} {record.lastName}</Typography.Text>
+                        <Typography.Text strong style={{ display: 'block' }}>Dr. {record.firstName || ''} {record.lastName || ''}</Typography.Text>
                         <Typography.Text type="secondary" style={{ fontSize: 11 }}>{record.specialization || 'General'}</Typography.Text>
                       </div>
                     </div>

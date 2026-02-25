@@ -1,4 +1,4 @@
-import React, { useEffect, lazy, Suspense } from 'react';
+import React, { useEffect } from 'react';
 import { Card, Row, Col, Statistic, Typography, Table, Tag, Button, Empty, message, Spin } from 'antd';
 import {
   UserOutlined,
@@ -12,8 +12,7 @@ import api from '../services/api';
 import { useSelectedBranch } from '../hooks/useSelectedBranch';
 import styled from 'styled-components';
 import { useOrganizationData } from '../hooks/useOrganizationData';
-
-const PremiumDashboard = lazy(() => import('./PremiumDashboard'));
+import PremiumDashboard from './PremiumDashboard';
 
 const { Title } = Typography;
 
@@ -427,11 +426,7 @@ const Dashboard: React.FC = () => {
   // Show Premium Dashboard for all admins (including super_admin fallback if header not caught)
   // Super Admins will see data from the first active organization (set by tenant middleware)
   if (isAdmin && !orgLoading) {
-    return (
-      <Suspense fallback={<div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}><Spin size="large" /></div>}>
-        <PremiumDashboard />
-      </Suspense>
-    );
+    return <PremiumDashboard />;
   }
 
   // For doctors and other roles, show the original dashboard
