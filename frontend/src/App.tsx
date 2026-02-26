@@ -257,8 +257,7 @@ const App: React.FC = () => {
       ),
       children: [
         // Public
-        { path: '/landing', element: <PublicLayout><HomeReference /></PublicLayout> },
-        { path: '/saas', element: <SaaSLanding /> },
+        { path: '/landing', element: <SaaSLanding /> },
         { path: '/signup', element: <OrganizationSignup /> },
         { path: '/home', element: <PublicLayout><HomeReference /></PublicLayout> },
         { path: '/about', element: <PublicLayout><About /></PublicLayout> },
