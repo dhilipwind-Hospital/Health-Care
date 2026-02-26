@@ -603,12 +603,341 @@ const SaaSLayout: React.FC<{ children?: React.ReactNode }> = ({ children }) => {
     }
 
     // =================================================================
-    // STANDARD USER MENU (Original Logic for non-SuperAdmin)
+    // LAB TECHNICIAN MENU
+    // =================================================================
+    if (isLabTech && !isAdmin) {
+      items.push({
+        key: 'lab-dashboard',
+        icon: <DashboardOutlined />,
+        label: 'Lab Dashboard',
+        path: '/laboratory/dashboard',
+      });
+      items.push({
+        key: 'sample-collection',
+        icon: <ExperimentOutlined />,
+        label: 'Sample Collection',
+        path: '/laboratory/sample-collection',
+      });
+      items.push({
+        key: 'results-entry',
+        icon: <FileTextOutlined />,
+        label: 'Results Entry',
+        path: '/laboratory/results-entry',
+      });
+      items.push({
+        key: 'lab-results',
+        icon: <BarChartOutlined />,
+        label: 'View Results',
+        path: '/laboratory/results',
+      });
+      items.push({
+        key: 'radiology',
+        icon: <ExperimentOutlined />,
+        label: 'Radiology',
+        path: '/radiology',
+      });
+      items.push({
+        key: 'blood-bank',
+        icon: <HeartOutlined />,
+        label: 'Blood Bank',
+        path: '/blood-bank',
+      });
+      items.push({
+        key: 'settings',
+        icon: <SettingOutlined />,
+        label: 'Settings',
+        path: '/settings',
+      });
+      return items;
+    }
+
+    // =================================================================
+    // ACCOUNTANT MENU
+    // =================================================================
+    if (isAccountant && !isAdmin) {
+      items.push({
+        key: 'finance-dashboard',
+        icon: <DashboardOutlined />,
+        label: 'Finance Dashboard',
+        path: '/',
+      });
+      items.push({
+        key: 'billing-management',
+        icon: <DollarOutlined />,
+        label: 'Billing Management',
+        path: '/billing/management',
+      });
+      items.push({
+        key: 'billing-enhanced',
+        icon: <CrownOutlined />,
+        label: 'Packages & Deposits',
+        path: '/billing/enhanced',
+      });
+      items.push({
+        key: 'revenue-analytics',
+        icon: <BarChartOutlined />,
+        label: 'Revenue Analytics',
+        path: '/billing/analytics',
+      });
+      items.push({
+        key: 'payment-processing',
+        icon: <BankOutlined />,
+        label: 'Payment Processing',
+        path: '/billing/payments',
+      });
+      items.push({
+        key: 'insurance-tpa',
+        icon: <SafetyOutlined />,
+        label: 'Insurance / TPA',
+        path: '/insurance-tpa',
+      });
+      items.push({
+        key: 'reports',
+        icon: <FileTextOutlined />,
+        label: 'Financial Reports',
+        path: '/reports',
+      });
+      items.push({
+        key: 'settings',
+        icon: <SettingOutlined />,
+        label: 'Settings',
+        path: '/settings',
+      });
+      return items;
+    }
+
+    // =================================================================
+    // PATIENT MENU
+    // =================================================================
+    if (isPatient) {
+      items.push({
+        key: 'patient-dashboard',
+        icon: <DashboardOutlined />,
+        label: 'My Dashboard',
+        path: '/portal',
+      });
+      items.push({
+        key: 'my-appointments',
+        icon: <CalendarOutlined />,
+        label: 'My Appointments',
+        path: '/appointments',
+      });
+      items.push({
+        key: 'book-appointment',
+        icon: <ScheduleOutlined />,
+        label: 'Book Appointment',
+        path: '/appointments/new',
+      });
+      items.push({
+        key: 'my-records',
+        icon: <FileTextOutlined />,
+        label: 'Medical Records',
+        path: '/records',
+      });
+      items.push({
+        key: 'my-prescriptions',
+        icon: <MedicineBoxOutlined />,
+        label: 'Prescriptions',
+        path: '/portal/prescriptions',
+      });
+      items.push({
+        key: 'my-bills',
+        icon: <DollarOutlined />,
+        label: 'My Bills',
+        path: '/portal/bills',
+      });
+      items.push({
+        key: 'telemedicine',
+        icon: <VideoCameraOutlined />,
+        label: 'Telemedicine',
+        path: '/telemedicine',
+      });
+      items.push({
+        key: 'messages',
+        icon: <MessageOutlined />,
+        label: 'Messages',
+        path: '/communication/messages',
+      });
+      items.push({
+        key: 'settings',
+        icon: <SettingOutlined />,
+        label: 'Settings',
+        path: '/settings',
+      });
+      return items;
+    }
+
+    // =================================================================
+    // ORGANIZATION ADMIN MENU (Clean Grouped Structure)
+    // =================================================================
+    if (isAdmin && !isSuperAdmin) {
+      // 1. Dashboard
+      items.push({
+        key: 'dashboard',
+        icon: <DashboardOutlined />,
+        label: 'Dashboard',
+        path: '/',
+      });
+
+      // 2. Patient Management
+      items.push({
+        key: 'patient-management',
+        icon: <UserOutlined />,
+        label: 'Patients',
+        children: [
+          { key: 'patients-list', label: 'All Patients', path: '/patients' },
+          { key: 'patient-registration', label: 'New Patient', path: '/patients/new' },
+        ],
+      });
+
+      // 3. Appointments
+      items.push({
+        key: 'appointments',
+        icon: <CalendarOutlined />,
+        label: 'Appointments',
+        children: [
+          { key: 'appointments-list', label: 'View Appointments', path: '/appointments' },
+          { key: 'book-appointment', label: 'Book Appointment', path: '/appointments/new' },
+          { key: 'all-appointments', label: 'All Appointments', path: '/admin/appointments' },
+        ],
+      });
+
+      // 4. Clinical Operations
+      items.push({
+        key: 'clinical-ops',
+        icon: <HeartOutlined />,
+        label: 'Clinical',
+        children: [
+          { key: 'medical-records', label: 'Medical Records', path: '/records' },
+          { key: 'telemedicine', label: 'Telemedicine', path: '/telemedicine' },
+          { key: 'physiotherapy', label: 'Physiotherapy', path: '/physiotherapy' },
+          { key: 'diet-management', label: 'Diet Management', path: '/diet' },
+        ],
+      });
+
+      // 5. Queue Management
+      items.push({
+        key: 'queue',
+        icon: <AlertOutlined />,
+        label: 'Queue',
+        children: [
+          { key: 'queue-reception', label: 'Reception Queue', path: '/queue/reception' },
+          { key: 'queue-triage', label: 'Triage Station', path: '/queue/triage' },
+        ],
+      });
+
+      // 6. Inpatient & Operations
+      items.push({
+        key: 'operations',
+        icon: <LayoutOutlined />,
+        label: 'Operations',
+        children: [
+          { key: 'inpatient-wards', label: 'Ward Overview', path: '/inpatient/wards' },
+          { key: 'inpatient-beds', label: 'Bed Management', path: '/inpatient/beds' },
+          { key: 'inpatient-admissions', label: 'Admissions', path: '/inpatient/admissions/new' },
+          { key: 'ot-management', label: 'OT Management', path: '/admin/ot' },
+          { key: 'ambulance', label: 'Ambulance', path: '/admin/ambulance-advanced' },
+          { key: 'dialysis', label: 'Dialysis', path: '/dialysis' },
+        ],
+      });
+
+      // 7. Diagnostics
+      items.push({
+        key: 'diagnostics',
+        icon: <ExperimentOutlined />,
+        label: 'Diagnostics',
+        children: [
+          { key: 'laboratory', label: 'Laboratory', path: '/laboratory/dashboard' },
+          { key: 'pharmacy', label: 'Pharmacy', path: '/pharmacy' },
+          { key: 'radiology', label: 'Radiology', path: '/radiology' },
+          { key: 'blood-bank', label: 'Blood Bank', path: '/blood-bank' },
+        ],
+      });
+
+      // 8. Billing & Finance
+      items.push({
+        key: 'billing',
+        icon: <DollarOutlined />,
+        label: 'Billing & Finance',
+        children: [
+          { key: 'billing-management', label: 'Billing Management', path: '/billing/management' },
+          { key: 'billing-enhanced', label: 'Packages & Deposits', path: '/billing/enhanced' },
+          { key: 'revenue-analytics', label: 'Revenue Analytics', path: '/billing/analytics' },
+          { key: 'insurance-tpa', label: 'Insurance / TPA', path: '/insurance-tpa' },
+        ],
+      });
+
+      // 9. Records & Compliance
+      items.push({
+        key: 'compliance',
+        icon: <SafetyOutlined />,
+        label: 'Compliance',
+        children: [
+          { key: 'death-certificates', label: 'Death Certificates', path: '/death-certificates' },
+          { key: 'birth-registers', label: 'Birth Register', path: '/birth-registers' },
+          { key: 'consent', label: 'Consent Management', path: '/consent' },
+          { key: 'mlc', label: 'MLC (Medico-Legal)', path: '/mlc' },
+          { key: 'abha', label: 'ABHA / ABDM', path: '/abha' },
+          { key: 'pcpndt', label: 'PCPNDT Form F', path: '/pcpndt' },
+        ],
+      });
+
+      // 10. Reports
+      items.push({
+        key: 'reports',
+        icon: <BarChartOutlined />,
+        label: 'Reports',
+        path: '/reports',
+      });
+
+      // 11. Administration
+      items.push({
+        key: 'administration',
+        icon: <TeamOutlined />,
+        label: 'Administration',
+        children: [
+          { key: 'manage-users', label: 'Manage Users', path: '/admin/users' },
+          { key: 'roles-permissions', label: 'Roles & Permissions', path: '/admin/roles' },
+          { key: 'manage-doctors', label: 'Manage Doctors', path: '/admin/doctors' },
+          { key: 'manage-departments', label: 'Departments', path: '/admin/departments' },
+          { key: 'manage-services', label: 'Services', path: '/admin/services' },
+          { key: 'staff-management', label: 'Staff Management', path: '/admin/staff' },
+          { key: 'locations', label: 'Locations', path: '/admin/locations' },
+          { key: 'duty-roster', label: 'Duty Roster', path: '/duty-roster' },
+        ],
+      });
+
+      // 12. Communication
+      items.push({
+        key: 'communication',
+        icon: <MessageOutlined />,
+        label: 'Communication',
+        children: [
+          { key: 'messages', label: 'Messages', path: '/communication/messages' },
+          { key: 'reminders', label: 'Reminders', path: '/communication/reminders' },
+          { key: 'appointment-reminders', label: 'Appointment Reminders', path: '/communication/appointment-reminders' },
+          { key: 'feedback', label: 'Feedback', path: '/communication/feedback' },
+        ],
+      });
+
+      // 13. Settings
+      items.push({
+        key: 'settings',
+        icon: <SettingOutlined />,
+        label: 'Settings',
+        path: '/settings',
+      });
+
+      return items;
+    }
+
+    // =================================================================
+    // STANDARD USER MENU (Fallback for any other roles)
     // =================================================================
 
     // For established organizations or non-admin users, show full menu
     // Dashboard - show for doctors, nurses, and other staff
-    if (isAdmin || isDoctor || isNurse || isReceptionist || isPharmacist || isLabTech || isAccountant) {
+    if (isDoctor || isNurse || isReceptionist || isPharmacist || isLabTech || isAccountant) {
       items.push({
         key: 'dashboard',
         icon: <DashboardOutlined />,
