@@ -425,6 +425,14 @@ const SaaSLayout: React.FC<{ children?: React.ReactNode }> = ({ children }) => {
         ],
       });
 
+      // 10. Settings
+      items.push({
+        key: 'settings',
+        icon: <SettingOutlined />,
+        label: 'Settings',
+        path: '/settings',
+      });
+
       return items;
     }
 
@@ -1343,6 +1351,13 @@ const SaaSLayout: React.FC<{ children?: React.ReactNode }> = ({ children }) => {
       return 'inpatient-management';
     }
     if (p.startsWith('/telemedicine')) return 'telemedicine';
+    if (p.startsWith('/assets')) return 'asset-management';
+    if (p.startsWith('/diet')) return 'diet-management';
+    if (p.startsWith('/physiotherapy')) return 'physiotherapy';
+    if (p.startsWith('/abha')) return 'abha';
+    if (p.startsWith('/pcpndt')) return 'pcpndt';
+    if (p.startsWith('/insurance-tpa')) return 'insurance-tpa';
+    if (p.startsWith('/medical-records-digitization')) return 'medical-records-digitization';
     if (p.startsWith('/billing')) {
       if (p.includes('/enhanced')) return 'billing-enhanced';
       if (p.includes('/management')) return 'billing-management';
@@ -1537,6 +1552,33 @@ const SaaSLayout: React.FC<{ children?: React.ReactNode }> = ({ children }) => {
     })),
   }));
 
+  const logoutFooter = (
+    <div
+      onClick={logout}
+      style={{
+        position: 'sticky',
+        bottom: 0,
+        width: '100%',
+        padding: collapsed ? '12px 0' : '12px 16px',
+        borderTop: '1px solid rgba(255,255,255,0.1)',
+        background: '#1a3352',
+        display: 'flex',
+        alignItems: 'center',
+        gap: 10,
+        cursor: 'pointer',
+        color: 'rgba(255,255,255,0.7)',
+        fontSize: 14,
+        transition: 'all 0.2s',
+        justifyContent: collapsed ? 'center' : 'flex-start',
+      }}
+      onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = '#ff4d4f'; (e.currentTarget as HTMLElement).style.background = 'rgba(255,77,79,0.08)'; }}
+      onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = 'rgba(255,255,255,0.7)'; (e.currentTarget as HTMLElement).style.background = '#1a3352'; }}
+    >
+      <LogoutOutlined style={{ fontSize: 16 }} />
+      {!collapsed && <span>Logout</span>}
+    </div>
+  );
+
   return (
     <StyledLayout className="app-layout">
       {/* Mobile Drawer */}
@@ -1546,17 +1588,20 @@ const SaaSLayout: React.FC<{ children?: React.ReactNode }> = ({ children }) => {
           width={280}
           open={mobileDrawerOpen}
           onClose={() => setMobileDrawerOpen(false)}
-          styles={{ body: { padding: 0, background: '#1E3A5F' }, header: { display: 'none' } }}
+          styles={{ body: { padding: 0, background: '#1E3A5F', display: 'flex', flexDirection: 'column', height: '100%' }, header: { display: 'none' } }}
         >
           <style>{sidebarInlineStyles}</style>
           {sidebarHeaderContent}
-          <Menu
-            theme="light"
-            mode="inline"
-            selectedKeys={activeKey ? [activeKey] : []}
-            onClick={menuOnClick}
-            items={menuItemsMapped}
-          />
+          <div style={{ flex: 1, overflowY: 'auto' }}>
+            <Menu
+              theme="light"
+              mode="inline"
+              selectedKeys={activeKey ? [activeKey] : []}
+              onClick={() => setMobileDrawerOpen(false)}
+              items={menuItemsMapped}
+            />
+          </div>
+          {logoutFooter}
         </Drawer>
       )}
 
@@ -1571,16 +1616,20 @@ const SaaSLayout: React.FC<{ children?: React.ReactNode }> = ({ children }) => {
           breakpoint="lg"
           collapsedWidth={60}
           onBreakpoint={(broken) => { if (broken) setCollapsed(true); }}
+          style={{ display: 'flex', flexDirection: 'column' }}
         >
           <style>{sidebarInlineStyles}</style>
           {sidebarHeaderContent}
-          <Menu
-            theme="light"
-            mode="inline"
-            selectedKeys={activeKey ? [activeKey] : []}
-            onClick={menuOnClick}
-            items={menuItemsMapped}
-          />
+          <div style={{ flex: 1, overflowY: 'auto' }}>
+            <Menu
+              theme="light"
+              mode="inline"
+              selectedKeys={activeKey ? [activeKey] : []}
+              onClick={menuOnClick}
+              items={menuItemsMapped}
+            />
+          </div>
+          {logoutFooter}
         </Sider>
       )}
 
@@ -1686,13 +1735,7 @@ const SaaSLayout: React.FC<{ children?: React.ReactNode }> = ({ children }) => {
                 </Button>
               </Dropdown>
             )}
-            {/* Header Icons - Clean outlined style */}
-            <NotificationBell />
-            <Button
-              type="text"
-              icon={<SettingOutlined style={{ color: '#3B82F6' }} />}
-              onClick={() => navigate('/settings')}
-            />
+            {/* Header: only avatar remains - icons moved to sidebar */}
             <Dropdown menu={userMenu} placement="bottomRight">
               <Space style={{ cursor: 'pointer' }}>
                 <Avatar src={(user as any)?.profileImage} icon={<UserOutlined />} />
