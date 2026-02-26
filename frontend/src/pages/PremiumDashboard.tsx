@@ -985,8 +985,88 @@ const PremiumDashboard: React.FC = () => {
 
   if (loading) {
     return (
-      <DashboardWrapper style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <Spin size="large" />
+      <DashboardWrapper>
+        {/* Skeleton Header */}
+        <Header>
+          <HeaderLeft>
+            <div className="hospital-icon" style={{ background: '#e5e7eb' }}>🏥</div>
+            <div style={{ background: '#e5e7eb', height: 28, width: 200, borderRadius: 6, marginBottom: 8 }} />
+            <div style={{ background: '#f3f4f6', height: 14, width: 280, borderRadius: 4 }} />
+          </HeaderLeft>
+          <HeaderRight>
+            <div style={{ background: '#e5e7eb', height: 44, width: 120, borderRadius: 12 }} />
+            <div style={{ background: '#f3f4f6', height: 44, width: 100, borderRadius: 12 }} />
+          </HeaderRight>
+        </Header>
+
+        {/* Skeleton Nav Tabs */}
+        <div style={{ display: 'flex', gap: 8, marginBottom: 24 }}>
+          {[1, 2, 3, 4, 5].map(i => (
+            <div key={i} style={{ background: i === 1 ? '#10B981' : '#f3f4f6', height: 40, width: 100, borderRadius: 20 }} />
+          ))}
+        </div>
+
+        {/* Skeleton Stats Cards */}
+        <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
+          {[1, 2, 3, 4].map(i => (
+            <Col xs={24} sm={12} md={6} key={i}>
+              <div style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 16, padding: 20 }}>
+                <div style={{ background: '#f3f4f6', height: 16, width: 80, borderRadius: 4, marginBottom: 12 }} />
+                <div style={{ background: '#e5e7eb', height: 32, width: 60, borderRadius: 6, marginBottom: 8 }} />
+                <div style={{ background: '#f3f4f6', height: 12, width: 100, borderRadius: 4 }} />
+              </div>
+            </Col>
+          ))}
+        </Row>
+
+        {/* Skeleton Content Cards */}
+        <Row gutter={[16, 16]}>
+          <Col xs={24} lg={16}>
+            <div style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 16, padding: 20 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
+                <div style={{ background: '#e5e7eb', height: 20, width: 150, borderRadius: 4 }} />
+                <div style={{ background: '#f3f4f6', height: 16, width: 80, borderRadius: 4 }} />
+              </div>
+              {[1, 2, 3, 4].map(i => (
+                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 0', borderBottom: i < 4 ? '1px solid #f3f4f6' : 'none' }}>
+                  <div style={{ background: '#e5e7eb', height: 40, width: 40, borderRadius: 10 }} />
+                  <div style={{ flex: 1 }}>
+                    <div style={{ background: '#e5e7eb', height: 14, width: 120, borderRadius: 4, marginBottom: 6 }} />
+                    <div style={{ background: '#f3f4f6', height: 12, width: 80, borderRadius: 4 }} />
+                  </div>
+                  <div style={{ background: '#f3f4f6', height: 24, width: 70, borderRadius: 12 }} />
+                </div>
+              ))}
+            </div>
+          </Col>
+          <Col xs={24} lg={8}>
+            <div style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 16, padding: 20, marginBottom: 16 }}>
+              <div style={{ background: '#e5e7eb', height: 20, width: 120, borderRadius: 4, marginBottom: 16 }} />
+              {[1, 2, 3].map(i => (
+                <div key={i} style={{ marginBottom: 12 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
+                    <div style={{ background: '#f3f4f6', height: 12, width: 100, borderRadius: 4 }} />
+                    <div style={{ background: '#f3f4f6', height: 12, width: 40, borderRadius: 4 }} />
+                  </div>
+                  <div style={{ background: '#e5e7eb', height: 6, width: '100%', borderRadius: 3 }} />
+                </div>
+              ))}
+            </div>
+            <div style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 16, padding: 20 }}>
+              <div style={{ background: '#e5e7eb', height: 20, width: 100, borderRadius: 4, marginBottom: 16 }} />
+              {[1, 2, 3, 4].map(i => (
+                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 0', borderBottom: i < 4 ? '1px solid #f3f4f6' : 'none' }}>
+                  <div style={{ background: '#e5e7eb', height: 36, width: 36, borderRadius: '50%' }} />
+                  <div style={{ flex: 1 }}>
+                    <div style={{ background: '#e5e7eb', height: 13, width: 100, borderRadius: 4, marginBottom: 4 }} />
+                    <div style={{ background: '#f3f4f6', height: 11, width: 70, borderRadius: 4 }} />
+                  </div>
+                  <div style={{ background: '#4ade80', height: 8, width: 8, borderRadius: '50%' }} />
+                </div>
+              ))}
+            </div>
+          </Col>
+        </Row>
       </DashboardWrapper>
     );
   }

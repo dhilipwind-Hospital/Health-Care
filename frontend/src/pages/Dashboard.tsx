@@ -422,10 +422,10 @@ const Dashboard: React.FC = () => {
   // Super Admin Dashboard removed as per user request. 
   // Super Admins redirected to saas/organizations.
 
-
   // Show Premium Dashboard for all admins (including super_admin fallback if header not caught)
   // Super Admins will see data from the first active organization (set by tenant middleware)
-  if (isAdmin && !orgLoading) {
+  // Note: PremiumDashboard has its own loading skeleton, so we can render it immediately
+  if (isAdmin) {
     return <PremiumDashboard />;
   }
 
