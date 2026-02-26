@@ -296,10 +296,7 @@ const SaaSLayout: React.FC<{ children?: React.ReactNode }> = ({ children }) => {
     // SUPER ADMIN MENU (Platform Owner Structure)
     // =================================================================
     if (isSuperAdmin) {
-      // 1. Platform Core
-      // Dashboard removed as per user request
-
-
+      // 1. SaaS Management
       items.push({
         key: 'saas-management',
         icon: <CrownOutlined />,
@@ -308,24 +305,12 @@ const SaaSLayout: React.FC<{ children?: React.ReactNode }> = ({ children }) => {
           { key: 'organizations', label: 'Organizations', path: '/saas/organizations' },
           { key: 'subscriptions', label: 'Subscriptions', path: '/saas/subscriptions' },
           { key: 'audit-logs', label: 'Audit Logs', path: '/admin/logs' },
-
           { key: 'global-analytics', label: 'Global Analytics', path: '/saas/analytics' },
           { key: 'sales-leads', label: 'Sales Leads', path: '/admin/sales-leads' },
         ],
       });
 
-      items.push({
-        key: 'communication',
-        icon: <MessageOutlined />,
-        label: 'Communications',
-        children: [
-          { key: 'broadcast', label: 'Broadcast Alerts', path: '/communication/broadcast' }, // New Placeholder
-          { key: 'messages', label: 'Messages', path: '/communication/messages' },
-          { key: 'feedback', label: 'System Feedback', path: '/communication/feedback' },
-        ],
-      });
-
-      // 2. Global Administration
+      // 2. Global Admin
       items.push({
         key: 'administration',
         icon: <SettingOutlined />,
@@ -340,7 +325,7 @@ const SaaSLayout: React.FC<{ children?: React.ReactNode }> = ({ children }) => {
         ],
       });
 
-      // 3. Clinical Suite
+      // 3. Clinical Suite (Telemedicine, Physiotherapy, Diet Management grouped here)
       items.push({
         key: 'clinical-suite',
         icon: <HeartOutlined />,
@@ -351,10 +336,12 @@ const SaaSLayout: React.FC<{ children?: React.ReactNode }> = ({ children }) => {
           { key: 'patients', label: 'Patients', path: '/patients' },
           { key: 'telemedicine', label: 'Telemedicine', path: '/telemedicine' },
           { key: 'manage-services', label: 'Service Catalog', path: '/admin/services' },
+          { key: 'physiotherapy', label: 'Physiotherapy', path: '/physiotherapy' },
+          { key: 'diet-management', label: 'Diet Management', path: '/diet' },
         ],
       });
 
-      // 4. Operations Suite
+      // 4. Operations Suite (Asset Management grouped here)
       items.push({
         key: 'operations-suite',
         icon: <LayoutOutlined />,
@@ -365,10 +352,11 @@ const SaaSLayout: React.FC<{ children?: React.ReactNode }> = ({ children }) => {
           { key: 'dialysis-mgmt', label: 'Dialysis', path: '/dialysis' },
           { key: 'ambulance', label: 'Ambulance & EMS', path: '/admin/ambulance-advanced' },
           { key: 'queue', label: 'Queue Management', path: '/queue/reception' },
+          { key: 'asset-management', label: 'Asset Management', path: '/assets' },
         ],
       });
 
-      // 5. Diagnostics Suite
+      // 5. Diagnostics (Drug Register grouped here)
       items.push({
         key: 'diagnostic-suite',
         icon: <ExperimentOutlined />,
@@ -378,10 +366,11 @@ const SaaSLayout: React.FC<{ children?: React.ReactNode }> = ({ children }) => {
           { key: 'pharmacy', label: 'Pharmacy', path: '/pharmacy' },
           { key: 'radiology-mgmt', label: 'Radiology', path: '/radiology' },
           { key: 'blood-bank-mgmt', label: 'Blood Bank', path: '/blood-bank' },
+          { key: 'drug-register', label: 'Drug Register', path: '/pharmacy/drug-register' },
         ],
       });
 
-      // 6. Finance Suite
+      // 6. Finance (Insurance/TPA grouped here)
       items.push({
         key: 'finance-suite',
         icon: <DollarOutlined />,
@@ -390,11 +379,12 @@ const SaaSLayout: React.FC<{ children?: React.ReactNode }> = ({ children }) => {
           { key: 'billing', label: 'Billing & Invoices', path: '/billing/management' },
           { key: 'billing-enhanced', label: 'Packages & Deposits', path: '/billing/enhanced' },
           { key: 'insurance', label: 'Insurance Claims', path: '/insurance/claims' },
+          { key: 'insurance-tpa', label: 'Insurance / TPA', path: '/insurance-tpa' },
           { key: 'reports', label: 'Financial Reports', path: '/admin/reports' },
         ],
       });
 
-      // 7. Records & Certificates
+      // 7. Records & Certificates (ABHA, PCPNDT, Records Digitization grouped here)
       items.push({
         key: 'records-suite',
         icon: <FileTextOutlined />,
@@ -407,18 +397,13 @@ const SaaSLayout: React.FC<{ children?: React.ReactNode }> = ({ children }) => {
           { key: 'biomedical-waste', label: 'Biomedical Waste', path: '/biomedical-waste' },
           { key: 'incident-reports', label: 'Incident Reports', path: '/incident-reports' },
           { key: 'infection-control', label: 'Infection Control', path: '/infection-control' },
+          { key: 'abha', label: 'ABHA / ABDM', path: '/abha' },
+          { key: 'pcpndt', label: 'PCPNDT Form F', path: '/pcpndt' },
+          { key: 'medical-records-digitization', label: 'Records Digitization', path: '/medical-records-digitization' },
         ],
       });
 
-      // 8. Telemedicine
-      items.push({
-        key: 'telemedicine',
-        icon: <VideoCameraOutlined />,
-        label: 'Telemedicine',
-        path: '/telemedicine',
-      });
-
-      // 9. HR Management
+      // 8. HR Management
       items.push({
         key: 'hr-management',
         icon: <TeamOutlined />,
@@ -428,68 +413,16 @@ const SaaSLayout: React.FC<{ children?: React.ReactNode }> = ({ children }) => {
         ],
       });
 
-      // 10. Asset Management
+      // 9. Communications
       items.push({
-        key: 'asset-management',
-        icon: <ToolOutlined />,
-        label: 'Asset Management',
-        path: '/assets',
-      });
-
-      // 11. Diet Management
-      items.push({
-        key: 'diet-management',
-        icon: <CoffeeOutlined />,
-        label: 'Diet Management',
-        path: '/diet',
-      });
-
-      // 12. Drug Register (Pharmacy Compliance)
-      items.push({
-        key: 'drug-register',
-        icon: <MedicineBoxOutlined />,
-        label: 'Drug Register',
-        path: '/pharmacy/drug-register',
-      });
-
-      // 13. ABHA/ABDM Integration
-      items.push({
-        key: 'abha',
-        icon: <SafetyOutlined />,
-        label: 'ABHA / ABDM',
-        path: '/abha',
-      });
-
-      // 14. PCPNDT Form F
-      items.push({
-        key: 'pcpndt',
-        icon: <FileTextOutlined />,
-        label: 'PCPNDT Form F',
-        path: '/pcpndt',
-      });
-
-      // 15. Insurance/TPA
-      items.push({
-        key: 'insurance-tpa',
-        icon: <BankOutlined />,
-        label: 'Insurance / TPA',
-        path: '/insurance-tpa',
-      });
-
-      // 16. Physiotherapy
-      items.push({
-        key: 'physiotherapy',
-        icon: <MedicineBoxOutlined />,
-        label: 'Physiotherapy',
-        path: '/physiotherapy',
-      });
-
-      // 17. Medical Records Digitization
-      items.push({
-        key: 'medical-records-digitization',
-        icon: <FileTextOutlined />,
-        label: 'Records Digitization',
-        path: '/medical-records-digitization',
+        key: 'communication',
+        icon: <MessageOutlined />,
+        label: 'Communications',
+        children: [
+          { key: 'broadcast', label: 'Broadcast Alerts', path: '/communication/broadcast' },
+          { key: 'messages', label: 'Messages', path: '/communication/messages' },
+          { key: 'feedback', label: 'System Feedback', path: '/communication/feedback' },
+        ],
       });
 
       return items;
@@ -957,8 +890,8 @@ const SaaSLayout: React.FC<{ children?: React.ReactNode }> = ({ children }) => {
       });
     }
 
-    // Telemedicine - for doctors and admin only (patients don't have route access)
-    if (isDoctor || isAdmin) {
+    // Telemedicine - for doctors only (admin gets it via Clinical Suite group below)
+    if (isDoctor && !isAdmin) {
       items.push({
         key: 'telemedicine',
         icon: <VideoCameraOutlined />,
@@ -967,8 +900,72 @@ const SaaSLayout: React.FC<{ children?: React.ReactNode }> = ({ children }) => {
       });
     }
 
-    // HR Management - for admin only
+    // Diet Management - for doctors and nurses (standalone; admin gets it grouped below)
+    if ((isDoctor || isNurse) && !isAdmin) {
+      items.push({
+        key: 'diet-management',
+        icon: <CoffeeOutlined />,
+        label: 'Diet Management',
+        path: '/diet',
+      });
+    }
+
+    // ABHA/ABDM - for receptionist only (admin gets it grouped below)
+    if (isReceptionist && !isAdmin) {
+      items.push({
+        key: 'abha',
+        icon: <SafetyOutlined />,
+        label: 'ABHA / ABDM',
+        path: '/abha',
+      });
+    }
+
+    // PCPNDT Form F - for doctors only (admin gets it grouped below)
+    if (isDoctor && !isAdmin) {
+      items.push({
+        key: 'pcpndt',
+        icon: <FileTextOutlined />,
+        label: 'PCPNDT Form F',
+        path: '/pcpndt',
+      });
+    }
+
+    // Insurance/TPA - for accountant only (admin gets it grouped below)
+    if (isAccountant && !isAdmin) {
+      items.push({
+        key: 'insurance-tpa',
+        icon: <BankOutlined />,
+        label: 'Insurance / TPA',
+        path: '/insurance-tpa',
+      });
+    }
+
+    // Physiotherapy - for doctors and nurses (standalone; admin gets it grouped below)
+    if ((isDoctor || isNurse) && !isAdmin) {
+      items.push({
+        key: 'physiotherapy',
+        icon: <MedicineBoxOutlined />,
+        label: 'Physiotherapy',
+        path: '/physiotherapy',
+      });
+    }
+
+    // Records Digitization - for receptionist only (admin gets it grouped below)
+    if (isReceptionist && !isAdmin) {
+      items.push({
+        key: 'medical-records-digitization',
+        icon: <FileTextOutlined />,
+        label: 'Records Digitization',
+        path: '/medical-records-digitization',
+      });
+    }
+
+    // =================================================================
+    // ORGANIZATION ADMIN — Grouped Clinical & Operations Items
+    // All orphaned flat items are grouped here for admin role only
+    // =================================================================
     if (isAdmin) {
+      // HR Management (Duty Roster)
       items.push({
         key: 'hr-management',
         icon: <TeamOutlined />,
@@ -978,71 +975,30 @@ const SaaSLayout: React.FC<{ children?: React.ReactNode }> = ({ children }) => {
         ],
       });
 
+      // Allied Health & Clinical Extras (Telemedicine, Diet, Physio, PCPNDT)
       items.push({
-        key: 'asset-management',
-        icon: <ToolOutlined />,
-        label: 'Asset Management',
-        path: '/assets',
+        key: 'admin-allied-health',
+        icon: <HeartOutlined />,
+        label: 'Allied Health',
+        children: [
+          { key: 'telemedicine-admin', label: 'Telemedicine', path: '/telemedicine' },
+          { key: 'diet-management-admin', label: 'Diet Management', path: '/diet' },
+          { key: 'physiotherapy-admin', label: 'Physiotherapy', path: '/physiotherapy' },
+          { key: 'pcpndt-admin', label: 'PCPNDT Form F', path: '/pcpndt' },
+        ],
       });
-    }
 
-    // Diet Management - for doctors and nurses
-    if (isDoctor || isNurse || isAdmin) {
+      // Compliance & Records (ABHA, Insurance/TPA, Records Digitization)
       items.push({
-        key: 'diet-management',
-        icon: <CoffeeOutlined />,
-        label: 'Diet Management',
-        path: '/diet',
-      });
-    }
-
-    // ABHA/ABDM - for admin and receptionist
-    if (isAdmin || isReceptionist) {
-      items.push({
-        key: 'abha',
+        key: 'admin-compliance',
         icon: <SafetyOutlined />,
-        label: 'ABHA / ABDM',
-        path: '/abha',
-      });
-    }
-
-    // PCPNDT Form F - for doctors
-    if (isDoctor || isAdmin) {
-      items.push({
-        key: 'pcpndt',
-        icon: <FileTextOutlined />,
-        label: 'PCPNDT Form F',
-        path: '/pcpndt',
-      });
-    }
-
-    // Insurance/TPA - for admin and accountant
-    if (isAdmin || isAccountant) {
-      items.push({
-        key: 'insurance-tpa',
-        icon: <BankOutlined />,
-        label: 'Insurance / TPA',
-        path: '/insurance-tpa',
-      });
-    }
-
-    // Physiotherapy - for doctors and nurses
-    if (isDoctor || isNurse || isAdmin) {
-      items.push({
-        key: 'physiotherapy',
-        icon: <MedicineBoxOutlined />,
-        label: 'Physiotherapy',
-        path: '/physiotherapy',
-      });
-    }
-
-    // Medical Records Digitization - for admin and receptionist
-    if (isAdmin || isReceptionist) {
-      items.push({
-        key: 'medical-records-digitization',
-        icon: <FileTextOutlined />,
-        label: 'Records Digitization',
-        path: '/medical-records-digitization',
+        label: 'Compliance',
+        children: [
+          { key: 'abha-admin', label: 'ABHA / ABDM', path: '/abha' },
+          { key: 'insurance-tpa-admin', label: 'Insurance / TPA', path: '/insurance-tpa' },
+          { key: 'medical-records-digitization-admin', label: 'Records Digitization', path: '/medical-records-digitization' },
+          { key: 'asset-management-admin', label: 'Asset Management', path: '/assets' },
+        ],
       });
     }
 
@@ -1526,15 +1482,18 @@ const SaaSLayout: React.FC<{ children?: React.ReactNode }> = ({ children }) => {
 
       {(!collapsed || isMobile) && (
         <OrganizationInfo>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-            <span style={{ fontSize: '12px', color: 'rgba(255, 255, 255, 0.7)' }}>{displayUsers}/{displayMaxUsers} users</span>
-            {(isSuperAdmin || isAdmin) && (
-              <Badge
-                count={displayPlan}
-                style={{ backgroundColor: '#10B981', fontSize: '10px' }}
-              />
-            )}
-          </div>
+          {/* Only show user count + plan badge for non-super-admin roles */}
+          {!isSuperAdmin && (
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+              <span style={{ fontSize: '12px', color: 'rgba(255, 255, 255, 0.7)' }}>{displayUsers}/{displayMaxUsers} users</span>
+              {isAdmin && (
+                <Badge
+                  count={displayPlan}
+                  style={{ backgroundColor: '#10B981', fontSize: '10px' }}
+                />
+              )}
+            </div>
+          )}
           <div style={{ fontSize: '12px', color: '#3B82F6', fontWeight: 500 }}>
             {role === 'super_admin' ? 'PLATFORM ADMIN' : role.toUpperCase()}
           </div>
