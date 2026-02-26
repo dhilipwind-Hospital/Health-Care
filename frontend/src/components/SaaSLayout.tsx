@@ -1516,9 +1516,6 @@ const SaaSLayout: React.FC<{ children?: React.ReactNode }> = ({ children }) => {
               )}
             </div>
           )}
-          <div style={{ fontSize: '12px', color: '#3B82F6', fontWeight: 500 }}>
-            {role === 'super_admin' ? 'PLATFORM ADMIN' : role.toUpperCase()}
-          </div>
         </OrganizationInfo>
       )}
     </>
