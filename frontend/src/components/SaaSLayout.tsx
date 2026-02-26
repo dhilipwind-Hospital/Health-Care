@@ -1466,6 +1466,13 @@ const SaaSLayout: React.FC<{ children?: React.ReactNode }> = ({ children }) => {
     .ant-menu-item-selected .anticon {
       color: #fff !important;
     }
+    /* Fixed sidebar: make internal children div flex-column so logout stays at bottom */
+    .ant-layout-sider-children {
+      display: flex !important;
+      flex-direction: column !important;
+      height: 100% !important;
+      overflow: hidden !important;
+    }
   `;
 
   const sidebarHeaderContent = (
@@ -1556,10 +1563,9 @@ const SaaSLayout: React.FC<{ children?: React.ReactNode }> = ({ children }) => {
     <div
       onClick={logout}
       style={{
-        position: 'sticky',
-        bottom: 0,
+        flexShrink: 0,
         width: '100%',
-        padding: collapsed ? '12px 0' : '12px 16px',
+        padding: collapsed ? '14px 0' : '14px 16px',
         borderTop: '1px solid rgba(255,255,255,0.1)',
         background: '#1a3352',
         display: 'flex',
@@ -1571,7 +1577,7 @@ const SaaSLayout: React.FC<{ children?: React.ReactNode }> = ({ children }) => {
         transition: 'all 0.2s',
         justifyContent: collapsed ? 'center' : 'flex-start',
       }}
-      onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = '#ff4d4f'; (e.currentTarget as HTMLElement).style.background = 'rgba(255,77,79,0.08)'; }}
+      onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = '#ff4d4f'; (e.currentTarget as HTMLElement).style.background = 'rgba(255,77,79,0.12)'; }}
       onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = 'rgba(255,255,255,0.7)'; (e.currentTarget as HTMLElement).style.background = '#1a3352'; }}
     >
       <LogoutOutlined style={{ fontSize: 16 }} />
@@ -1605,7 +1611,7 @@ const SaaSLayout: React.FC<{ children?: React.ReactNode }> = ({ children }) => {
         </Drawer>
       )}
 
-      {/* Desktop Sider */}
+      {/* Desktop Sider - Fixed to viewport */}
       {!isMobile && (
         <Sider
           trigger={null}
@@ -1616,11 +1622,18 @@ const SaaSLayout: React.FC<{ children?: React.ReactNode }> = ({ children }) => {
           breakpoint="lg"
           collapsedWidth={60}
           onBreakpoint={(broken) => { if (broken) setCollapsed(true); }}
-          style={{ display: 'flex', flexDirection: 'column' }}
+          style={{
+            position: 'fixed',
+            height: '100vh',
+            left: 0,
+            top: 0,
+            zIndex: 100,
+            overflow: 'hidden',
+          }}
         >
           <style>{sidebarInlineStyles}</style>
           {sidebarHeaderContent}
-          <div style={{ flex: 1, overflowY: 'auto' }}>
+          <div style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden' }}>
             <Menu
               theme="light"
               mode="inline"
@@ -1633,7 +1646,8 @@ const SaaSLayout: React.FC<{ children?: React.ReactNode }> = ({ children }) => {
         </Sider>
       )}
 
-      <Layout>
+      {/* Main content offset by sidebar width */}
+      <Layout style={{ marginLeft: isMobile ? 0 : (collapsed ? 60 : 280), transition: 'margin-left 0.2s', minHeight: '100vh' }}>
         <StyledHeader>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             {isMobile && (
