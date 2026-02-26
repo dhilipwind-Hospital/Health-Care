@@ -1565,7 +1565,7 @@ const SaaSLayout: React.FC<{ children?: React.ReactNode }> = ({ children }) => {
       style={{
         flexShrink: 0,
         width: '100%',
-        padding: collapsed ? '14px 0' : '14px 16px',
+        padding: collapsed ? '14px 0' : '14px 20px',
         borderTop: '1px solid rgba(255,255,255,0.1)',
         background: '#1a3352',
         display: 'flex',
@@ -1574,14 +1574,15 @@ const SaaSLayout: React.FC<{ children?: React.ReactNode }> = ({ children }) => {
         cursor: 'pointer',
         color: 'rgba(255,255,255,0.7)',
         fontSize: 14,
+        lineHeight: 1,
         transition: 'all 0.2s',
         justifyContent: collapsed ? 'center' : 'flex-start',
       }}
       onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = '#ff4d4f'; (e.currentTarget as HTMLElement).style.background = 'rgba(255,77,79,0.12)'; }}
       onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = 'rgba(255,255,255,0.7)'; (e.currentTarget as HTMLElement).style.background = '#1a3352'; }}
     >
-      <LogoutOutlined style={{ fontSize: 16 }} />
-      {!collapsed && <span>Logout</span>}
+      <LogoutOutlined style={{ fontSize: 16, lineHeight: 1, display: 'flex' }} />
+      {!collapsed && <span style={{ lineHeight: 1 }}>Logout</span>}
     </div>
   );
 
@@ -1649,7 +1650,8 @@ const SaaSLayout: React.FC<{ children?: React.ReactNode }> = ({ children }) => {
       {/* Main content offset by sidebar width */}
       <Layout style={{ marginLeft: isMobile ? 0 : (collapsed ? 60 : 280), transition: 'margin-left 0.2s', minHeight: '100vh' }}>
         <StyledHeader>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          {/* Left: mobile hamburger + breadcrumb */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
             {isMobile && (
               <Button
                 type="text"
@@ -1658,6 +1660,22 @@ const SaaSLayout: React.FC<{ children?: React.ReactNode }> = ({ children }) => {
                 style={{ fontSize: '20px', color: '#1E3A5F', width: 40, height: 40 }}
               />
             )}
+            {/* Breadcrumb inline in header */}
+            <Breadcrumb
+              separator={<span style={{ color: '#9CA3AF' }}>›</span>}
+              items={generateBreadcrumbs(location.pathname).map((item, idx, arr) => ({
+                title: item.path && idx < arr.length - 1 ? (
+                  <span
+                    style={{ cursor: 'pointer', color: '#6B7280', fontSize: 13, fontWeight: 400 }}
+                    onClick={() => item.path && navigate(item.path)}
+                  >
+                    {item.title}
+                  </span>
+                ) : (
+                  <span style={{ color: '#111827', fontSize: 13, fontWeight: 600 }}>{item.title}</span>
+                )
+              }))}
+            />
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             {((user as any)?.availableLocations?.length > 0 || (user as any)?.availableBranches?.length > 0) && (
@@ -1758,21 +1776,6 @@ const SaaSLayout: React.FC<{ children?: React.ReactNode }> = ({ children }) => {
             </Dropdown>
           </div>
         </StyledHeader>
-
-        <div style={{ padding: '0 24px' }}>
-          <Breadcrumb
-            items={generateBreadcrumbs(location.pathname).map(item => ({
-              title: item.path ? (
-                <span
-                  style={{ cursor: 'pointer', color: '#3B82F6' }}
-                  onClick={() => item.path && navigate(item.path)}
-                >
-                  {item.title}
-                </span>
-              ) : item.title
-            }))}
-          />
-        </div>
 
         <StyledContent>
           {children || <Outlet />}
