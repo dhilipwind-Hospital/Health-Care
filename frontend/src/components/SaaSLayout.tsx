@@ -1495,9 +1495,9 @@ const SaaSLayout: React.FC<{ children?: React.ReactNode }> = ({ children }) => {
         {!isMobile && (
           <Button
             type="text"
-            icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
+            icon={collapsed ? <MenuUnfoldOutlined style={{ color: '#fff' }} /> : <MenuFoldOutlined style={{ color: '#fff' }} />}
             onClick={() => setCollapsed(!collapsed)}
-            style={{ fontSize: '16px', color: 'rgba(255, 255, 255, 0.8)', width: 32, height: 32 }}
+            style={{ fontSize: '16px', color: '#fff', width: 32, height: 32, background: 'transparent', border: 'none', boxShadow: 'none' }}
           />
         )}
       </div>
@@ -1581,8 +1581,13 @@ const SaaSLayout: React.FC<{ children?: React.ReactNode }> = ({ children }) => {
       onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = '#ff4d4f'; (e.currentTarget as HTMLElement).style.background = 'rgba(255,77,79,0.12)'; }}
       onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = 'rgba(255,255,255,0.7)'; (e.currentTarget as HTMLElement).style.background = '#1a3352'; }}
     >
-      <LogoutOutlined style={{ fontSize: 16, lineHeight: 1, display: 'flex' }} />
-      {!collapsed && <span style={{ lineHeight: 1 }}>Logout</span>}
+      <LogoutOutlined style={{ fontSize: 16, lineHeight: 1, display: 'flex', flexShrink: 0 }} />
+      {!collapsed && (
+        <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.3, overflow: 'hidden' }}>
+          <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.45)', fontWeight: 400, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{user?.firstName} {user?.lastName}</span>
+          <span style={{ fontSize: 13, lineHeight: 1 }}>Logout</span>
+        </div>
+      )}
     </div>
   );
 
@@ -1767,13 +1772,14 @@ const SaaSLayout: React.FC<{ children?: React.ReactNode }> = ({ children }) => {
                 </Button>
               </Dropdown>
             )}
-            {/* Header: only avatar remains - icons moved to sidebar */}
-            <Dropdown menu={userMenu} placement="bottomRight">
-              <Space style={{ cursor: 'pointer' }}>
-                <Avatar src={(user as any)?.profileImage} icon={<UserOutlined />} />
-                <span>{user?.firstName} {user?.lastName}</span>
-              </Space>
-            </Dropdown>
+            {/* Header: avatar clicks directly to profile */}
+            <div
+              style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}
+              onClick={() => navigate('/profile')}
+            >
+              <Avatar src={(user as any)?.profileImage} icon={<UserOutlined />} />
+              <span style={{ fontWeight: 500 }}>{user?.firstName} {user?.lastName}</span>
+            </div>
           </div>
         </StyledHeader>
 
