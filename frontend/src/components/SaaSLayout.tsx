@@ -1300,9 +1300,9 @@ const SaaSLayout: React.FC<{ children?: React.ReactNode }> = ({ children }) => {
   const userMenu = {
     items: [
       { key: 'profile', icon: <UserOutlined />, label: <Link to="/profile">Profile</Link> },
-      { key: 'organization', icon: <BankOutlined />, label: <Link to="/organization">Organization</Link> },
+      ...(!isSuperAdmin ? [{ key: 'organization', icon: <BankOutlined />, label: <Link to="/organization">Organization</Link> }] : []),
       { type: 'divider' as const },
-      { key: 'logout', icon: <LogoutOutlined />, label: 'Logout', onClick: logout },
+      { key: 'logout', icon: <LogoutOutlined style={{ color: '#ff4d4f' }} />, label: <span style={{ color: '#ff4d4f' }}>Logout</span>, onClick: logout },
     ]
   };
 
@@ -1565,12 +1565,12 @@ const SaaSLayout: React.FC<{ children?: React.ReactNode }> = ({ children }) => {
       style={{
         flexShrink: 0,
         width: '100%',
-        padding: collapsed ? '14px 0' : '14px 20px',
+        padding: collapsed ? '16px 0' : '16px 24px',
         borderTop: '1px solid rgba(255,255,255,0.1)',
         background: '#1a3352',
         display: 'flex',
         alignItems: 'center',
-        gap: 10,
+        gap: 12,
         cursor: 'pointer',
         color: 'rgba(255,255,255,0.7)',
         fontSize: 14,
@@ -1655,9 +1655,9 @@ const SaaSLayout: React.FC<{ children?: React.ReactNode }> = ({ children }) => {
             {isMobile && (
               <Button
                 type="text"
-                icon={<MenuUnfoldOutlined />}
+                icon={<MenuUnfoldOutlined style={{ color: '#fff' }} />}
                 onClick={() => setMobileDrawerOpen(true)}
-                style={{ fontSize: '20px', color: '#1E3A5F', width: 40, height: 40 }}
+                style={{ fontSize: '20px', color: '#fff', width: 40, height: 40, background: 'transparent' }}
               />
             )}
             {/* Breadcrumb inline in header */}

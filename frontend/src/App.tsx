@@ -393,6 +393,14 @@ const App: React.FC = () => {
         { path: '/admin/locations', element: <SaaSLayout><RequireRole roles={['admin', 'super_admin']}><LocationsManagement /></RequireRole></SaaSLayout> },
         { path: '/admin/sales-leads', element: <SaaSLayout><RequireRole roles={['super_admin']}><SalesLeads /></RequireRole></SaaSLayout> },
 
+        // Breadcrumb parent redirects (prevent wildcard → /landing when clicking breadcrumb parents)
+        { path: '/saas', element: <Navigate to="/saas/dashboard" replace /> },
+        { path: '/admin', element: <Navigate to="/admin/users" replace /> },
+        { path: '/doctor', element: <Navigate to="/doctor/dashboard" replace /> },
+        { path: '/inpatient', element: <Navigate to="/inpatient/beds" replace /> },
+        { path: '/queue', element: <Navigate to="/queue/reception" replace /> },
+        { path: '/laboratory', element: <Navigate to="/laboratory/dashboard" replace /> },
+
         // SaaS Management (Super Admin only)
         { path: '/saas/dashboard', element: <SaaSLayout><RequireRole roles={['super_admin']}><SuperAdminDashboard /></RequireRole></SaaSLayout> },
         { path: '/saas/organizations', element: <SaaSLayout><RequireRole roles={['super_admin']}><OrganizationsManagement /></RequireRole></SaaSLayout> },
