@@ -4,6 +4,7 @@ import './styles/settings.css';
 import './styles/adminOverrides.css';
 import './styles/pinkTheme.css';
 import ErrorBoundary from './components/ErrorBoundary';
+import RouteErrorBoundary from './components/RouteErrorBoundary';
 import GlobalErrorHandler from './components/GlobalErrorHandler';
 import { RouterProvider, createBrowserRouter, Navigate, Outlet, useLocation } from 'react-router-dom';
 import { ConfigProvider, App as AntApp } from 'antd';
@@ -53,6 +54,7 @@ import MedicalRecords from './pages/portal/MedicalRecords';
 import MedicalHistory from './pages/portal/MedicalHistory';
 import BillingHistory from './pages/portal/BillingHistory';
 import SymptomChecker from './pages/portal/SymptomChecker';
+import PatientPrescriptions from './pages/portal/PatientPrescriptions';
 import ViewDoctorAvailability from './pages/availability/ViewDoctorAvailability';
 import Records from './pages/Records';
 // Pharmacy imports (PharmacistDashboard is used instead of legacy Pharmacy/PharmacyDashboard)
@@ -342,8 +344,8 @@ const App: React.FC = () => {
         { path: '/training/schedule', element: <SaaSLayout><TrainingCenter /></SaaSLayout> },
         { path: '/patients', element: <SaaSLayout><RequireRole roles={['admin', 'super_admin', 'doctor', 'nurse', 'receptionist']}><PatientList /></RequireRole></SaaSLayout> },
         { path: '/records', element: <SaaSLayout><RequireRole roles={['admin', 'super_admin', 'doctor', 'nurse', 'patient']}><Records /></RequireRole></SaaSLayout> },
-        { path: '/pharmacy', element: <SaaSLayout><RequireRole roles={['admin', 'super_admin', 'pharmacist']}><PharmacistDashboard /></RequireRole></SaaSLayout> },
-        { path: '/pharmacy/dashboard', element: <SaaSLayout><RequireRole roles={['admin', 'super_admin', 'pharmacist']}><PharmacistDashboard /></RequireRole></SaaSLayout> },
+        { path: '/pharmacy', element: <SaaSLayout><RequireRole roles={['admin', 'super_admin', 'pharmacist']}><RouteErrorBoundary moduleName="Pharmacy"><PharmacistDashboard /></RouteErrorBoundary></RequireRole></SaaSLayout> },
+        { path: '/pharmacy/dashboard', element: <SaaSLayout><RequireRole roles={['admin', 'super_admin', 'pharmacist']}><RouteErrorBoundary moduleName="Pharmacy"><PharmacistDashboard /></RouteErrorBoundary></RequireRole></SaaSLayout> },
         { path: '/pharmacy/medicines', element: <SaaSLayout><RequireRole roles={['admin', 'super_admin', 'pharmacist', 'nurse']}><MedicineList /></RequireRole></SaaSLayout> },
         { path: '/pharmacy/inventory', element: <SaaSLayout><RequireRole roles={['admin', 'super_admin', 'pharmacist']}><InventoryDashboard /></RequireRole></SaaSLayout> },
         { path: '/pharmacy/inventory/alerts', element: <SaaSLayout><RequireRole roles={['admin', 'super_admin', 'pharmacist']}><StockAlerts /></RequireRole></SaaSLayout> },
@@ -400,12 +402,13 @@ const App: React.FC = () => {
             </RequireRole>
           </SaaSLayout>
         },
-        { path: '/portal/records', element: <SaaSLayout><RequireRole roles={['patient']}><MedicalRecords /></RequireRole></SaaSLayout> },
-        { path: '/portal/medical-history', element: <SaaSLayout><RequireRole roles={['patient']}><MedicalHistory /></RequireRole></SaaSLayout> },
-        { path: '/portal/bills', element: <SaaSLayout><RequireRole roles={['patient']}><BillingHistory /></RequireRole></SaaSLayout> },
-        { path: '/portal/insurance', element: <SaaSLayout><RequireRole roles={['patient']}><MyInsurance /></RequireRole></SaaSLayout> },
-        { path: '/portal/access-management', element: <SaaSLayout><RequireRole roles={['patient']}><PatientAccessManagement /></RequireRole></SaaSLayout> },
-        { path: '/portal/symptom-checker', element: <SaaSLayout><RequireRole roles={['patient']}><SymptomChecker /></RequireRole></SaaSLayout> },
+        { path: '/portal/records', element: <SaaSLayout><RequireRole roles={['patient']}><RouteErrorBoundary moduleName="Medical Records"><MedicalRecords /></RouteErrorBoundary></RequireRole></SaaSLayout> },
+        { path: '/portal/medical-history', element: <SaaSLayout><RequireRole roles={['patient']}><RouteErrorBoundary moduleName="Medical History"><MedicalHistory /></RouteErrorBoundary></RequireRole></SaaSLayout> },
+        { path: '/portal/bills', element: <SaaSLayout><RequireRole roles={['patient']}><RouteErrorBoundary moduleName="Billing History"><BillingHistory /></RouteErrorBoundary></RequireRole></SaaSLayout> },
+        { path: '/portal/insurance', element: <SaaSLayout><RequireRole roles={['patient']}><RouteErrorBoundary moduleName="Insurance"><MyInsurance /></RouteErrorBoundary></RequireRole></SaaSLayout> },
+        { path: '/portal/access-management', element: <SaaSLayout><RequireRole roles={['patient']}><RouteErrorBoundary moduleName="Access Management"><PatientAccessManagement /></RouteErrorBoundary></RequireRole></SaaSLayout> },
+        { path: '/portal/prescriptions', element: <SaaSLayout><RequireRole roles={['patient']}><RouteErrorBoundary moduleName="Prescriptions"><PatientPrescriptions /></RouteErrorBoundary></RequireRole></SaaSLayout> },
+        { path: '/portal/symptom-checker', element: <SaaSLayout><RequireRole roles={['patient']}><RouteErrorBoundary moduleName="Symptom Checker"><SymptomChecker /></RouteErrorBoundary></RequireRole></SaaSLayout> },
 
         { path: '/doctor/my-patients', element: <SaaSLayout><RequireRole roles={['doctor']}><MyPatients /></RequireRole></SaaSLayout> },
         { path: '/doctor/patients/:patientId/records', element: <SaaSLayout><RequireRole roles={['doctor']}><PatientRecordsDoctor /></RequireRole></SaaSLayout> },
@@ -470,7 +473,7 @@ const App: React.FC = () => {
 
         // Billing & Reports
         { path: '/billing', element: <SaaSLayout><RequireRole roles={['admin', 'super_admin', 'accountant']}><Dashboard /></RequireRole></SaaSLayout> },
-        { path: '/billing/management', element: <SaaSLayout><RequireRole roles={['admin', 'super_admin', 'accountant', 'receptionist']}><BillingManagement /></RequireRole></SaaSLayout> },
+        { path: '/billing/management', element: <SaaSLayout><RequireRole roles={['admin', 'super_admin', 'accountant', 'receptionist']}><RouteErrorBoundary moduleName="Billing"><BillingManagement /></RouteErrorBoundary></RequireRole></SaaSLayout> },
         { path: '/billing/analytics', element: <SaaSLayout><RequireRole roles={['admin', 'super_admin', 'accountant']}><ReportsAdmin /></RequireRole></SaaSLayout> },
         { path: '/billing/payments', element: <SaaSLayout><RequireRole roles={['admin', 'super_admin', 'accountant']}><BillingManagement /></RequireRole></SaaSLayout> },
         { path: '/billing/queue', element: <SaaSLayout><RequireRole roles={['admin', 'super_admin', 'accountant', 'receptionist']}><BillingQueue /></RequireRole></SaaSLayout> },

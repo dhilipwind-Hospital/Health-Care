@@ -100,21 +100,31 @@ const BookAppointmentStepper: React.FC = () => {
       }
 
       const [svcRes, deptRes, docRes] = await Promise.all([
-        api.get('/services', { params: { page: 1, limit: 200 } }),
-        api.get('/departments', { params: { page: 1, limit: 200 } }),
-        api.get('/visits/available-doctors', { suppressErrorToast: true } as any),
+        api.get('/services', { params: { page: 1, limit: 200 }, suppressErrorToast: true } as any).catch(() => ({ data: { data: [] } })),
+        api.get('/departments', { params: { page: 1, limit: 200 }, suppressErrorToast: true } as any).catch(() => ({ data: { data: [] } })),
+        api.get('/visits/available-doctors', { suppressErrorToast: true } as any).catch(() => ({ data: { data: [] } })),
       ]);
 
       const svc = svcRes.data?.data || svcRes.data || [];
       const dept = deptRes.data?.data || deptRes.data || [];
-      const doc = docRes.data?.data || docRes.data || [];
+      let doc = docRes.data?.data || docRes.data || [];
+
+      // If available-doctors endpoint returned empty, fallback to all doctors
+      if (doc.length === 0) {
+        try {
+          const fallbackRes = await api.get('/users', { params: { role: 'doctor', limit: 200 }, suppressErrorToast: true } as any);
+          doc = fallbackRes.data?.data || fallbackRes.data || [];
+        } catch { /* ignore */ }
+      }
 
       setServices(svc);
       setDepartments(dept);
       setDoctors(doc);
 
-      if (svc.length === 0) {
-        messageApi.info('No services found. Please contact your administrator.');
+      if (svc.length === 0 && dept.length > 0) {
+        messageApi.info('No services found. You can still book by selecting a doctor directly.');
+      } else if (svc.length === 0 && dept.length === 0) {
+        messageApi.warning('No services or departments configured. Please contact your administrator.');
       }
     } catch (error: any) {
       console.error('Error loading data:', error);

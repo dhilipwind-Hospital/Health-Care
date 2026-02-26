@@ -138,7 +138,7 @@ router.get('/bills/:id/invoice.pdf', errorHandler(async (req: any, res: Response
   doc.fontSize(11).text('Item', colX[0], tableTop).text('Qty', colX[1], tableTop).text('Unit', colX[2], tableTop).text('Total', colX[3], tableTop);
   let y = tableTop + 18;
   items.forEach((it) => {
-    doc.text(it.name, colX[0], y).text(String(it.quantity), colX[1], y).text(`$${Number(it.unitPrice).toFixed(2)}`, colX[2], y).text(`$${Number(it.total).toFixed(2)}`, colX[3], y);
+    doc.text(it.name, colX[0], y).text(String(it.quantity), colX[1], y).text(`₹${Number(it.unitPrice).toFixed(2)}`, colX[2], y).text(`₹${Number(it.total).toFixed(2)}`, colX[3], y);
     y += 18;
   });
   y += 10;
@@ -147,9 +147,9 @@ router.get('/bills/:id/invoice.pdf', errorHandler(async (req: any, res: Response
   const balance = Math.max(0, subtotal - paid);
   doc.moveTo(colX[2], y).lineTo(550, y).strokeColor('#ccc').stroke();
   y += 8;
-  doc.fontSize(11).text('Subtotal:', colX[2], y).text(`$${subtotal.toFixed(2)}`, colX[3], y, { align: 'left' }); y += 16;
-  doc.text('Paid:', colX[2], y).text(`$${paid.toFixed(2)}`, colX[3], y); y += 16;
-  doc.font('Helvetica-Bold').text('Balance:', colX[2], y).text(`$${balance.toFixed(2)}`, colX[3], y).font('Helvetica');
+  doc.fontSize(11).text('Subtotal:', colX[2], y).text(`₹${subtotal.toFixed(2)}`, colX[3], y, { align: 'left' }); y += 16;
+  doc.text('Paid:', colX[2], y).text(`₹${paid.toFixed(2)}`, colX[3], y); y += 16;
+  doc.font('Helvetica-Bold').text('Balance:', colX[2], y).text(`₹${balance.toFixed(2)}`, colX[3], y).font('Helvetica');
   // Footer
   doc.moveDown(2).fontSize(10).fillColor('#666').text('Thank you for choosing Ayphen Hospitals. For questions about this invoice, contact billing@ayphen.example.com');
   doc.end();

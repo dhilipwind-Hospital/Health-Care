@@ -359,10 +359,14 @@ const Dashboard: React.FC = () => {
           try {
             const commonParams = selectedBranchId ? { locationId: selectedBranchId } : {};
             
-            const patientsRes = await api.get('/users', { params: { ...commonParams, role: 'patient', limit: 1 }, suppressErrorToast: true } as any);
-            const appointmentsRes = await api.get('/appointments/admin', { params: { ...commonParams, limit: 100 }, suppressErrorToast: true } as any);
-            const staffRes = await api.get('/users', { params: { ...commonParams, role: 'doctor,nurse,pharmacist,lab_technician,receptionist', status: 'active', limit: 1 }, suppressErrorToast: true } as any);
-            const departmentsRes = await api.get('/departments', { params: { limit: 1 }, suppressErrorToast: true } as any);
+            const [patientsRes, appointmentsRes, staffRes, departmentsRes, billingRes, bedsRes] = await Promise.all([
+              api.get('/users', { params: { ...commonParams, role: 'patient', limit: 1 }, suppressErrorToast: true } as any),
+              api.get('/appointments/admin', { params: { ...commonParams, limit: 100 }, suppressErrorToast: true } as any),
+              api.get('/users', { params: { ...commonParams, role: 'doctor,nurse,pharmacist,lab_technician,receptionist', status: 'active', limit: 1 }, suppressErrorToast: true } as any),
+              api.get('/departments', { params: { limit: 1 }, suppressErrorToast: true } as any),
+              api.get('/billing', { params: { ...commonParams, limit: 500 }, suppressErrorToast: true } as any).catch(() => ({ data: { data: [] } })),
+              api.get('/inpatient/beds', { params: commonParams, suppressErrorToast: true } as any).catch(() => ({ data: [] })),
+            ]);
 
             if (!mounted) return;
 
@@ -381,14 +385,31 @@ const Dashboard: React.FC = () => {
             }).length;
             const pendingAppts = allAppts.filter(a => String(a.status).toLowerCase() === 'pending').length;
 
+            // Calculate real revenue from billing data
+            const allBills = billingRes.data?.data || [];
+            const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+            const monthlyRevenue = allBills.reduce((sum: number, bill: any) => {
+              const billDate = new Date(bill.billDate || bill.issueDate || bill.createdAt || '');
+              const isPaid = (bill.status || '').toLowerCase() === 'paid';
+              const amount = bill.paidAmount || bill.totalAmount || bill.amount || bill.total || 0;
+              if (isPaid && billDate >= monthStart) return sum + Number(amount);
+              return sum;
+            }, 0);
+
+            // Calculate real bed occupancy
+            const allBeds = Array.isArray(bedsRes.data) ? bedsRes.data : (bedsRes.data?.beds || bedsRes.data?.data || []);
+            const totalBeds = allBeds.length;
+            const occupiedBeds = allBeds.filter((bed: any) => bed.status === 'occupied').length;
+            const bedOccupancy = totalBeds > 0 ? Math.round((occupiedBeds / totalBeds) * 100) : 0;
+
             setAdminStats({
               totalPatients: patientsRes.data?.pagination?.total || patientsRes.data?.total || 0,
               todayAppointments: todayAppts,
               pendingAppointments: pendingAppts,
-              monthlyRevenue: 0,
+              monthlyRevenue,
               activeStaff: staffRes.data?.pagination?.total || staffRes.data?.total || 0,
               departments: departmentsRes.data?.pagination?.total || departmentsRes.data?.total || 0,
-              bedOccupancy: 0,
+              bedOccupancy,
               satisfaction: 0
             });
           } catch (e) {

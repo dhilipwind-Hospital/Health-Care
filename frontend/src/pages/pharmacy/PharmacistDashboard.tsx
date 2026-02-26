@@ -343,12 +343,8 @@ const PharmacistDashboard: React.FC = () => {
       const res = await api.get('/pharmacy/medicines', { params: { limit: 100 } });
       setMedicines(res.data?.data || []);
     } catch (e) {
-      // Mock data
-      setMedicines([
-        { id: '1', name: 'Paracetamol 500mg', currentStock: 50, reorderLevel: 100, expiryDate: '2025-06-01' },
-        { id: '2', name: 'Amoxicillin 250mg', currentStock: 30, reorderLevel: 50, expiryDate: '2025-03-15' },
-        { id: '3', name: 'Metformin 500mg', currentStock: 200, reorderLevel: 100, expiryDate: '2026-01-01' },
-      ]);
+      console.error('Failed to fetch medicines:', e);
+      setMedicines([]);
     }
   };
 
