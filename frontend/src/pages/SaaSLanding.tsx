@@ -24,7 +24,11 @@ import {
   UserOutlined,
   ScheduleOutlined,
   DollarOutlined,
-  ExperimentOutlined
+  ExperimentOutlined,
+  HomeOutlined,
+  BarChartOutlined,
+  AuditOutlined,
+  BellOutlined
 } from '@ant-design/icons';
 import { Button, Card, Row, Col, Typography, Space, Statistic, Modal, Form, Input, Select, message, Collapse } from 'antd';
 import api from '../services/api';
@@ -40,6 +44,10 @@ const SaaSLanding: React.FC = () => {
   const [isDemoModalVisible, setIsDemoModalVisible] = React.useState(false);
   const [loading, setLoading] = React.useState(false);
   const [form] = Form.useForm();
+  const [statsAnimated, setStatsAnimated] = React.useState(false);
+  const [modules, setModules] = React.useState(0);
+  const [roles, setRoles] = React.useState(0);
+  const [uptime, setUptime] = React.useState(0);
 
   const handleTalkToSales = () => {
     setIsModalVisible(true);
@@ -83,6 +91,36 @@ const SaaSLanding: React.FC = () => {
       entries.forEach((entry) => {
         if (entry.isIntersecting) {
           entry.target.classList.add('animate-in');
+          
+          // Trigger counter animation for hero stats
+          if (entry.target.classList.contains('hero-stats') && !statsAnimated) {
+            setStatsAnimated(true);
+            
+            // Animate modules counter
+            let moduleCount = 0;
+            const moduleInterval = setInterval(() => {
+              moduleCount += 1;
+              setModules(moduleCount);
+              if (moduleCount >= 30) clearInterval(moduleInterval);
+            }, 30);
+            
+            // Animate roles counter
+            let roleCount = 0;
+            const roleInterval = setInterval(() => {
+              roleCount += 1;
+              setRoles(roleCount);
+              if (roleCount >= 8) clearInterval(roleInterval);
+            }, 60);
+            
+            // Animate uptime counter
+            let uptimeCount = 0;
+            const uptimeInterval = setInterval(() => {
+              uptimeCount += 0.1;
+              setUptime(Math.min(uptimeCount, 99.9));
+              if (uptimeCount >= 99.9) clearInterval(uptimeInterval);
+            }, 10);
+          }
+          
           observer.unobserve(entry.target);
         }
       });
@@ -90,7 +128,7 @@ const SaaSLanding: React.FC = () => {
 
     // Observe all elements with scroll animation classes
     const animateElements = document.querySelectorAll(
-      '.scroll-animate, .scroll-animate-card, .scroll-animate-stagger'
+      '.scroll-animate, .scroll-animate-card, .scroll-animate-stagger, .hero-stats, .journey-step'
     );
 
     animateElements.forEach((element) => {
@@ -98,7 +136,7 @@ const SaaSLanding: React.FC = () => {
     });
 
     return () => observer.disconnect();
-  }, []);
+  }, [statsAnimated]);
 
   return (
     <div className="saas-landing">
@@ -149,10 +187,10 @@ const SaaSLanding: React.FC = () => {
                 Watch Demo
               </Button>
             </Space>
-            <div className="hero-stats">
-              <Statistic title="Modules" value={30} suffix="+" />
-              <Statistic title="User Roles" value={8} />
-              <Statistic title="Uptime" value={99.9} suffix="%" />
+            <div className="hero-stats scroll-animate">
+              <Statistic title="Modules" value={modules} suffix="+" precision={0} />
+              <Statistic title="User Roles" value={roles} precision={0} />
+              <Statistic title="Uptime" value={uptime} suffix="%" precision={1} />
             </div>
           </div>
           <div className="hero-image">
@@ -214,8 +252,8 @@ const SaaSLanding: React.FC = () => {
               Comprehensive features designed for healthcare excellence
             </Paragraph>
           </div>
-          <Row gutter={[32, 32]}>
-            <Col xs={24} md={8} className="scroll-animate-stagger">
+          <Row gutter={[24, 24]}>
+            <Col xs={24} sm={12} md={6} className="scroll-animate-stagger">
               <Card className="feature-card scroll-animate-card" hoverable>
                 <TeamOutlined className="feature-icon" />
                 <Title level={4}>Patient Management</Title>
@@ -225,7 +263,7 @@ const SaaSLanding: React.FC = () => {
                 </Paragraph>
               </Card>
             </Col>
-            <Col xs={24} md={8} className="scroll-animate-stagger">
+            <Col xs={24} sm={12} md={6} className="scroll-animate-stagger">
               <Card className="feature-card scroll-animate-card" hoverable>
                 <MedicineBoxOutlined className="feature-icon" />
                 <Title level={4}>Multi-Department</Title>
@@ -235,7 +273,7 @@ const SaaSLanding: React.FC = () => {
                 </Paragraph>
               </Card>
             </Col>
-            <Col xs={24} md={8} className="scroll-animate-stagger">
+            <Col xs={24} sm={12} md={6} className="scroll-animate-stagger">
               <Card className="feature-card scroll-animate-card" hoverable>
                 <SafetyOutlined className="feature-icon" />
                 <Title level={4}>Pharmacy & Lab</Title>
@@ -245,7 +283,7 @@ const SaaSLanding: React.FC = () => {
                 </Paragraph>
               </Card>
             </Col>
-            <Col xs={24} md={8} className="scroll-animate-stagger">
+            <Col xs={24} sm={12} md={6} className="scroll-animate-stagger">
               <Card className="feature-card scroll-animate-card" hoverable>
                 <CloudOutlined className="feature-icon" />
                 <Title level={4}>Cloud-Based</Title>
@@ -255,7 +293,7 @@ const SaaSLanding: React.FC = () => {
                 </Paragraph>
               </Card>
             </Col>
-            <Col xs={24} md={8} className="scroll-animate-stagger">
+            <Col xs={24} sm={12} md={6} className="scroll-animate-stagger">
               <Card className="feature-card scroll-animate-card" hoverable>
                 <LockOutlined className="feature-icon" />
                 <Title level={4}>Data Security</Title>
@@ -265,7 +303,7 @@ const SaaSLanding: React.FC = () => {
                 </Paragraph>
               </Card>
             </Col>
-            <Col xs={24} md={8} className="scroll-animate-stagger">
+            <Col xs={24} sm={12} md={6} className="scroll-animate-stagger">
               <Card className="feature-card scroll-animate-card" hoverable>
                 <GlobalOutlined className="feature-icon" />
                 <Title level={4}>Multi-Tenant</Title>
@@ -275,7 +313,94 @@ const SaaSLanding: React.FC = () => {
                 </Paragraph>
               </Card>
             </Col>
+            <Col xs={24} sm={12} md={6} className="scroll-animate-stagger">
+              <Card className="feature-card scroll-animate-card" hoverable>
+                <HomeOutlined className="feature-icon" />
+                <Title level={4}>Bed Management</Title>
+                <Paragraph>
+                  Real-time bed occupancy tracking, allocation, and transfer management
+                  across departments.
+                </Paragraph>
+              </Card>
+            </Col>
+            <Col xs={24} sm={12} md={6} className="scroll-animate-stagger">
+              <Card className="feature-card scroll-animate-card" hoverable>
+                <ScheduleOutlined className="feature-icon" />
+                <Title level={4}>Queue Management</Title>
+                <Paragraph>
+                  Token-based queue system for OPD, departments, and services. Reduce
+                  wait times.
+                </Paragraph>
+              </Card>
+            </Col>
+            <Col xs={24} sm={12} md={6} className="scroll-animate-stagger">
+              <Card className="feature-card scroll-animate-card" hoverable>
+                <ThunderboltOutlined className="feature-icon" />
+                <Title level={4}>Smart Reminders</Title>
+                <Paragraph>
+                  Automated SMS and email appointment reminders. Reduce no-shows by 40%.
+                </Paragraph>
+              </Card>
+            </Col>
+            <Col xs={24} sm={12} md={6} className="scroll-animate-stagger">
+              <Card className="feature-card scroll-animate-card" hoverable>
+                <BarChartOutlined className="feature-icon" />
+                <Title level={4}>Analytics Dashboard</Title>
+                <Paragraph>
+                  Real-time insights, performance metrics, and revenue tracking for
+                  data-driven decisions.
+                </Paragraph>
+              </Card>
+            </Col>
+            <Col xs={24} sm={12} md={6} className="scroll-animate-stagger">
+              <Card className="feature-card scroll-animate-card" hoverable>
+                <AuditOutlined className="feature-icon" />
+                <Title level={4}>Audit Logs</Title>
+                <Paragraph>
+                  Complete activity tracking and compliance reporting for regulatory
+                  requirements.
+                </Paragraph>
+              </Card>
+            </Col>
+            <Col xs={24} sm={12} md={6} className="scroll-animate-stagger">
+              <Card className="feature-card scroll-animate-card" hoverable>
+                <BellOutlined className="feature-icon" />
+                <Title level={4}>Real-time Notifications</Title>
+                <Paragraph>
+                  Instant alerts for critical events, lab results, and patient updates
+                  across the platform.
+                </Paragraph>
+              </Card>
+            </Col>
           </Row>
+        </div>
+      </section>
+
+      {/* Patient Journey Section */}
+      <section className="journey-section" style={{ background: '#F8FAFC', padding: '4rem 0' }}>
+        <div className="section-container">
+          <div className="section-header scroll-animate" style={{ textAlign: 'center', marginBottom: '3rem' }}>
+            <Title level={2}>Seamless Patient Journey</Title>
+            <Paragraph>Complete workflow from booking to billing</Paragraph>
+          </div>
+          <div className="journey-timeline scroll-animate" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', maxWidth: '1000px', margin: '0 auto', position: 'relative' }}>
+            <div style={{ position: 'absolute', top: '30px', left: '10%', right: '10%', height: '2px', background: 'linear-gradient(90deg, #10B981 0%, #10B981 100%)', zIndex: 0 }}></div>
+            {[
+              { icon: '📱', title: 'Book Online', desc: 'Patient books via portal' },
+              { icon: '🎫', title: 'Check-In', desc: 'Token & queue system' },
+              { icon: '👨‍⚕️', title: 'Consultation', desc: 'Doctor reviews' },
+              { icon: '🧪', title: 'Treatment', desc: 'Lab & pharmacy' },
+              { icon: '💳', title: 'Billing', desc: 'Invoice & payment' }
+            ].map((step, index) => (
+              <div key={index} className="journey-step scroll-animate-stagger" style={{ textAlign: 'center', flex: 1, position: 'relative', zIndex: 1 }}>
+                <div style={{ width: '60px', height: '60px', borderRadius: '50%', background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '28px', margin: '0 auto 12px', boxShadow: '0 4px 12px rgba(16, 185, 129, 0.3)' }}>
+                  {step.icon}
+                </div>
+                <Text strong style={{ display: 'block', fontSize: '14px', color: '#1E3A5F', marginBottom: '4px' }}>{step.title}</Text>
+                <Text type="secondary" style={{ fontSize: '12px' }}>{step.desc}</Text>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 
@@ -490,8 +615,60 @@ const SaaSLanding: React.FC = () => {
             </Row>
           </div>
 
+          {/* Role Highlights */}
+          <div className="role-highlights scroll-animate" style={{ marginTop: '4rem' }}>
+            <Title level={3} style={{ textAlign: 'center', marginBottom: '2rem' }}>
+              Built for Every Role in Your Hospital
+            </Title>
+            <Row gutter={[24, 24]} justify="center">
+              {[
+                { icon: '👨‍⚕️', role: 'Doctor', desc: 'Queue & Prescriptions' },
+                { icon: '📋', role: 'Receptionist', desc: 'Check-in & Tokens' },
+                { icon: '💊', role: 'Pharmacist', desc: 'Inventory Management' },
+                { icon: '🧪', role: 'Lab Tech', desc: 'Test Results' },
+                { icon: '👩‍⚕️', role: 'Nurse', desc: 'Vitals & Care' },
+                { icon: '💰', role: 'Accountant', desc: 'Billing & GST' },
+                { icon: '⚙️', role: 'Admin', desc: 'Analytics Dashboard' },
+                { icon: '👤', role: 'Patient', desc: 'Self-service Portal' }
+              ].map((item, index) => (
+                <Col key={index} xs={12} sm={6} md={3} className="scroll-animate-stagger">
+                  <div style={{ textAlign: 'center', padding: '16px', background: 'white', borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.06)', transition: 'all 0.3s ease', cursor: 'pointer' }} className="role-card">
+                    <div style={{ fontSize: '32px', marginBottom: '8px' }}>{item.icon}</div>
+                    <Text strong style={{ display: 'block', fontSize: '13px', color: '#1E3A5F', marginBottom: '4px' }}>{item.role}</Text>
+                    <Text type="secondary" style={{ fontSize: '11px' }}>{item.desc}</Text>
+                  </div>
+                </Col>
+              ))}
+            </Row>
+          </div>
+
+          {/* Security Badges */}
+          <div className="security-badges scroll-animate" style={{ marginTop: '4rem', background: 'linear-gradient(135deg, #EFF6FF 0%, #DBEAFE 100%)', padding: '3rem 2rem', borderRadius: '16px' }}>
+            <Title level={3} style={{ textAlign: 'center', marginBottom: '2rem' }}>
+              Enterprise-Grade Security
+            </Title>
+            <Row gutter={[24, 24]} justify="center">
+              {[
+                { icon: <LockOutlined style={{ fontSize: '32px', color: '#10B981' }} />, title: 'SSL Encryption', desc: 'Data encrypted in transit' },
+                { icon: <SafetyOutlined style={{ fontSize: '32px', color: '#3B82F6' }} />, title: 'HIPAA Compliant', desc: 'Healthcare standards' },
+                { icon: <CheckCircleOutlined style={{ fontSize: '32px', color: '#8B5CF6' }} />, title: 'SOC 2 Type II', desc: 'Certified security' },
+                { icon: <LockOutlined style={{ fontSize: '32px', color: '#F59E0B' }} />, title: 'JWT Auth', desc: 'Secure access control' },
+                { icon: <CloudOutlined style={{ fontSize: '32px', color: '#06B6D4' }} />, title: 'Daily Backups', desc: 'Auto data recovery' },
+                { icon: <CheckCircleOutlined style={{ fontSize: '32px', color: '#10B981' }} />, title: '99.9% Uptime', desc: 'Guaranteed availability' }
+              ].map((badge, index) => (
+                <Col key={index} xs={12} sm={8} md={4} className="scroll-animate-stagger">
+                  <div style={{ textAlign: 'center', padding: '20px 12px', background: 'white', borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.06)', transition: 'all 0.3s ease' }} className="security-badge">
+                    <div style={{ marginBottom: '12px' }}>{badge.icon}</div>
+                    <Text strong style={{ display: 'block', fontSize: '13px', color: '#1E3A5F', marginBottom: '4px' }}>{badge.title}</Text>
+                    <Text type="secondary" style={{ fontSize: '11px' }}>{badge.desc}</Text>
+                  </div>
+                </Col>
+              ))}
+            </Row>
+          </div>
+
           {/* Why Choose Us */}
-          <div className="about-why scroll-animate">
+          <div className="about-why scroll-animate" style={{ marginTop: '4rem' }}>
             <Row gutter={[48, 32]} align="middle">
               <Col xs={24} md={12}>
                 <Title level={3}>
@@ -678,6 +855,16 @@ const SaaSLanding: React.FC = () => {
                   key: '6',
                   label: 'What kind of support do you provide?',
                   children: <Paragraph>We provide email support for all plans, priority WhatsApp support for Professional plans, and a dedicated account manager for Enterprise customers. Our support team consists of healthcare IT specialists who understand hospital workflows.</Paragraph>
+                },
+                {
+                  key: '7',
+                  label: 'What user roles are supported?',
+                  children: <Paragraph>Ayphen Care supports 8 specialized roles: Doctor (patient queue, prescriptions, lab orders), Receptionist (appointments, check-in, tokens), Pharmacist (inventory, dispensing), Lab Technician (test management), Nurse (patient care, vitals), Accountant (billing, GST invoices), Admin (analytics, user management), and Patient (self-service portal). Each role has a customized dashboard with only the features they need.</Paragraph>
+                },
+                {
+                  key: '8',
+                  label: 'How does multi-branch management work?',
+                  children: <Paragraph>Our multi-branch architecture allows you to manage unlimited hospital locations from a single dashboard. Patient records, staff data, and inventory sync in real-time across all branches. Each branch can have its own settings, departments, and staff while sharing organizational data. You can view consolidated reports or branch-specific analytics. Perfect for hospital chains and healthcare networks.</Paragraph>
                 }
               ]}
             />
