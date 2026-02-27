@@ -210,7 +210,7 @@ export async function seedLunarisHMS() {
         departmentId: dept.id,
         department: dept,
         organizationId: orgId
-      } as any);
+      } as any) as unknown as Service;
       await svcRepo.save(svc);
       svcMap.set(s.name, svc);
     }
