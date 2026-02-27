@@ -472,7 +472,7 @@ const App: React.FC = () => {
         { path: '/communication/broadcast', element: <SaaSLayout><RequireRole roles={['super_admin']}><SystemBroadcasts /></RequireRole></SaaSLayout> },
 
         // Billing & Reports
-        { path: '/billing', element: <SaaSLayout><RequireRole roles={['admin', 'super_admin', 'accountant']}><Dashboard /></RequireRole></SaaSLayout> },
+        { path: '/billing', element: <SaaSLayout><RequireRole roles={['admin', 'super_admin', 'accountant']}><RouteErrorBoundary moduleName="Billing"><BillingManagement /></RouteErrorBoundary></RequireRole></SaaSLayout> },
         { path: '/billing/management', element: <SaaSLayout><RequireRole roles={['admin', 'super_admin', 'accountant', 'receptionist']}><RouteErrorBoundary moduleName="Billing"><BillingManagement /></RouteErrorBoundary></RequireRole></SaaSLayout> },
         { path: '/billing/analytics', element: <SaaSLayout><RequireRole roles={['admin', 'super_admin', 'accountant']}><ReportsAdmin /></RequireRole></SaaSLayout> },
         { path: '/billing/payments', element: <SaaSLayout><RequireRole roles={['admin', 'super_admin', 'accountant']}><BillingManagement /></RequireRole></SaaSLayout> },

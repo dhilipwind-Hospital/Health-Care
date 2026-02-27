@@ -1,6 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Card, Button, Table, Space, Typography, Tag, Form, InputNumber, Input, Select, message } from 'antd';
+import { Card, Button, Table, Space, Typography, Tag, Form, InputNumber, Input, Select, message, Alert } from 'antd';
 import { callNext, getQueue, getTriage, saveTriage, advanceVisit, serveQueueItem, skipQueueItem, getAvailableDoctors, callQueueItem } from '../../services/queue.service';
+import api from '../../services/api';
+import dayjs from 'dayjs';
 
 const { Title } = Typography;
 
@@ -11,6 +13,7 @@ const TriageStation: React.FC = () => {
   const [saving, setSaving] = useState(false);
   const [form] = Form.useForm();
   const [doctors, setDoctors] = useState<any[]>([]);
+  const [appointments, setAppointments] = useState<any[]>([]);
 
   const fetchQueue = async () => {
     try {
@@ -21,8 +24,14 @@ const TriageStation: React.FC = () => {
 
   useEffect(() => {
     fetchQueue();
-    // Load doctors for optional assignment
     getAvailableDoctors().then(setDoctors).catch(() => setDoctors([]));
+    // Load today's appointments as fallback data
+    api.get('/appointments', { params: { limit: 100 } })
+      .then(res => {
+        const data = res.data?.data || res.data?.appointments || res.data || [];
+        setAppointments(Array.isArray(data) ? data : []);
+      })
+      .catch(() => setAppointments([]));
     const t = setInterval(fetchQueue, 5000);
     return () => clearInterval(t);
   }, []);
@@ -164,12 +173,38 @@ const TriageStation: React.FC = () => {
     },
   ], []);
 
+  const appointmentColumns = [
+    { title: 'Patient', key: 'patient', render: (_: any, r: any) => `${r.patient?.firstName || ''} ${r.patient?.lastName || ''}`.trim() || '—' },
+    { title: 'Doctor', key: 'doctor', render: (_: any, r: any) => r.doctor?.firstName ? `Dr. ${r.doctor.firstName} ${r.doctor.lastName || ''}` : '—' },
+    { title: 'Department', key: 'dept', render: (_: any, r: any) => r.department?.name || r.doctor?.department?.name || '—' },
+    { title: 'Type', dataIndex: 'type', key: 'type', render: (t: string) => <Tag color={t === 'emergency' ? 'red' : 'blue'}>{t || 'standard'}</Tag> },
+    { title: 'Status', dataIndex: 'status', key: 'status', render: (s: string) => {
+        const c: Record<string, string> = { scheduled: 'blue', confirmed: 'green', in_progress: 'cyan', completed: 'default', cancelled: 'red', no_show: 'orange' };
+        return <Tag color={c[s] || 'default'} style={{ textTransform: 'capitalize' }}>{(s || '').replace('_', ' ')}</Tag>;
+      }
+    },
+    { title: 'Time', key: 'time', render: (_: any, r: any) => r.appointmentTime ? dayjs(r.appointmentTime).format('h:mm A') : '—' },
+  ];
+
   return (
     <Space direction="vertical" style={{ width: '100%' }}>
       <Title level={4}>Triage Station</Title>
 
       <Card title="Waiting List" extra={<Button onClick={onCallNext} type="primary">Call Next</Button>}>
-        <Table rowKey="id" dataSource={queue} columns={columns} pagination={{ pageSize: 8 }} />
+        {queue.length === 0 && appointments.length > 0 ? (
+          <>
+            <Alert
+              message="No patients in triage queue yet"
+              description="Patients appear here after check-in from reception. Showing all appointments for reference."
+              type="info"
+              showIcon
+              style={{ marginBottom: 16 }}
+            />
+            <Table rowKey="id" dataSource={appointments} columns={appointmentColumns as any} pagination={{ pageSize: 10 }} />
+          </>
+        ) : (
+          <Table rowKey="id" dataSource={queue} columns={columns} pagination={{ pageSize: 8 }} locale={{ emptyText: 'No patients in triage queue. Patients are added after check-in from reception.' }} />
+        )}
       </Card>
 
       {current && (

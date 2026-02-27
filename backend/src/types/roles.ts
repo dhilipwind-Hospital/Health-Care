@@ -134,6 +134,7 @@ export const rolePermissions: RolePermissions = {
   ],
 
   [UserRole.ACCOUNTANT]: [
+    Permission.VIEW_PATIENT,
     Permission.VIEW_BILL,
     Permission.CREATE_BILL,
     Permission.UPDATE_BILL,

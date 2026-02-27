@@ -659,7 +659,7 @@ const SaaSLayout: React.FC<{ children?: React.ReactNode }> = ({ children }) => {
         key: 'finance-dashboard',
         icon: <DashboardOutlined />,
         label: 'Finance Dashboard',
-        path: '/',
+        path: '/billing/management',
       });
       items.push({
         key: 'billing-management',
@@ -1833,16 +1833,14 @@ const SaaSLayout: React.FC<{ children?: React.ReactNode }> = ({ children }) => {
 
       {(!collapsed || isMobile) && (
         <OrganizationInfo>
-          {/* Only show user count + plan badge for non-super-admin roles */}
-          {!isSuperAdmin && (
+          {/* Only show user count + plan badge for admin roles */}
+          {isAdmin && !isSuperAdmin && (
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
               <span style={{ fontSize: '12px', color: 'rgba(255, 255, 255, 0.7)' }}>{displayUsers}/{displayMaxUsers} users</span>
-              {isAdmin && (
-                <Badge
-                  count={displayPlan}
-                  style={{ backgroundColor: '#10B981', fontSize: '10px' }}
-                />
-              )}
+              <Badge
+                count={displayPlan}
+                style={{ backgroundColor: '#10B981', fontSize: '10px' }}
+              />
             </div>
           )}
         </OrganizationInfo>
@@ -1910,8 +1908,8 @@ const SaaSLayout: React.FC<{ children?: React.ReactNode }> = ({ children }) => {
       <LogoutOutlined style={{ fontSize: 16, lineHeight: 1, display: 'flex', flexShrink: 0 }} />
       {!collapsed && (
         <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.3, overflow: 'hidden' }}>
-          <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.45)', fontWeight: 400, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{user?.firstName} {user?.lastName}</span>
-          <span style={{ fontSize: 13, lineHeight: 1 }}>Logout</span>
+          <span style={{ fontSize: 13, color: '#ffffff', fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{user?.firstName} {user?.lastName}</span>
+          <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.45)', fontWeight: 400, textTransform: 'capitalize' }}>{String(user?.role || '').replace('_', ' ')}</span>
         </div>
       )}
     </div>

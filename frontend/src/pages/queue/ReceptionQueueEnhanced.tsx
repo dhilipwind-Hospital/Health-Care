@@ -244,9 +244,10 @@ const ReceptionQueueEnhanced: React.FC = () => {
       // Also fetch today's appointments
       try {
         const apptRes = await import('../../services/api').then(m => m.default.get('/appointments', {
-          params: { date: today, status: 'scheduled', limit: 50 }
+          params: { date: today, limit: 100 }
         }));
-        setTodayAppointments(apptRes.data?.data || []);
+        const appts = apptRes.data?.data || apptRes.data?.appointments || apptRes.data || [];
+        setTodayAppointments(Array.isArray(appts) ? appts : []);
       } catch {
         setTodayAppointments([]);
       }
@@ -520,7 +521,7 @@ const ReceptionQueueEnhanced: React.FC = () => {
           <div style={{ width: 80, textAlign: 'right' }}>Action</div>
         </div>
 
-        {/* Queue Items */}
+        {/* Queue Items — live queue first, fall back to today's appointments */}
         {filteredQueue.length > 0 ? (
           filteredQueue.map((item) => {
             const patient = item?.visit?.patient || {};
@@ -545,20 +546,12 @@ const ReceptionQueueEnhanced: React.FC = () => {
                 </div>
                 <div className="actions">
                   {item.status === 'waiting' && item.stage === 'reception' && (
-                    <Button
-                      type="link"
-                      size="small"
-                      onClick={() => handleCallPatient(item)}
-                    >
+                    <Button type="link" size="small" onClick={() => handleCallPatient(item)}>
                       Call
                     </Button>
                   )}
                   {item.status === 'called' && item.stage === 'reception' && (
-                    <Button
-                      type="primary"
-                      size="small"
-                      onClick={() => handleAdvanceToTriage(item)}
-                    >
+                    <Button type="primary" size="small" onClick={() => handleAdvanceToTriage(item)}>
                       Send to Triage
                     </Button>
                   )}
@@ -569,9 +562,56 @@ const ReceptionQueueEnhanced: React.FC = () => {
               </PatientRow>
             );
           })
+        ) : todayAppointments.length > 0 ? (
+          <>
+            <div style={{ padding: '8px 20px', background: '#fffbe6', borderBottom: '1px solid #ffe58f', fontSize: 12, color: '#874d00' }}>
+              📋 Showing today's scheduled appointments — check-in patients to add them to the live queue
+            </div>
+            {todayAppointments.filter(appt => {
+              if (!searchText) return true;
+              const name = `${appt.patient?.firstName || ''} ${appt.patient?.lastName || ''}`.toLowerCase();
+              return name.includes(searchText.toLowerCase());
+            }).map((appt: any, idx: number) => {
+              const patient = appt.patient || {};
+              const doctor = appt.doctor || {};
+              const statusColorMap: Record<string, string> = {
+                scheduled: 'blue', confirmed: 'green', completed: 'default',
+                cancelled: 'red', no_show: 'orange', in_progress: 'cyan',
+              };
+              return (
+                <PatientRow key={appt.id || idx}>
+                  <div className="token" style={{ fontSize: 13, color: '#888' }}>#{idx + 1}</div>
+                  <div className="patient-info">
+                    <div className="name">{patient.firstName || ''} {patient.lastName || ''}</div>
+                    <div className="meta">
+                      {calculateAge(patient.dateOfBirth)}{patient.gender ? ` • ${patient.gender}` : ''} • {appt.type || 'standard'}
+                    </div>
+                  </div>
+                  <div className="doctor">
+                    {doctor.firstName ? `Dr. ${doctor.firstName} ${doctor.lastName || ''}`.trim() : '—'}
+                  </div>
+                  <div className="status">
+                    <Tag color={statusColorMap[appt.status] || 'default'} style={{ textTransform: 'capitalize' }}>
+                      {(appt.status || 'scheduled').replace('_', ' ')}
+                    </Tag>
+                  </div>
+                  <div className="wait-time" style={{ fontSize: 12 }}>
+                    {appt.appointmentTime ? new Date(appt.appointmentTime).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }) : '—'}
+                  </div>
+                  <div className="actions">
+                    {(appt.status === 'scheduled' || appt.status === 'confirmed') && (
+                      <Button type="primary" size="small" onClick={() => handleCheckInFromAppointment(appt)} loading={loading}>
+                        Check-In
+                      </Button>
+                    )}
+                  </div>
+                </PatientRow>
+              );
+            })}
+          </>
         ) : (
           <div style={{ padding: 40, textAlign: 'center', color: '#666' }}>
-            No patients in queue
+            No patients in queue. Use "Check-In Patient" or "Walk-in Registration" to add patients.
           </div>
         )}
 
