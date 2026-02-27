@@ -86,6 +86,13 @@ body {
   border-color: #10B981 !important;
 }
 
+/* Force white icon color inside primary buttons globally */
+.ant-btn-primary .anticon,
+.ant-btn-primary .anticon svg {
+  color: #ffffff !important;
+  fill: #ffffff !important;
+}
+
 /* Input focus - border only, keep white background */
 .ant-input:focus,
 .ant-input-focused {

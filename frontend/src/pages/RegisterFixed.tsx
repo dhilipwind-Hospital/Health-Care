@@ -34,11 +34,12 @@ const PageContainer = styled.div`
 const Modal = styled.div`
   background: white;
   border-radius: 24px;
-  box-shadow: 0 20px 60px rgba(233, 30, 99, 0.15);
+  box-shadow: 0 20px 60px rgba(16, 185, 129, 0.12), 0 8px 24px rgba(0, 0, 0, 0.06);
   max-width: 520px;
   width: 100%;
-  padding: 40px 32px;
+  padding: 40px 36px;
   position: relative;
+  border-top: 4px solid #10B981;
 `;
 
 const CloseButton = styled(Button)`

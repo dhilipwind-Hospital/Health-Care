@@ -183,9 +183,6 @@ const SaaSLanding: React.FC = () => {
                   Start Free Trial
                 </Button>
               </Link>
-              <Button size="large" ghost icon={<PlayCircleOutlined />} onClick={() => setIsDemoModalVisible(true)}>
-                Watch Demo
-              </Button>
             </Space>
             <div className="hero-stats scroll-animate">
               <Statistic title="Modules" value={modules} suffix="+" precision={0} />
@@ -488,11 +485,9 @@ const SaaSLanding: React.FC = () => {
                   <li><CheckCircleOutlined /> 99.9% SLA guarantee</li>
                 </ul>
                 <div className="pricing-cta">
-                  <Link to="/signup?plan=enterprise">
-                    <Button size="large" block onClick={(e) => { e.preventDefault(); handleTalkToSales(); }}>
-                      Contact Sales
-                    </Button>
-                  </Link>
+                  <Button type="default" size="large" block onClick={handleTalkToSales} style={{ height: 48, borderRadius: 8, fontWeight: 600 }}>
+                    Contact Sales
+                  </Button>
                 </div>
               </Card>
             </Col>
@@ -708,7 +703,7 @@ const SaaSLanding: React.FC = () => {
                   <Space direction="vertical" size="middle" style={{ width: '100%' }}>
                     <Text><strong>Email:</strong> support@ayphen.com</Text>
                     <Text><strong>Phone:</strong> +91-44-2345-6789</Text>
-                    <Text><strong>Location:</strong> Chennai, Tamil Nadu, India</Text>
+                    <Text><strong>Location:</strong> RMZ Millenia, Chennai, Tamil Nadu, IN</Text>
                   </Space>
                   <div style={{ marginTop: '1.5rem' }}>
                     <Link to="/signup">

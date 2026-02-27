@@ -207,21 +207,17 @@ const LoginFixed: React.FC = () => {
   const navigate = useNavigate();
   const [loginForm] = Form.useForm();
 
-  // If already logged in, redirect based on role
+  // If user is already logged in when visiting /login, redirect to their dashboard
   useEffect(() => {
-    if (user) {
+    if (user && !loading) {
       const role = String(user.role || '').toLowerCase();
-      if (role === 'admin' || role === 'super_admin') navigate('/dashboard', { replace: true });
-      else if (role === 'doctor') navigate('/dashboard', { replace: true });
-      else if (role === 'nurse') navigate('/dashboard', { replace: true });
-      else if (role === 'receptionist') navigate('/dashboard', { replace: true });
-      else if (role === 'lab_technician' || role === 'lab_supervisor') navigate('/laboratory/dashboard', { replace: true });
+      if (role === 'patient') navigate('/portal', { replace: true });
       else if (role === 'pharmacist') navigate('/pharmacy', { replace: true });
+      else if (role === 'lab_technician' || role === 'lab_supervisor') navigate('/laboratory/dashboard', { replace: true });
       else if (role === 'accountant') navigate('/billing/management', { replace: true });
-      else if (role === 'patient') navigate('/portal', { replace: true });
       else navigate('/dashboard', { replace: true });
     }
-  }, [user, navigate]);
+  }, [user, loading, navigate]);
 
   const onLoginFinish = async (values: { email: string; password: string; remember?: boolean }) => {
     try {
@@ -318,15 +314,6 @@ const LoginFixed: React.FC = () => {
         <div style={{ textAlign: 'center', marginTop: 8 }}>
           <a href="/register" style={{ color: '#10B981', fontWeight: 500 }}>No account? Sign up</a>
         </div>
-        
-        <Divider>or continue with</Divider>
-        
-        <SocialButtons>
-          <GoogleSignIn block />
-          <SocialButton icon={<FacebookOutlined />}>
-            Facebook
-          </SocialButton>
-        </SocialButtons>
       </Modal>
     </PageContainer>
   );

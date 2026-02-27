@@ -35,9 +35,10 @@ const MyAppointments: React.FC = () => {
   const highlightId = useMemo(() => new URLSearchParams(location.search).get('highlight') || '', [location.search]);
   const lastSeenKey = role === 'doctor' ? 'hms_doctor_appt_last_seen' : 'hms_patient_appt_last_seen';
   const [lastSeenAt] = useState<number>(() => Number(localStorage.getItem(lastSeenKey) || '0'));
-  const [rescheduleModal, setRescheduleModal] = useState<{ open: boolean; row?: AppointmentRow; start?: Dayjs }>(
+  const [rescheduleModal, setRescheduleModal] = useState<{ open: boolean; row?: AppointmentRow; start?: Dayjs; selectedDate?: Dayjs; selectedTime?: string }>(
     { open: false }
   );
+  const [rescheduling, setRescheduling] = useState(false);
   const [detailsModal, setDetailsModal] = useState<{ open: boolean; row?: AppointmentRow }>({ open: false });
   const [cancelModal, setCancelModal] = useState<{ open: boolean; row?: AppointmentRow; reason: string }>({ open: false, reason: '' });
   const [history, setHistory] = useState<{ loading: boolean; items: Array<{ id: string; action: string; details?: string; createdAt: string }> }>({ loading: false, items: [] });
@@ -177,22 +178,38 @@ const MyAppointments: React.FC = () => {
           {/* Patient actions: reschedule/cancel */}
           {role !== 'doctor' && (
             <>
-              <Button size="small" onClick={() => setRescheduleModal({ open: true, row, start: dayjs(row.startTime) })}>Reschedule</Button>
               {(() => {
+                const isCancelled = String(row.status || '').toUpperCase() === 'CANCELLED';
+                return (
+                  <Tooltip title={isCancelled ? 'Cannot reschedule a cancelled appointment' : ''}>
+                    <Button
+                      size="small"
+                      disabled={isCancelled}
+                      onClick={() => setRescheduleModal({ open: true, row, start: dayjs(row.startTime), selectedDate: dayjs(row.startTime), selectedTime: undefined })}
+                    >
+                      Reschedule
+                    </Button>
+                  </Tooltip>
+                );
+              })()}
+              {(() => {
+                const isCancelled = String(row.status || '').toUpperCase() === 'CANCELLED';
                 const cutoffHours = 24;
                 const withinCutoff = dayjs(row.startTime).diff(dayjs(), 'hour') < cutoffHours;
+                const isDisabled = isCancelled || withinCutoff;
+                const tooltipMsg = isCancelled ? 'Already cancelled' : withinCutoff ? `Cannot cancel within ${cutoffHours} hours. Please contact support.` : '';
                 const cancelBtn = (
                   <Button
                     size="small"
                     danger
-                    disabled={withinCutoff}
+                    disabled={isDisabled}
                     onClick={() => setCancelModal({ open: true, row, reason: '' })}
                   >
                     Cancel
                   </Button>
                 );
-                return withinCutoff ? (
-                  <Tooltip title={`Cannot cancel within ${cutoffHours} hours. Please contact support.`}>
+                return tooltipMsg ? (
+                  <Tooltip title={tooltipMsg}>
                     {cancelBtn}
                   </Tooltip>
                 ) : cancelBtn;
@@ -306,52 +323,97 @@ const MyAppointments: React.FC = () => {
           optionFilterProp="label"
         />
       </Modal>
-      {/* Reschedule modal */}
+      {/* Reschedule modal with time slots */}
       <Modal
         open={rescheduleModal.open}
         title="Reschedule Appointment"
-        onCancel={() => setRescheduleModal({ open: false })}
-        okText="Reschedule"
-        onOk={async () => {
-          if (!rescheduleModal.row || !rescheduleModal.start) {
-            return setRescheduleModal({ open: false });
-          }
-          try {
-            const row = rescheduleModal.row;
-            // Compute end time using original duration as fallback
-            let durationMin = 30;
-            try {
-              const original = dayjs(row.endTime).diff(dayjs(row.startTime), 'minute');
-              if (original > 0) durationMin = Math.round(original);
-              else if (row.service?.id) {
-                const svcRes = await api.get(`/services/${row.service.id}` as any);
-                if (svcRes.data?.averageDuration) durationMin = svcRes.data.averageDuration;
+        onCancel={() => { if (!rescheduling) setRescheduleModal({ open: false }); }}
+        width={520}
+        footer={[
+          <Button key="cancel" onClick={() => { if (!rescheduling) setRescheduleModal({ open: false }); }} disabled={rescheduling}>Cancel</Button>,
+          <Button
+            key="reschedule"
+            type="primary"
+            loading={rescheduling}
+            disabled={!rescheduleModal.selectedDate || !rescheduleModal.selectedTime || rescheduling}
+            onClick={async () => {
+              if (!rescheduleModal.row || !rescheduleModal.selectedDate || !rescheduleModal.selectedTime) return;
+              try {
+                setRescheduling(true);
+                const row = rescheduleModal.row;
+                let durationMin = 30;
+                try {
+                  const original = dayjs(row.endTime).diff(dayjs(row.startTime), 'minute');
+                  if (original > 0) durationMin = Math.round(original);
+                } catch { /* fallback */ }
+                const [hourStr, minuteStr] = rescheduleModal.selectedTime.split(':');
+                const startDayjs = rescheduleModal.selectedDate.hour(parseInt(hourStr)).minute(parseInt(minuteStr)).second(0);
+                const startISO = startDayjs.toISOString();
+                const endISO = startDayjs.add(durationMin, 'minute').toISOString();
+                await api.post(`/appointments/${row.id}/reschedule`, {
+                  startTime: startISO,
+                  endTime: endISO,
+                  reason: 'Patient requested reschedule'
+                } as any);
+                msgApi.success('Appointment rescheduled successfully');
+                setRescheduleModal({ open: false });
+                load();
+              } catch (e: any) {
+                msgApi.error(e?.response?.data?.message || 'Failed to reschedule');
+              } finally {
+                setRescheduling(false);
               }
-            } catch { /* ignore and use fallback */ }
-            const startISO = rescheduleModal.start.toISOString();
-            const endISO = rescheduleModal.start.add(durationMin, 'minute').toISOString();
-            // Use new reschedule endpoint
-            await api.post(`/appointments/${row.id}/reschedule`, { 
-              startTime: startISO, 
-              endTime: endISO,
-              reason: 'Patient requested reschedule'
-            } as any);
-            msgApi.success('Appointment rescheduled successfully');
-            setRescheduleModal({ open: false });
-            load();
-          } catch (e: any) {
-            msgApi.error(e?.response?.data?.message || 'Failed to reschedule');
-          }
-        }}
+            }}
+          >
+            Reschedule
+          </Button>,
+        ]}
       >
-        <div style={{ marginBottom: 8 }}>New start date & time</div>
-        <DatePicker
-          showTime
-          style={{ width: '100%' }}
-          value={rescheduleModal.start}
-          onChange={(v) => setRescheduleModal(prev => ({ ...prev, start: v || undefined }))}
-          disabledDate={(d) => d && d < dayjs().startOf('day')}
-        />
+        <div style={{ marginBottom: 12 }}>
+          <div style={{ fontWeight: 500, marginBottom: 8 }}>Select New Date</div>
+          <DatePicker
+            style={{ width: '100%' }}
+            value={rescheduleModal.selectedDate}
+            onChange={(v) => setRescheduleModal(prev => ({ ...prev, selectedDate: v || undefined, selectedTime: undefined }))}
+            disabledDate={(d) => d && d < dayjs().startOf('day')}
+          />
+        </div>
+        {rescheduleModal.selectedDate && (
+          <div>
+            <div style={{ fontWeight: 500, marginBottom: 8 }}>Available Time Slots</div>
+            {[
+              { label: 'Morning', slots: ['09:00','09:30','10:00','10:30','11:00','11:30'] },
+              { label: 'Afternoon', slots: ['12:00','12:30','13:00','13:30','14:00','14:30','15:00','15:30','16:00','16:30'] },
+              { label: 'Evening', slots: ['17:00','17:30','18:00','18:30','19:00','19:30'] },
+            ].map(section => (
+              <div key={section.label} style={{ marginBottom: 12 }}>
+                <div style={{ fontSize: 12, color: '#888', marginBottom: 6, textTransform: 'uppercase', fontWeight: 600 }}>{section.label}</div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                  {section.slots.map(slot => {
+                    const isSelected = rescheduleModal.selectedTime === slot;
+                    const [h, m] = slot.split(':').map(Number);
+                    const display = `${h > 12 ? String(h - 12).padStart(2, '0') : String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+                    return (
+                      <Button
+                        key={slot}
+                        size="small"
+                        type={isSelected ? 'primary' : 'default'}
+                        style={{
+                          borderRadius: 8,
+                          minWidth: 60,
+                          ...(isSelected ? { background: '#0d9488', borderColor: '#0d9488' } : {}),
+                        }}
+                        onClick={() => setRescheduleModal(prev => ({ ...prev, selectedTime: slot }))}
+                      >
+                        {display}
+                      </Button>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </Modal>
 
       {/* Cancel with reason modal */}

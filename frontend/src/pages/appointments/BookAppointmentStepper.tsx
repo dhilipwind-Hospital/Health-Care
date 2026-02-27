@@ -327,11 +327,6 @@ const BookAppointmentStepper: React.FC = () => {
         confirmationId: response.data?.id || 'N/A',
       });
       setShowSuccess(true);
-      
-      // Refresh appointments list after successful booking
-      setTimeout(() => {
-        navigate('/appointments');
-      }, 2000);
     } catch (error: any) {
       console.error('=== BOOKING ERROR ===');
       console.error('Error response:', error?.response?.data);
@@ -405,11 +400,19 @@ const BookAppointmentStepper: React.FC = () => {
               type="primary"
               key="view"
               style={{ background: '#0d9488', borderColor: '#0d9488' }}
-              onClick={() => navigate('/appointments')}
+              onClick={() => {
+                setShowSuccess(false);
+                const role = String((user as any)?.role || '').toLowerCase();
+                navigate(role === 'patient' ? '/portal' : '/appointments');
+              }}
             >
               View My Appointments
             </Button>,
-            <Button key="home" onClick={() => navigate('/')}>
+            <Button key="home" onClick={() => {
+              setShowSuccess(false);
+              const role = String((user as any)?.role || '').toLowerCase();
+              navigate(role === 'patient' ? '/portal' : '/dashboard');
+            }}>
               Go to Dashboard
             </Button>,
           ]}

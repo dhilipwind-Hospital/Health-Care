@@ -365,6 +365,22 @@
   border-radius: 50% !important;
 }
 
+/* Calendar year/month dropdown fix */
+.sidebar-card .ant-picker-calendar-header .ant-select-selector {
+  border-radius: 8px !important;
+  height: 32px !important;
+}
+.sidebar-card .ant-picker-calendar-header .ant-select {
+  min-width: 80px;
+}
+.sidebar-card .ant-picker-calendar-header .ant-select-dropdown {
+  border-radius: 8px;
+  z-index: 9999;
+}
+.sidebar-card .ant-picker-calendar-header {
+  padding: 8px 0 !important;
+}
+
 /* Time Slots */
 .time-section {
   margin-bottom: 16px;
