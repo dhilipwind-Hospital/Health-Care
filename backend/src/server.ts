@@ -510,18 +510,26 @@ export class Server {
         await adminUser.hashPassword();
         await userRepo.save(adminUser);
 
-        // Create doctors
+        // Create doctors (all departments, 2 per major dept)
         const doctors = [
           { firstName: 'Senthil', lastName: 'Kumar', dept: 'General Medicine', phone: '+91 9876500101' },
+          { firstName: 'Lakshmi', lastName: 'Narayanan', dept: 'General Medicine', phone: '+91 9876500102' },
           { firstName: 'Rajesh', lastName: 'Venkataraman', dept: 'Cardiology', phone: '+91 9876500103' },
+          { firstName: 'Priya', lastName: 'Sundaram', dept: 'Cardiology', phone: '+91 9876500104' },
           { firstName: 'Karthik', lastName: 'Rajan', dept: 'Orthopedics', phone: '+91 9876500105' },
+          { firstName: 'Anand', lastName: 'Krishnan', dept: 'Orthopedics', phone: '+91 9876500106' },
           { firstName: 'Meera', lastName: 'Balasubramanian', dept: 'Pediatrics', phone: '+91 9876500107' },
+          { firstName: 'Divya', lastName: 'Shankar', dept: 'Pediatrics', phone: '+91 9876500108' },
           { firstName: 'Saranya', lastName: 'Mohan', dept: 'Gynecology & Obstetrics', phone: '+91 9876500109' },
+          { firstName: 'Kavitha', lastName: 'Ramachandran', dept: 'Gynecology & Obstetrics', phone: '+91 9876500110' },
           { firstName: 'Suresh', lastName: 'Iyer', dept: 'Neurology', phone: '+91 9876500111' },
           { firstName: 'Deepa', lastName: 'Natarajan', dept: 'Dermatology', phone: '+91 9876500112' },
           { firstName: 'Ganesh', lastName: 'Pillai', dept: 'Ophthalmology', phone: '+91 9876500113' },
           { firstName: 'Ramya', lastName: 'Gopal', dept: 'ENT', phone: '+91 9876500114' },
-          { firstName: 'Vijay', lastName: 'Anand', dept: 'Emergency', phone: '+91 9876500115' }
+          { firstName: 'Vijay', lastName: 'Anand', dept: 'Emergency', phone: '+91 9876500115' },
+          { firstName: 'Arun', lastName: 'Prakash', dept: 'Emergency', phone: '+91 9876500116' },
+          { firstName: 'Sathish', lastName: 'Kumar', dept: 'Radiology', phone: '+91 9876500117' },
+          { firstName: 'Revathi', lastName: 'Subramanian', dept: 'Pathology', phone: '+91 9876500118' }
         ];
 
         for (const doc of doctors) {
@@ -542,17 +550,31 @@ export class Server {
           await userRepo.save(doctor);
         }
 
-        // Create other staff
+        // Create other staff (matching comprehensive seed)
         const staffConfigs = [
-          { role: UserRole.NURSE, email: 'nurse.radha@cuddalore-hms.com', firstName: 'Radha', lastName: 'Krishnamurthy' },
-          { role: UserRole.NURSE, email: 'nurse.geetha@cuddalore-hms.com', firstName: 'Geetha', lastName: 'Venkat' },
-          { role: UserRole.RECEPTIONIST, email: 'reception1@cuddalore-hms.com', firstName: 'Priyanka', lastName: 'Sharma' },
-          { role: UserRole.RECEPTIONIST, email: 'reception2@cuddalore-hms.com', firstName: 'Sneha', lastName: 'Reddy' },
-          { role: UserRole.PHARMACIST, email: 'pharmacist1@cuddalore-hms.com', firstName: 'Murali', lastName: 'Krishna' },
-          { role: UserRole.PHARMACIST, email: 'pharmacist2@cuddalore-hms.com', firstName: 'Bala', lastName: 'Murugan' },
-          { role: UserRole.LAB_TECHNICIAN, email: 'lab1@cuddalore-hms.com', firstName: 'Selvam', lastName: 'Raj' },
-          { role: UserRole.LAB_TECHNICIAN, email: 'lab2@cuddalore-hms.com', firstName: 'Mani', lastName: 'Kandan' },
-          { role: UserRole.ACCOUNTANT, email: 'accountant1@cuddalore-hms.com', firstName: 'Ravi', lastName: 'Chandran' }
+          // Nurses (10)
+          { role: UserRole.NURSE, email: 'nurse.radha@cuddalore-hms.com', firstName: 'Radha', lastName: 'Krishnamurthy', phone: '+91 9876500201' },
+          { role: UserRole.NURSE, email: 'nurse.geetha@cuddalore-hms.com', firstName: 'Geetha', lastName: 'Venkat', phone: '+91 9876500202' },
+          { role: UserRole.NURSE, email: 'nurse.saroja@cuddalore-hms.com', firstName: 'Saroja', lastName: 'Raman', phone: '+91 9876500203' },
+          { role: UserRole.NURSE, email: 'nurse.kamala@cuddalore-hms.com', firstName: 'Kamala', lastName: 'Devi', phone: '+91 9876500204' },
+          { role: UserRole.NURSE, email: 'nurse.vimala@cuddalore-hms.com', firstName: 'Vimala', lastName: 'Sundari', phone: '+91 9876500205' },
+          { role: UserRole.NURSE, email: 'nurse.padma@cuddalore-hms.com', firstName: 'Padma', lastName: 'Priya', phone: '+91 9876500206' },
+          { role: UserRole.NURSE, email: 'nurse.lalitha@cuddalore-hms.com', firstName: 'Lalitha', lastName: 'Kumari', phone: '+91 9876500207' },
+          { role: UserRole.NURSE, email: 'nurse.uma@cuddalore-hms.com', firstName: 'Uma', lastName: 'Maheswari', phone: '+91 9876500208' },
+          { role: UserRole.NURSE, email: 'nurse.vasanthi@cuddalore-hms.com', firstName: 'Vasanthi', lastName: 'Lakshmi', phone: '+91 9876500209' },
+          { role: UserRole.NURSE, email: 'nurse.jayanthi@cuddalore-hms.com', firstName: 'Jayanthi', lastName: 'Selvi', phone: '+91 9876500210' },
+          // Receptionists (3)
+          { role: UserRole.RECEPTIONIST, email: 'reception1@cuddalore-hms.com', firstName: 'Priyanka', lastName: 'Sharma', phone: '+91 9876500301' },
+          { role: UserRole.RECEPTIONIST, email: 'reception2@cuddalore-hms.com', firstName: 'Sneha', lastName: 'Reddy', phone: '+91 9876500302' },
+          { role: UserRole.RECEPTIONIST, email: 'reception3@cuddalore-hms.com', firstName: 'Anitha', lastName: 'Kumar', phone: '+91 9876500303' },
+          // Pharmacists (2)
+          { role: UserRole.PHARMACIST, email: 'pharmacist1@cuddalore-hms.com', firstName: 'Murali', lastName: 'Krishna', phone: '+91 9876500401' },
+          { role: UserRole.PHARMACIST, email: 'pharmacist2@cuddalore-hms.com', firstName: 'Bala', lastName: 'Murugan', phone: '+91 9876500402' },
+          // Lab Technicians (2)
+          { role: UserRole.LAB_TECHNICIAN, email: 'lab1@cuddalore-hms.com', firstName: 'Selvam', lastName: 'Raj', phone: '+91 9876500501' },
+          { role: UserRole.LAB_TECHNICIAN, email: 'lab2@cuddalore-hms.com', firstName: 'Mani', lastName: 'Kandan', phone: '+91 9876500502' },
+          // Accountant (1)
+          { role: UserRole.ACCOUNTANT, email: 'accountant1@cuddalore-hms.com', firstName: 'Ravi', lastName: 'Chandran', phone: '+91 9876500601' }
         ];
 
         for (const staff of staffConfigs) {
@@ -560,7 +582,7 @@ export class Server {
             email: staff.email,
             firstName: staff.firstName,
             lastName: staff.lastName,
-            phone: '+91 9876500000',
+            phone: staff.phone,
             password: 'Demo@123',
             role: staff.role,
             organizationId: orgId,
@@ -570,11 +592,28 @@ export class Server {
           await userRepo.save(user);
         }
 
-        // Create sample patients
+        // Create sample patients (20 patients matching comprehensive seed)
         const patients = [
           { firstName: 'Ravi', lastName: 'Kumar', email: 'patient.ravi1@gmail.com', phone: '+91 9876600001' },
           { firstName: 'Sita', lastName: 'Devi', email: 'patient.sita2@gmail.com', phone: '+91 9876600002' },
-          { firstName: 'Krishna', lastName: 'Moorthy', email: 'patient.krishna3@gmail.com', phone: '+91 9876600003' }
+          { firstName: 'Krishna', lastName: 'Moorthy', email: 'patient.krishna3@gmail.com', phone: '+91 9876600003' },
+          { firstName: 'Radha', lastName: 'Lakshmi', email: 'patient.radha4@gmail.com', phone: '+91 9876600004' },
+          { firstName: 'Arjun', lastName: 'Reddy', email: 'patient.arjun5@gmail.com', phone: '+91 9876600005' },
+          { firstName: 'Priya', lastName: 'Sharma', email: 'patient.priya6@gmail.com', phone: '+91 9876600006' },
+          { firstName: 'Venkat', lastName: 'Rao', email: 'patient.venkat7@gmail.com', phone: '+91 9876600007' },
+          { firstName: 'Lakshmi', lastName: 'Naidu', email: 'patient.lakshmi8@gmail.com', phone: '+91 9876600008' },
+          { firstName: 'Surya', lastName: 'Prakash', email: 'patient.surya9@gmail.com', phone: '+91 9876600009' },
+          { firstName: 'Kavitha', lastName: 'Sundaram', email: 'patient.kavitha10@gmail.com', phone: '+91 9876600010' },
+          { firstName: 'Anil', lastName: 'Babu', email: 'patient.anil11@gmail.com', phone: '+91 9876600011' },
+          { firstName: 'Sunitha', lastName: 'Rani', email: 'patient.sunitha12@gmail.com', phone: '+91 9876600012' },
+          { firstName: 'Mahesh', lastName: 'Kumar', email: 'patient.mahesh13@gmail.com', phone: '+91 9876600013' },
+          { firstName: 'Geetha', lastName: 'Priya', email: 'patient.geetha14@gmail.com', phone: '+91 9876600014' },
+          { firstName: 'Ram', lastName: 'Prasad', email: 'patient.ram15@gmail.com', phone: '+91 9876600015' },
+          { firstName: 'Anu', lastName: 'Lakshmi', email: 'patient.anu16@gmail.com', phone: '+91 9876600016' },
+          { firstName: 'Kiran', lastName: 'Kumar', email: 'patient.kiran17@gmail.com', phone: '+91 9876600017' },
+          { firstName: 'Padma', lastName: 'Devi', email: 'patient.padma18@gmail.com', phone: '+91 9876600018' },
+          { firstName: 'Vijay', lastName: 'Shankar', email: 'patient.vijay19@gmail.com', phone: '+91 9876600019' },
+          { firstName: 'Uma', lastName: 'Maheswari', email: 'patient.uma20@gmail.com', phone: '+91 9876600020' }
         ];
 
         for (const pat of patients) {

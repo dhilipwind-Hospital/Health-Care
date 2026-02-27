@@ -485,7 +485,7 @@ const SaaSLanding: React.FC = () => {
                   <li><CheckCircleOutlined /> 99.9% SLA guarantee</li>
                 </ul>
                 <div className="pricing-cta">
-                  <Button type="default" size="large" block onClick={handleTalkToSales} style={{ height: 48, borderRadius: 8, fontWeight: 600 }}>
+                  <Button type="default" size="large" block onClick={handleTalkToSales}>
                     Contact Sales
                   </Button>
                 </div>
@@ -627,8 +627,8 @@ const SaaSLanding: React.FC = () => {
                 { icon: '👤', role: 'Patient', desc: 'Self-service Portal' }
               ].map((item, index) => (
                 <Col key={index} xs={12} sm={6} md={3} className="scroll-animate-stagger">
-                  <div style={{ textAlign: 'center', padding: '16px', background: 'white', borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.06)', transition: 'all 0.3s ease', cursor: 'pointer' }} className="role-card">
-                    <div style={{ fontSize: '32px', marginBottom: '8px' }}>{item.icon}</div>
+                  <div style={{ textAlign: 'center', padding: '20px 16px', background: 'white', borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.06)', transition: 'all 0.3s ease', cursor: 'pointer', height: '100%', minHeight: '140px', display: 'flex', flexDirection: 'column' as const, alignItems: 'center', justifyContent: 'center' }} className="role-card">
+                    <div style={{ fontSize: '32px', marginBottom: '8px', lineHeight: 1 }}>{item.icon}</div>
                     <Text strong style={{ display: 'block', fontSize: '13px', color: '#1E3A5F', marginBottom: '4px' }}>{item.role}</Text>
                     <Text type="secondary" style={{ fontSize: '11px' }}>{item.desc}</Text>
                   </div>
@@ -670,28 +670,21 @@ const SaaSLanding: React.FC = () => {
                   <TrophyOutlined style={{ color: '#10B981', marginRight: 12 }} />
                   Why Choose Ayphen Care?
                 </Title>
-                <ul className="why-list">
-                  <li>
-                    <CheckCircleOutlined /> <strong>Multi-Tenant Architecture</strong> —
-                    Perfect for hospital chains and healthcare networks
-                  </li>
-                  <li>
-                    <CheckCircleOutlined /> <strong>Blazing Fast Performance</strong> —
-                    Sub-second response times, even with millions of records
-                  </li>
-                  <li>
-                    <CheckCircleOutlined /> <strong>Customizable & Scalable</strong> —
-                    Grows with your organization from 1 to 1000+ locations
-                  </li>
-                  <li>
-                    <CheckCircleOutlined /> <strong>24/7 Expert Support</strong> —
-                    Dedicated healthcare IT specialists always available
-                  </li>
-                  <li>
-                    <CheckCircleOutlined /> <strong>Regular Updates</strong> —
-                    New features and improvements released monthly
-                  </li>
-                </ul>
+                <div className="why-list">
+                  {[
+                    { title: 'Multi-Tenant Architecture', desc: 'Perfect for hospital chains and healthcare networks' },
+                    { title: 'Blazing Fast Performance', desc: 'Sub-second response times, even with millions of records' },
+                    { title: 'Customizable & Scalable', desc: 'Grows with your organization from 1 to 1000+ locations' },
+                    { title: '24/7 Expert Support', desc: 'Dedicated healthcare IT specialists always available' },
+                    { title: 'Regular Updates', desc: 'New features and improvements released monthly' },
+                  ].map((item, idx) => (
+                    <div className="why-item" key={idx}>
+                      <div className="why-item-icon"><CheckCircleOutlined /></div>
+                      <div className="why-item-title">{item.title}</div>
+                      <div className="why-item-desc">— {item.desc}</div>
+                    </div>
+                  ))}
+                </div>
               </Col>
               <Col xs={24} md={12}>
                 <Card className="contact-card">

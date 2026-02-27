@@ -143,38 +143,42 @@ const MyAppointments: React.FC = () => {
       render: (_: any, row) => (
         <Space>
           <Button size="small" onClick={() => setDetailsModal({ open: true, row })}>Details</Button>
-          {role === 'doctor' && (
-            <>
-              <Button size="small" onClick={() => setNotesModal({ open: true, row, notes: row.notes || '' })}>Notes</Button>
-              {row.patient?.id && (
-                <Link to={`/doctor/patients/${row.patient.id}/records`}>
-                  <Button size="small">Records</Button>
-                </Link>
-              )}
-              {row.patient?.id && (
-                <Link to={`/doctor/consultations/${row.id}`}>
-                  <Button size="small">Consultation</Button>
-                </Link>
-              )}
-              {row.patient?.id && (
-                <Link to={`/doctor/patients/${row.patient.id}/prescriptions/new?patientName=${encodeURIComponent(row.patient.firstName + ' ' + row.patient.lastName)}`}>
-                  <Button size="small">Prescription</Button>
-                </Link>
-              )}
-              {row.patient?.id && (
-                <Button size="small" onClick={async () => {
-                  try {
-                    // lazy load departments once
-                    if (!departments.length) {
-                      const d = await api.get('/departments', { params: { status: 'active' }, suppressErrorToast: true } as any);
-                      setDepartments(d.data?.data || d.data || []);
-                    }
-                  } catch (_) {}
-                  setReferModal({ open: true, row });
-                }}>Refer</Button>
-              )}
-            </>
-          )}
+          {role === 'doctor' && (() => {
+            const isCancelledDoc = String(row.status || '').toUpperCase() === 'CANCELLED';
+            const isCompletedDoc = String(row.status || '').toUpperCase() === 'COMPLETED';
+            const isFinalizedDoc = isCancelledDoc || isCompletedDoc;
+            return (
+              <>
+                <Button size="small" onClick={() => setNotesModal({ open: true, row, notes: row.notes || '' })}>Notes</Button>
+                {!isFinalizedDoc && row.patient?.id && (
+                  <Link to={`/doctor/patients/${row.patient.id}/records`}>
+                    <Button size="small">Records</Button>
+                  </Link>
+                )}
+                {!isFinalizedDoc && row.patient?.id && (
+                  <Link to={`/doctor/consultations/${row.id}`}>
+                    <Button size="small">Consultation</Button>
+                  </Link>
+                )}
+                {!isFinalizedDoc && row.patient?.id && (
+                  <Link to={`/doctor/patients/${row.patient.id}/prescriptions/new?patientName=${encodeURIComponent(row.patient.firstName + ' ' + row.patient.lastName)}`}>
+                    <Button size="small">Prescription</Button>
+                  </Link>
+                )}
+                {!isFinalizedDoc && row.patient?.id && (
+                  <Button size="small" onClick={async () => {
+                    try {
+                      if (!departments.length) {
+                        const d = await api.get('/departments', { params: { status: 'active' }, suppressErrorToast: true } as any);
+                        setDepartments(d.data?.data || d.data || []);
+                      }
+                    } catch (_) {}
+                    setReferModal({ open: true, row });
+                  }}>Refer</Button>
+                )}
+              </>
+            );
+          })()}
           {/* Patient actions: reschedule/cancel */}
           {role !== 'doctor' && (
             <>

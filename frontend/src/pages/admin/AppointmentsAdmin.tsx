@@ -173,14 +173,27 @@ const AppointmentsAdmin: React.FC = () => {
     { title: 'End', dataIndex: 'endTime', render: (v: string) => new Date(v).toLocaleString() },
     { title: 'Status', dataIndex: 'status', render: (s: string) => <Tag color={s === 'confirmed' ? 'green' : s === 'pending' ? 'orange' : s === 'cancelled' ? 'red' : 'default'}>{(s || '—').toUpperCase()}</Tag> },
     {
-      title: 'Actions', key: 'actions', render: (_, r) => (
-        <Space>
-          <Button size="small" onClick={() => onView(r)}>View</Button>
-          <Button size="small" onClick={() => onConfirmAppt(r)}>Confirm</Button>
-          <Button size="small" onClick={() => onOpenReschedule(r)}>Reschedule</Button>
-          <Button size="small" danger onClick={() => onCancelAppt(r)}>Cancel</Button>
-        </Space>
-      )
+      title: 'Actions', key: 'actions', render: (_, r) => {
+        const st = String(r.status || '').toLowerCase();
+        const isCancelled = st === 'cancelled';
+        const isConfirmed = st === 'confirmed';
+        const isCompleted = st === 'completed';
+        const isFinalized = isCancelled || isCompleted;
+        return (
+          <Space>
+            <Button size="small" onClick={() => onView(r)}>View</Button>
+            {!isFinalized && !isConfirmed && (
+              <Button size="small" type="primary" ghost onClick={() => onConfirmAppt(r)}>Confirm</Button>
+            )}
+            {!isFinalized && (
+              <Button size="small" onClick={() => onOpenReschedule(r)}>Reschedule</Button>
+            )}
+            {!isFinalized && (
+              <Button size="small" danger onClick={() => onCancelAppt(r)}>Cancel</Button>
+            )}
+          </Space>
+        );
+      }
     },
   ];
 
