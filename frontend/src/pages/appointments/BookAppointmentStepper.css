@@ -84,6 +84,10 @@
   color: #fff;
 }
 
+.step-circle .anticon {
+  color: inherit !important;
+}
+
 .step-info {
   display: flex;
   flex-direction: column;
@@ -532,6 +536,10 @@
 .confirm-booking-btn:disabled {
   background: #94a3b8;
   cursor: not-allowed;
+}
+
+.confirm-booking-btn .anticon {
+  color: #fff !important;
 }
 
 /* Empty State */
