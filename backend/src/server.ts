@@ -646,6 +646,21 @@ export class Server {
       }
     });
 
+    // Seed Lunaris HMS organization (one-time use, production-safe)
+    this.app.post('/api/seed-lunaris-hms', async (req: Request, res: Response) => {
+      try {
+        const { seedLunarisHMS } = require('./scripts/seed-lunaris-hms');
+        const result = await seedLunarisHMS();
+        if (result.alreadyExists) {
+          return res.status(200).json({ message: 'Lunaris HMS already exists', organizationId: result.organizationId });
+        }
+        res.status(201).json({ message: 'Lunaris HMS created successfully', ...result });
+      } catch (error: any) {
+        console.error('Seed Lunaris HMS error:', error);
+        res.status(500).json({ message: 'Failed to seed Lunaris HMS', error: error.message });
+      }
+    });
+
     // Seed super admin endpoint (one-time use)
     this.app.post('/api/seed-super-admin', async (req: Request, res: Response) => {
       try {
