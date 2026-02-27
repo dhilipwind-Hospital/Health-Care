@@ -663,7 +663,7 @@
   /* Flexbox for consistent height and button alignment */
   display: flex !important;
   flex-direction: column !important;
-  min-height: 520px;
+  min-height: 580px;
 }
 
 .pricing-card:hover {
@@ -756,7 +756,11 @@
   padding: 1.5rem 2rem;
   margin: 0;
   flex-grow: 1;
-  /* Push button to bottom */
+  /* Fixed min-height ensures all cards have same feature area height → buttons align uniformly */
+  min-height: 260px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
 }
 
 .pricing-features li {
@@ -778,38 +782,72 @@
 }
 
 .pricing-cta {
+  /* Always pinned to bottom with uniform spacing */
   margin-top: auto;
-  padding: 0 2rem 2rem;
+  padding: 1.5rem 2rem 2rem;
   width: 100%;
+  flex-shrink: 0;
 }
 
 .pricing-cta a {
   display: block;
 }
 
-.pricing-cta .ant-btn {
-  height: 48px;
-  font-size: 1rem;
-  font-weight: 600;
-  border-radius: 10px !important;
-  width: 100%;
-}
-
+/* All pricing buttons: same fixed dimensions */
+.pricing-cta .ant-btn,
 .pricing-card .ant-btn {
-  height: 48px;
-  font-size: 1rem;
-  font-weight: 600;
-  border-radius: 10px !important;
+  height: 52px !important;
+  font-size: 1rem !important;
+  font-weight: 600 !important;
+  border-radius: 12px !important;
+  width: 100% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  letter-spacing: 0.01em;
+  transition: all 0.2s ease !important;
 }
 
+/* Professional (primary/featured) — dark filled */
+.pricing-card.featured .ant-btn-primary,
 .pricing-card .ant-btn-primary {
   background: linear-gradient(135deg, #1E3A5F 0%, #0F172A 100%) !important;
   border: none !important;
-  box-shadow: 0 4px 16px rgba(30, 58, 95, 0.3) !important;
+  color: #fff !important;
+  box-shadow: 0 4px 16px rgba(30, 58, 95, 0.35) !important;
 }
 
+.pricing-card.featured .ant-btn-primary:hover,
 .pricing-card .ant-btn-primary:hover {
-  box-shadow: 0 8px 24px rgba(30, 58, 95, 0.4) !important;
+  box-shadow: 0 8px 28px rgba(30, 58, 95, 0.45) !important;
+  transform: translateY(-2px);
+  background: linear-gradient(135deg, #2D4A6F 0%, #1E3A5F 100%) !important;
+}
+
+/* Basic — outlined teal/blue border with colored text */
+.pricing-card.basic-card .ant-btn-default {
+  background: transparent !important;
+  border: 2px solid #1E3A5F !important;
+  color: #1E3A5F !important;
+}
+
+.pricing-card.basic-card .ant-btn-default:hover {
+  background: rgba(30, 58, 95, 0.06) !important;
+  border-color: #1E3A5F !important;
+  transform: translateY(-2px);
+}
+
+/* Enterprise — filled teal/accent outline to distinguish from Basic */
+.pricing-card.enterprise-card .ant-btn-default {
+  background: linear-gradient(135deg, #0F766E 0%, #0D9488 100%) !important;
+  border: none !important;
+  color: #fff !important;
+  box-shadow: 0 4px 14px rgba(15, 118, 110, 0.3) !important;
+}
+
+.pricing-card.enterprise-card .ant-btn-default:hover {
+  background: linear-gradient(135deg, #0D6E66 0%, #0B8278 100%) !important;
+  box-shadow: 0 8px 24px rgba(15, 118, 110, 0.4) !important;
   transform: translateY(-2px);
 }
 

@@ -412,7 +412,7 @@ const SaaSLanding: React.FC = () => {
           </div>
           <Row gutter={[32, 32]} justify="center">
             <Col xs={24} md={8} className="scroll-animate-stagger">
-              <Card className="pricing-card scroll-animate-card">
+              <Card className="pricing-card basic-card scroll-animate-card">
                 <div className="pricing-header">
                   <Title level={4}>Basic</Title>
                   <div className="pricing-price">
@@ -466,7 +466,7 @@ const SaaSLanding: React.FC = () => {
               </Card>
             </Col>
             <Col xs={24} md={8} className="scroll-animate-stagger">
-              <Card className="pricing-card scroll-animate-card">
+              <Card className="pricing-card enterprise-card scroll-animate-card">
                 <div className="pricing-header">
                   <Title level={4}>Enterprise</Title>
                   <div className="pricing-price">
