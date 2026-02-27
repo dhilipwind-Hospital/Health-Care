@@ -649,15 +649,16 @@ export class Server {
     // Seed Lunaris HMS organization (one-time use, production-safe)
     this.app.post('/api/seed-lunaris-hms', async (req: Request, res: Response) => {
       try {
-        const { seedLunarisHMS } = require('./scripts/seed-lunaris-hms');
-        const result = await seedLunarisHMS();
-        if (result.alreadyExists) {
-          return res.status(200).json({ message: 'Lunaris HMS already exists', organizationId: result.organizationId });
+        // Dynamic import to avoid build issues
+        const seedModule = await import(path.join(__dirname, 'scripts', 'seed-lunaris-hms'));
+        const result = await seedModule.seedLunarisHMS();
+        if ((result as any).alreadyExists) {
+          return res.status(200).json({ message: 'Lunaris HMS already exists', organizationId: (result as any).organizationId });
         }
         res.status(201).json({ message: 'Lunaris HMS created successfully', ...result });
       } catch (error: any) {
         console.error('Seed Lunaris HMS error:', error);
-        res.status(500).json({ message: 'Failed to seed Lunaris HMS', error: error.message });
+        res.status(500).json({ message: 'Failed to seed Lunaris HMS', error: error.message, stack: error.stack });
       }
     });
 
