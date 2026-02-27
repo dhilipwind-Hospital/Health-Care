@@ -28,7 +28,10 @@ import {
   HomeOutlined,
   BarChartOutlined,
   AuditOutlined,
-  BellOutlined
+  BellOutlined,
+  QrcodeOutlined,
+  IdcardOutlined,
+  MobileOutlined
 } from '@ant-design/icons';
 import { Button, Card, Row, Col, Typography, Space, Statistic, Modal, Form, Input, Select, message, Collapse } from 'antd';
 import api from '../services/api';
@@ -38,6 +41,22 @@ import './SaaSLanding.css';
 const { Title, Paragraph, Text } = Typography;
 const { Option } = Select;
 const { TextArea } = Input;
+
+const pricingBtnStyle: React.CSSProperties = {
+  display: 'block',
+  width: '100%',
+  height: '52px',
+  background: 'linear-gradient(135deg, #1E3A5F 0%, #0F172A 100%)',
+  color: '#ffffff',
+  border: 'none',
+  borderRadius: '12px',
+  fontSize: '1rem',
+  fontWeight: 600,
+  letterSpacing: '0.01em',
+  cursor: 'pointer',
+  transition: 'all 0.2s ease',
+  boxShadow: '0 4px 16px rgba(30, 58, 95, 0.35)',
+};
 
 const SaaSLanding: React.FC = () => {
   const [isModalVisible, setIsModalVisible] = React.useState(false);
@@ -383,14 +402,14 @@ const SaaSLanding: React.FC = () => {
           <div className="journey-timeline scroll-animate" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', maxWidth: '1000px', margin: '0 auto', position: 'relative' }}>
             <div style={{ position: 'absolute', top: '30px', left: '10%', right: '10%', height: '2px', background: 'linear-gradient(90deg, #10B981 0%, #10B981 100%)', zIndex: 0 }}></div>
             {[
-              { icon: '📱', title: 'Book Online', desc: 'Patient books via portal' },
-              { icon: '🎫', title: 'Check-In', desc: 'Token & queue system' },
-              { icon: '👨‍⚕️', title: 'Consultation', desc: 'Doctor reviews' },
-              { icon: '🧪', title: 'Treatment', desc: 'Lab & pharmacy' },
-              { icon: '💳', title: 'Billing', desc: 'Invoice & payment' }
+              { icon: <MobileOutlined />, title: 'Book Online', desc: 'Patient books via portal' },
+              { icon: <IdcardOutlined />, title: 'Check-In', desc: 'Token & queue system' },
+              { icon: <UserOutlined />, title: 'Consultation', desc: 'Doctor reviews' },
+              { icon: <ExperimentOutlined />, title: 'Treatment', desc: 'Lab & pharmacy' },
+              { icon: <DollarOutlined />, title: 'Billing', desc: 'Invoice & payment' }
             ].map((step, index) => (
               <div key={index} className="journey-step scroll-animate-stagger" style={{ textAlign: 'center', flex: 1, position: 'relative', zIndex: 1 }}>
-                <div style={{ width: '60px', height: '60px', borderRadius: '50%', background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '28px', margin: '0 auto 12px', boxShadow: '0 4px 12px rgba(16, 185, 129, 0.3)' }}>
+                <div style={{ width: '60px', height: '60px', borderRadius: '50%', background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px', margin: '0 auto 12px', boxShadow: '0 4px 12px rgba(16, 185, 129, 0.3)' }}>
                   {step.icon}
                 </div>
                 <Text strong style={{ display: 'block', fontSize: '14px', color: '#1E3A5F', marginBottom: '4px' }}>{step.title}</Text>
@@ -430,9 +449,9 @@ const SaaSLanding: React.FC = () => {
                 </ul>
                 <div className="pricing-cta">
                   <Link to="/signup?plan=basic">
-                    <Button type="default" size="large" block>
+                    <button style={pricingBtnStyle}>
                       Start Free Trial
-                    </Button>
+                    </button>
                   </Link>
                 </div>
               </Card>
@@ -458,9 +477,9 @@ const SaaSLanding: React.FC = () => {
                 </ul>
                 <div className="pricing-cta">
                   <Link to="/signup?plan=professional">
-                    <Button type="primary" size="large" block>
+                    <button style={pricingBtnStyle}>
                       Start Free Trial
-                    </Button>
+                    </button>
                   </Link>
                 </div>
               </Card>
@@ -485,9 +504,9 @@ const SaaSLanding: React.FC = () => {
                   <li><CheckCircleOutlined /> 99.9% SLA guarantee</li>
                 </ul>
                 <div className="pricing-cta">
-                  <Button type="default" size="large" block onClick={handleTalkToSales}>
+                  <button style={pricingBtnStyle} onClick={handleTalkToSales}>
                     Contact Sales
-                  </Button>
+                  </button>
                 </div>
               </Card>
             </Col>
