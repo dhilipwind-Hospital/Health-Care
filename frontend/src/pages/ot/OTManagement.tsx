@@ -45,7 +45,7 @@ const OTManagement: React.FC = () => {
   const loadAll = async () => {
     try {
       setLoading(true);
-      const [roomsRes, surgeriesRes, queueRes, analyticsRes, doctorsRes, patientsRes] = await Promise.all([
+      const results = await Promise.allSettled([
         api.get('/ot/rooms'),
         api.get('/ot/surgeries'),
         api.get('/ot/queue'),
@@ -53,14 +53,17 @@ const OTManagement: React.FC = () => {
         api.get('/users?role=doctor&limit=100'),
         api.get('/users?role=patient&limit=100'),
       ]);
-      setRooms(roomsRes.data?.data || []);
-      setSurgeries(surgeriesRes.data?.data || []);
-      setQueue(queueRes.data?.data || []);
-      setAnalytics(analyticsRes.data?.data || null);
-      setDoctors(doctorsRes.data?.data || doctorsRes.data || []);
-      setPatients(patientsRes.data?.data || patientsRes.data || []);
+      const val = (r: PromiseSettledResult<any>) => r.status === 'fulfilled' ? r.value : null;
+      setRooms(val(results[0])?.data?.data || []);
+      setSurgeries(val(results[1])?.data?.data || []);
+      setQueue(val(results[2])?.data?.data || []);
+      setAnalytics(val(results[3])?.data?.data || null);
+      const dr = val(results[4]);
+      setDoctors(dr?.data?.data || dr?.data || []);
+      const pr = val(results[5]);
+      setPatients(pr?.data?.data || pr?.data || []);
     } catch (e: any) {
-      if (e.response?.status !== 404) message.error('Failed to load data');
+      message.error('Failed to load data');
     } finally {
       setLoading(false);
     }

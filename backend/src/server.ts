@@ -87,8 +87,6 @@ import assetRoutes from './routes/asset.routes';
 import infectionControlRoutes from './routes/infection-control.routes';
 import dutyRosterRoutes from './routes/duty-roster.routes';
 import telemedicineRoutes from './routes/telemedicine.routes';
-import { TelemedicineController } from './controllers/telemedicine.controller';
-import { TelemedicineConsultation } from './models/Telemedicine';
 import abhaRoutes from './routes/abha.routes';
 import pcpndtRoutes from './routes/pcpndt.routes';
 import insuranceTpaRoutes from './routes/insurance-tpa.routes';
@@ -673,6 +671,18 @@ export class Server {
       } catch (error: any) {
         console.error('Seed HMS modules error:', error);
         res.status(500).json({ message: 'Failed to seed HMS modules', error: error.message, stack: error.stack });
+      }
+    });
+
+    // Seed live queue (visits + queue items + triage data)
+    this.app.post('/api/seed-live-queue', async (req: Request, res: Response) => {
+      try {
+        const seedModule = await import(path.join(__dirname, 'scripts', 'seed-live-queue'));
+        const result = await seedModule.seedLiveQueue();
+        res.status(201).json({ message: 'Live queue seeded successfully', ...result });
+      } catch (error: any) {
+        console.error('Seed live queue error:', error);
+        res.status(500).json({ message: 'Failed to seed live queue', error: error.message });
       }
     });
 
@@ -1442,27 +1452,7 @@ export class Server {
     } catch (e) {
       console.warn('triage.routes not loaded:', (e as any)?.message || e);
     }
-    // Telemedicine /sessions aliases — delegate to the real TelemedicineController
-    // (proper routes already mounted at /api/telemedicine via telemedicineRoutes)
-    this.app.post('/api/telemedicine/sessions', authenticate, (req, res) => TelemedicineController.create(req, res));
-    this.app.get('/api/telemedicine/sessions', authenticate, (req, res) => TelemedicineController.list(req, res));
-    this.app.put('/api/telemedicine/sessions/:id', authenticate, (req, res) => TelemedicineController.update(req, res));
-    this.app.delete('/api/telemedicine/sessions/:id', authenticate, async (req: Request, res: Response) => {
-      try {
-        const repo = AppDataSource.getRepository(TelemedicineConsultation);
-        const orgId = (req as any).user?.organizationId || (req as any).tenant?.id;
-        const where: any = { id: req.params.id };
-        if (orgId) where.organizationId = orgId;
-        const consultation = await repo.findOne({ where });
-        if (!consultation) {
-          return res.status(404).json({ success: false, message: 'Session not found' });
-        }
-        await repo.remove(consultation);
-        res.status(200).json({ success: true, message: 'Session deleted successfully' });
-      } catch (error: any) {
-        res.status(500).json({ success: false, message: error.message });
-      }
-    });
+    // Telemedicine /sessions routes now handled in telemedicine.routes.ts
 
     // Laboratory Management routes
     const labRoutes = require('./routes/lab.routes').default;

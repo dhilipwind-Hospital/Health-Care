@@ -1,106 +1,135 @@
 /**
  * Seed Live Queue Flow
- * 
- * Simulates active patients in the queue at different stages:
- * - Reception (Waiting for registration/triage)
- * - Triage (Waiting for or undergoing triage)
- * - Doctor (Waiting for or undergoing consultation)
+ *
+ * Creates active visits and queue items at different stages:
+ * - Reception (waiting for registration/triage)
+ * - Triage (waiting for vitals assessment)
+ * - Doctor (waiting for consultation)
+ *
+ * Idempotent — skips if queue items already exist.
+ * Usage: npx ts-node src/scripts/seed-live-queue.ts
+ *   or via POST /api/seed-live-queue
  */
 
 import 'reflect-metadata';
 import { AppDataSource } from '../config/database';
+import { Organization } from '../models/Organization';
 import { User } from '../models/User';
-import { Location } from '../models/Location';
 import { Visit } from '../models/Visit';
 import { QueueItem } from '../models/QueueItem';
-import { UserRole } from '../types/roles';
+import { Triage } from '../models/Triage';
 
-async function seedLiveQueue() {
-    try {
-        console.log('\n🚀 STARTING LIVE QUEUE SEEDING...');
+export async function seedLiveQueue() {
+  if (!AppDataSource.isInitialized) {
+    await AppDataSource.initialize();
+    console.log('🔌 Database connected');
+  }
 
-        if (!AppDataSource.isInitialized) {
-            await AppDataSource.initialize();
-        }
+  const orgRepo = AppDataSource.getRepository(Organization);
+  const org = await orgRepo.findOne({ where: { isActive: true }, order: { createdAt: 'ASC' } });
+  if (!org) throw new Error('No active organization found');
+  const orgId = org.id;
+  console.log(`🏥 Organization: ${org.name}`);
 
-        const userRepo = AppDataSource.getRepository(User);
-        const locRepo = AppDataSource.getRepository(Location);
-        const visitRepo = AppDataSource.getRepository(Visit);
-        const queueRepo = AppDataSource.getRepository(QueueItem);
+  // Check if queue items already exist
+  const queueRepo = AppDataSource.getRepository(QueueItem);
+  const existing = await queueRepo.count({ where: { organizationId: orgId } });
+  if (existing > 0) {
+    console.log(`⏭️ Queue: ${existing} items already exist, skipping`);
+    return { success: true, skipped: true, existing };
+  }
 
-        // 1. Fetch Locations
-        const chennaiLoc = await locRepo.findOne({ where: { code: 'CHN-MAIN' } });
-        const bangaloreLoc = await locRepo.findOne({ where: { code: 'BLR-BRANCH' } });
+  const userRepo = AppDataSource.getRepository(User);
+  const patients = await userRepo.find({ where: { organizationId: orgId, role: 'patient' as any, isActive: true }, take: 5 });
+  const doctors = await userRepo.find({ where: { organizationId: orgId, role: 'doctor' as any, isActive: true }, take: 5 });
 
-        if (!chennaiLoc || !bangaloreLoc) {
-            console.error('❌ Locations not found!');
-            return;
-        }
+  if (patients.length < 3 || doctors.length < 2) {
+    throw new Error(`Need at least 3 patients and 2 doctors. Found ${patients.length} patients, ${doctors.length} doctors.`);
+  }
+  console.log(`👥 Found ${patients.length} patients, ${doctors.length} doctors`);
 
-        const orgId = chennaiLoc.organizationId;
+  const visitRepo = AppDataSource.getRepository(Visit);
+  const triageRepo = AppDataSource.getRepository(Triage);
+  const today = new Date().toISOString().split('T')[0].replace(/-/g, '');
+  let tokenSeq = 1;
 
-        // 2. Fetch Patients & Doctors
-        const patients = await userRepo.find({ where: { role: UserRole.PATIENT }, take: 10 });
-        const doctors = await userRepo.find({ where: { role: UserRole.DOCTOR } });
+  const createVisit = async (
+    patient: User,
+    doctor: User,
+    stage: 'reception' | 'triage' | 'doctor',
+    queueStatus: 'waiting' | 'called',
+    priority: 'standard' | 'urgent' | 'emergency',
+  ) => {
+    const token = `T-${today}-${String(tokenSeq++).padStart(4, '0')}`;
+    const visitStatus = stage === 'doctor' ? 'with_doctor' : stage === 'triage' ? 'triage' : 'created';
 
-        if (patients.length < 5 || doctors.length < 2) {
-            console.error('❌ Not enough patients or doctors. Run seed-complete-demo.ts first.');
-            return;
-        }
+    const visit = visitRepo.create({
+      organizationId: orgId,
+      patientId: patient.id,
+      visitNumber: `V-${today}-${String(tokenSeq).padStart(4, '0')}`,
+      status: visitStatus,
+    } as any);
+    const savedVisit = await visitRepo.save(visit);
 
-        // Cleanup existing LIVE queue items (optional, but good for demo reset)
-        // await queueRepo.delete({});
-        // await visitRepo.delete({});
+    const qi = queueRepo.create({
+      organizationId: orgId,
+      visitId: (savedVisit as any).id,
+      stage,
+      status: queueStatus,
+      priority,
+      tokenNumber: token,
+      assignedDoctorId: doctor.id,
+    } as any);
+    await queueRepo.save(qi);
 
-        const stages: ('reception' | 'triage' | 'doctor')[] = ['reception', 'triage', 'doctor'];
-        const statuses: ('waiting' | 'called' | 'served')[] = ['waiting', 'called', 'served'];
-
-        console.log('🚶 Creating active visits...');
-
-        const createLiveVisit = async (patient: User, doctor: User, stage: any, status: any, token: string) => {
-            // Create Visit
-            const visit = visitRepo.create({
-                organizationId: orgId,
-                patientId: patient.id,
-                visitNumber: `VISIT-${Date.now().toString().slice(-6)}-${token}`,
-                status: stage === 'doctor' ? 'with_doctor' : (stage === 'triage' ? 'triage' : 'created')
-            } as any);
-            const savedVisit = await visitRepo.save(visit);
-
-            // Create Queue Item
-            const queueItem = queueRepo.create({
-                organizationId: orgId,
-                visitId: (savedVisit as any).id,
-                stage: stage,
-                status: status,
-                priority: 'standard',
-                tokenNumber: token,
-                assignedDoctorId: doctor.id
-            } as any);
-            await queueRepo.save(queueItem);
-
-            console.log(` ✅ [${token}] Patient ${patient.firstName} is in ${stage} (${status})`);
-        };
-
-        // --- Chennai Queue ---
-        console.log('\n🏥 Chennai Main Queue:');
-        await createLiveVisit(patients[0], doctors[0], 'reception', 'waiting', 'CHN-001');
-        await createLiveVisit(patients[1], doctors[1], 'triage', 'waiting', 'CHN-002');
-        await createLiveVisit(patients[2], doctors[2], 'doctor', 'called', 'CHN-003');
-
-        // --- Bangalore Queue ---
-        console.log('\n🏥 Bangalore Branch Queue:');
-        await createLiveVisit(patients[3], doctors[4] || doctors[0], 'triage', 'waiting', 'BLR-001');
-        await createLiveVisit(patients[4], doctors[5] || doctors[1], 'doctor', 'called', 'BLR-002');
-
-        console.log('\n✨ LIVE QUEUE SEED COMPLETED!');
-        await AppDataSource.destroy();
-        process.exit(0);
-
-    } catch (error) {
-        console.error('❌ Queue Seeding Failed:', error);
-        process.exit(1);
+    // Add triage vitals for patients in triage or doctor stage
+    if (stage === 'triage' || stage === 'doctor') {
+      const triage = triageRepo.create({
+        organizationId: orgId,
+        visitId: (savedVisit as any).id,
+        vitals: {
+          temperature: 98.4 + Math.random() * 1.2,
+          systolic: 110 + Math.floor(Math.random() * 30),
+          diastolic: 70 + Math.floor(Math.random() * 15),
+          heartRate: 72 + Math.floor(Math.random() * 20),
+          spo2: 96 + Math.floor(Math.random() * 3),
+          weight: 55 + Math.floor(Math.random() * 25),
+        },
+        symptoms: stage === 'doctor' ? 'Fever and body aches for 3 days' : 'Headache and mild nausea',
+        priority,
+      } as any);
+      await triageRepo.save(triage);
     }
+
+    console.log(`  ✅ [${token}] ${patient.firstName} ${patient.lastName} → ${stage} (${queueStatus}, ${priority})`);
+  };
+
+  console.log('🚶 Creating queue items...');
+
+  // 2 patients waiting at reception
+  await createVisit(patients[0], doctors[0], 'reception', 'waiting', 'standard');
+  await createVisit(patients[1], doctors[1], 'reception', 'waiting', 'urgent');
+
+  // 1 patient in triage (called)
+  await createVisit(patients[2], doctors[0], 'triage', 'called', 'standard');
+
+  // 1 patient waiting for doctor
+  if (patients[3]) {
+    await createVisit(patients[3], doctors[1], 'doctor', 'waiting', 'standard');
+  }
+
+  // 1 emergency patient called for doctor
+  if (patients[4]) {
+    await createVisit(patients[4], doctors[2] || doctors[0], 'doctor', 'called', 'emergency');
+  }
+
+  console.log(`\n✅ Queue seeded: ${tokenSeq - 1} visits created`);
+  return { success: true, created: tokenSeq - 1 };
 }
 
-seedLiveQueue();
+// Allow standalone CLI execution
+if (require.main === module) {
+  seedLiveQueue()
+    .then(() => { AppDataSource.destroy(); process.exit(0); })
+    .catch(err => { console.error('❌ Seed error:', err); process.exit(1); });
+}
