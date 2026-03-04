@@ -92,6 +92,11 @@ import pcpndtRoutes from './routes/pcpndt.routes';
 import insuranceTpaRoutes from './routes/insurance-tpa.routes';
 import physiotherapyRoutes from './routes/physiotherapy.routes';
 import medicalRecordFilesRoutes from './routes/medical-records.routes';
+import visitorRoutes from './routes/visitor.routes';
+import staffAttendanceRoutes from './routes/staff-attendance.routes';
+import housekeepingRoutes from './routes/housekeeping.routes';
+import mortuaryRoutes from './routes/mortuary.routes';
+import shiftHandoverRoutes from './routes/shift-handover.routes';
 
 
 export class Server {
@@ -686,6 +691,18 @@ export class Server {
       }
     });
 
+    // Seed advanced modules (visitors, attendance, housekeeping, mortuary, shift handover)
+    this.app.post('/api/seed-advanced-modules', async (req: Request, res: Response) => {
+      try {
+        const seedModule = await import(path.join(__dirname, 'scripts', 'seed-advanced-modules'));
+        const result = await seedModule.seedAdvancedModules();
+        res.status(201).json({ message: 'Advanced modules seeded successfully', ...result });
+      } catch (error: any) {
+        console.error('Seed advanced modules error:', error);
+        res.status(500).json({ message: 'Failed to seed advanced modules', error: error.message });
+      }
+    });
+
     // Seed super admin endpoint (one-time use)
     this.app.post('/api/seed-super-admin', async (req: Request, res: Response) => {
       try {
@@ -787,6 +804,11 @@ export class Server {
     this.app.use('/api/insurance-tpa', insuranceTpaRoutes);
     this.app.use('/api/physiotherapy', physiotherapyRoutes);
     this.app.use('/api/medical-record-files', medicalRecordFilesRoutes);
+    this.app.use('/api/visitors', visitorRoutes);
+    this.app.use('/api/staff-attendance', staffAttendanceRoutes);
+    this.app.use('/api/housekeeping', housekeepingRoutes);
+    this.app.use('/api/mortuary', mortuaryRoutes);
+    this.app.use('/api/shift-handover', shiftHandoverRoutes);
 
     // Super Admin Routes
     this.app.use('/api/super-admin', require('./routes/super-admin.routes').default);

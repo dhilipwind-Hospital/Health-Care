@@ -438,4 +438,124 @@ export class InventoryController {
       return res.status(500).json({ message: 'Failed to generate inventory report', error: (error as any).message });
     }
   };
+
+  // Pharmacy Reports — Inventory Summary
+  static getInventoryReport = async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      const tenantId = (req as any).tenant?.id || user?.organizationId;
+      const medicineRepo = AppDataSource.getRepository(Medicine);
+
+      const medicines = await medicineRepo.find({ where: { organizationId: tenantId, isActive: true } });
+      const totalItems = medicines.length;
+      const totalStock = medicines.reduce((sum, m) => sum + (m.currentStock || 0), 0);
+      const totalValue = medicines.reduce((sum, m) => sum + (m.currentStock || 0) * (Number(m.unitPrice) || 0), 0);
+      const lowStock = medicines.filter(m => m.currentStock <= m.reorderLevel).length;
+      const outOfStock = medicines.filter(m => m.currentStock === 0).length;
+
+      const now = new Date();
+      const threeMonths = new Date(); threeMonths.setMonth(now.getMonth() + 3);
+      const expiringSoon = medicines.filter(m => m.expiryDate && new Date(m.expiryDate) <= threeMonths && new Date(m.expiryDate) >= now).length;
+      const expired = medicines.filter(m => m.expiryDate && new Date(m.expiryDate) < now).length;
+
+      // Category breakdown
+      const categoryMap: Record<string, { count: number; value: number }> = {};
+      medicines.forEach(m => {
+        const cat = m.category || 'Uncategorized';
+        if (!categoryMap[cat]) categoryMap[cat] = { count: 0, value: 0 };
+        categoryMap[cat].count += m.currentStock || 0;
+        categoryMap[cat].value += (m.currentStock || 0) * (Number(m.unitPrice) || 0);
+      });
+      const categoryBreakdown = Object.entries(categoryMap).map(([category, d]) => ({ category, ...d }));
+
+      res.json({ success: true, data: { totalItems, totalStock, totalValue, lowStock, outOfStock, expiringSoon, expired, categoryBreakdown } });
+    } catch (error: any) {
+      res.status(500).json({ success: false, message: error.message });
+    }
+  };
+
+  // Pharmacy Reports — Consumption (StockMovement aggregation)
+  static getConsumptionReport = async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      const tenantId = (req as any).tenant?.id || user?.organizationId;
+      const txRepo = AppDataSource.getRepository(MedicineTransaction);
+
+      const { months = 6 } = req.query;
+      const startDate = new Date();
+      startDate.setMonth(startDate.getMonth() - Number(months));
+
+      const transactions = await txRepo.find({
+        where: { organizationId: tenantId, transactionDate: Between(startDate, new Date()) },
+        relations: ['medicine'],
+        order: { transactionDate: 'ASC' },
+      });
+
+      // Monthly consumption
+      const monthlyMap: Record<string, { dispensed: number; purchased: number }> = {};
+      transactions.forEach(tx => {
+        const key = new Date(tx.transactionDate).toISOString().slice(0, 7);
+        if (!monthlyMap[key]) monthlyMap[key] = { dispensed: 0, purchased: 0 };
+        if (tx.transactionType === TransactionType.SALE || tx.transactionType === TransactionType.ADJUSTMENT) {
+          monthlyMap[key].dispensed += Math.abs(tx.quantity);
+        } else if (tx.transactionType === TransactionType.PURCHASE) {
+          monthlyMap[key].purchased += Math.abs(tx.quantity);
+        }
+      });
+
+      const monthly = Object.entries(monthlyMap).map(([month, d]) => ({ month, ...d }));
+
+      // Top consumed medicines
+      const medMap: Record<string, { name: string; total: number }> = {};
+      transactions.filter(tx => tx.transactionType === TransactionType.SALE).forEach(tx => {
+        const id = tx.medicineId;
+        if (!medMap[id]) medMap[id] = { name: (tx as any).medicine?.name || id, total: 0 };
+        medMap[id].total += Math.abs(tx.quantity);
+      });
+      const topConsumed = Object.values(medMap).sort((a, b) => b.total - a.total).slice(0, 10);
+
+      res.json({ success: true, data: { monthly, topConsumed } });
+    } catch (error: any) {
+      res.status(500).json({ success: false, message: error.message });
+    }
+  };
+
+  // Pharmacy Reports — Financial
+  static getFinancialReport = async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      const tenantId = (req as any).tenant?.id || user?.organizationId;
+      const txRepo = AppDataSource.getRepository(MedicineTransaction);
+
+      const { months = 6 } = req.query;
+      const startDate = new Date();
+      startDate.setMonth(startDate.getMonth() - Number(months));
+
+      const transactions = await txRepo.find({
+        where: { organizationId: tenantId, transactionDate: Between(startDate, new Date()) },
+        relations: ['medicine'],
+        order: { transactionDate: 'ASC' },
+      });
+
+      const monthlyMap: Record<string, { purchases: number; sales: number }> = {};
+      transactions.forEach(tx => {
+        const key = new Date(tx.transactionDate).toISOString().slice(0, 7);
+        if (!monthlyMap[key]) monthlyMap[key] = { purchases: 0, sales: 0 };
+        const price = Number((tx as any).medicine?.unitPrice || 0);
+        if (tx.transactionType === TransactionType.PURCHASE) {
+          monthlyMap[key].purchases += Math.abs(tx.quantity) * price;
+        } else if (tx.transactionType === TransactionType.SALE) {
+          monthlyMap[key].sales += Math.abs(tx.quantity) * price;
+        }
+      });
+
+      const monthly = Object.entries(monthlyMap).map(([month, d]) => ({ month, ...d, profit: d.sales - d.purchases }));
+      const totalPurchases = monthly.reduce((s, m) => s + m.purchases, 0);
+      const totalSales = monthly.reduce((s, m) => s + m.sales, 0);
+
+      res.json({ success: true, data: { monthly, totalPurchases, totalSales, totalProfit: totalSales - totalPurchases } });
+    } catch (error: any) {
+      res.status(500).json({ success: false, message: error.message });
+    }
+  };
 }

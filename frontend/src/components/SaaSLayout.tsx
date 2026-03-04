@@ -353,6 +353,9 @@ const SaaSLayout: React.FC<{ children?: React.ReactNode }> = ({ children }) => {
           { key: 'ambulance', label: 'Ambulance & EMS', path: '/admin/ambulance-advanced' },
           { key: 'queue', label: 'Queue Management', path: '/queue/reception' },
           { key: 'asset-management', label: 'Asset Management', path: '/assets' },
+          { key: 'visitors', label: 'Visitor Management', path: '/visitors' },
+          { key: 'housekeeping', label: 'Housekeeping', path: '/housekeeping' },
+          { key: 'mortuary', label: 'Mortuary', path: '/mortuary' },
         ],
       });
 
@@ -410,6 +413,8 @@ const SaaSLayout: React.FC<{ children?: React.ReactNode }> = ({ children }) => {
         label: 'HR Management',
         children: [
           { key: 'duty-roster', label: 'Duty Roster', path: '/duty-roster' },
+          { key: 'staff-attendance', label: 'Staff Attendance', path: '/staff-attendance' },
+          { key: 'shift-handover', label: 'Shift Handover', path: '/shift-handover' },
         ],
       });
 
@@ -838,6 +843,9 @@ const SaaSLayout: React.FC<{ children?: React.ReactNode }> = ({ children }) => {
           { key: 'ot-management', label: 'OT Management', path: '/admin/ot' },
           { key: 'ambulance', label: 'Ambulance', path: '/admin/ambulance-advanced' },
           { key: 'dialysis', label: 'Dialysis', path: '/dialysis' },
+          { key: 'visitors', label: 'Visitor Management', path: '/visitors' },
+          { key: 'housekeeping', label: 'Housekeeping', path: '/housekeeping' },
+          { key: 'mortuary', label: 'Mortuary', path: '/mortuary' },
         ],
       });
 
@@ -904,6 +912,8 @@ const SaaSLayout: React.FC<{ children?: React.ReactNode }> = ({ children }) => {
           { key: 'staff-management', label: 'Staff Management', path: '/admin/staff' },
           { key: 'locations', label: 'Locations', path: '/admin/locations' },
           { key: 'duty-roster', label: 'Duty Roster', path: '/duty-roster' },
+          { key: 'staff-attendance', label: 'Staff Attendance', path: '/staff-attendance' },
+          { key: 'shift-handover', label: 'Shift Handover', path: '/shift-handover' },
         ],
       });
 

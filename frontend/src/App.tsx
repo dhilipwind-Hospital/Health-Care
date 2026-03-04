@@ -167,6 +167,14 @@ import InsuranceTpaManagement from './pages/insurance/InsuranceTpaManagement';
 import PhysiotherapyManagement from './pages/physiotherapy/PhysiotherapyManagement';
 import MedicalRecordsDigitization from './pages/medical-records/MedicalRecordsDigitization';
 
+// Advanced HMS Modules
+import BedDashboardTV from './pages/inpatient/BedDashboardTV';
+import VisitorManagement from './pages/visitor/VisitorManagement';
+import StaffAttendancePage from './pages/hr/StaffAttendancePage';
+import HousekeepingManagement from './pages/housekeeping/HousekeepingManagement';
+import MortuaryManagement from './pages/mortuary/MortuaryManagement';
+import ShiftHandoverPage from './pages/hr/ShiftHandoverPage';
+
 const App: React.FC = () => {
   // Check for user preferences on app load
   useEffect(() => {
@@ -501,6 +509,14 @@ const App: React.FC = () => {
         { path: '/insurance-tpa', element: <SaaSLayout><RequireRole roles={['admin', 'super_admin', 'accountant']}><InsuranceTpaManagement /></RequireRole></SaaSLayout> },
         { path: '/physiotherapy', element: <SaaSLayout><RequireRole roles={['admin', 'super_admin', 'doctor', 'nurse']}><PhysiotherapyManagement /></RequireRole></SaaSLayout> },
         { path: '/medical-records-digitization', element: <SaaSLayout><RequireRole roles={['admin', 'super_admin', 'receptionist']}><MedicalRecordsDigitization /></RequireRole></SaaSLayout> },
+
+        // Advanced HMS Modules
+        { path: '/tv/beds', element: <BedDashboardTV /> },
+        { path: '/visitors', element: <SaaSLayout><RequireRole roles={['admin', 'super_admin', 'nurse', 'receptionist']}><VisitorManagement /></RequireRole></SaaSLayout> },
+        { path: '/staff-attendance', element: <SaaSLayout><RequireRole roles={['admin', 'super_admin']}><StaffAttendancePage /></RequireRole></SaaSLayout> },
+        { path: '/housekeeping', element: <SaaSLayout><RequireRole roles={['admin', 'super_admin', 'nurse']}><HousekeepingManagement /></RequireRole></SaaSLayout> },
+        { path: '/mortuary', element: <SaaSLayout><RequireRole roles={['admin', 'super_admin']}><MortuaryManagement /></RequireRole></SaaSLayout> },
+        { path: '/shift-handover', element: <SaaSLayout><RequireRole roles={['admin', 'super_admin', 'doctor', 'nurse']}><ShiftHandoverPage /></RequireRole></SaaSLayout> },
 
         // Future Modules (Placeholders)
         { path: '/insurance/claims', element: <SaaSLayout><ModulePlaceholder title="Insurance Claims Processing" /></SaaSLayout> },

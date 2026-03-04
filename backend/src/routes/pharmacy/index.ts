@@ -129,6 +129,11 @@ router.get('/prescriptions/:id', authenticate, tenantContext, errorHandler(Presc
 router.put('/prescriptions/:id/dispense', authenticate, tenantContext, isPharmacistOrAdmin, errorHandler(PrescriptionController.dispensePrescription));
 router.put('/prescriptions/:id/cancel', authenticate, tenantContext, isDoctor, errorHandler(PrescriptionController.cancelPrescription));
 
+// Pharmacy Reports (real API)
+router.get('/reports/inventory', authenticate, isPharmacistOrAdmin, errorHandler(InventoryController.getInventoryReport));
+router.get('/reports/consumption', authenticate, isPharmacistOrAdmin, errorHandler(InventoryController.getConsumptionReport));
+router.get('/reports/financial', authenticate, isPharmacistOrAdmin, errorHandler(InventoryController.getFinancialReport));
+
 // Inventory routes
 router.post('/inventory/add-stock', authenticate, isPharmacistOrAdmin, errorHandler(InventoryController.addStock));
 router.post('/inventory/adjust-stock', authenticate, isPharmacistOrAdmin, errorHandler(InventoryController.adjustStock));

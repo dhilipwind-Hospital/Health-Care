@@ -20,153 +20,37 @@ const ReportsEnhanced: React.FC = () => {
   const [consumptionData, setConsumptionData] = useState<any[]>([]);
   const [financialData, setFinancialData] = useState<any[]>([]);
 
+  const [inventorySummary, setInventorySummary] = useState<any>({});
+
   useEffect(() => {
-    // Mock data for inventory report
-    const mockInventoryData = [
-      {
-        id: '1',
-        name: 'Paracetamol',
-        category: 'Analgesic',
-        currentStock: 1000,
-        reorderLevel: 200,
-        expiryDate: '2025-01-01',
-        value: 1000 * 0.5, // currentStock * unitPrice
-        status: 'Adequate'
-      },
-      {
-        id: '2',
-        name: 'Amoxicillin',
-        category: 'Antibiotic',
-        currentStock: 50,
-        reorderLevel: 100,
-        expiryDate: '2024-02-01',
-        value: 50 * 1.0,
-        status: 'Low Stock'
-      },
-      {
-        id: '3',
-        name: 'Metformin',
-        category: 'Antidiabetic',
-        currentStock: 40,
-        reorderLevel: 80,
-        expiryDate: '2025-04-01',
-        value: 40 * 0.6,
-        status: 'Low Stock'
-      },
-      {
-        id: '4',
-        name: 'Atorvastatin',
-        category: 'Statin',
-        currentStock: 250,
-        reorderLevel: 50,
-        expiryDate: '2025-05-01',
-        value: 250 * 1.2,
-        status: 'Adequate'
-      },
-      {
-        id: '5',
-        name: 'Salbutamol',
-        category: 'Bronchodilator',
-        currentStock: 20,
-        reorderLevel: 20,
-        expiryDate: '2024-06-01',
-        value: 20 * 5.0,
-        status: 'Low Stock'
+    const fetchReports = async () => {
+      setLoading(true);
+      try {
+        const [invRes, conRes, finRes] = await Promise.allSettled([
+          api.get('/pharmacy/reports/inventory'),
+          api.get('/pharmacy/reports/consumption'),
+          api.get('/pharmacy/reports/financial'),
+        ]);
+
+        if (invRes.status === 'fulfilled') {
+          const d = invRes.value.data?.data || {};
+          setInventorySummary(d);
+          setInventoryData(d.categoryBreakdown || []);
+        }
+        if (conRes.status === 'fulfilled') {
+          const d = conRes.value.data?.data || {};
+          setConsumptionData(d.monthly || []);
+        }
+        if (finRes.status === 'fulfilled') {
+          const d = finRes.value.data?.data || {};
+          setFinancialData(d.monthly || []);
+        }
+      } catch (err) {
+        console.error('Failed to fetch pharmacy reports:', err);
       }
-    ];
-    
-    // Mock data for consumption report
-    const mockConsumptionData = [
-      {
-        id: '1',
-        name: 'Paracetamol',
-        category: 'Analgesic',
-        consumed: 500,
-        month: 'September',
-        department: 'General Medicine'
-      },
-      {
-        id: '2',
-        name: 'Amoxicillin',
-        category: 'Antibiotic',
-        consumed: 150,
-        month: 'September',
-        department: 'Pediatrics'
-      },
-      {
-        id: '3',
-        name: 'Metformin',
-        category: 'Antidiabetic',
-        consumed: 200,
-        month: 'September',
-        department: 'Endocrinology'
-      },
-      {
-        id: '4',
-        name: 'Atorvastatin',
-        category: 'Statin',
-        consumed: 100,
-        month: 'September',
-        department: 'Cardiology'
-      },
-      {
-        id: '5',
-        name: 'Salbutamol',
-        category: 'Bronchodilator',
-        consumed: 80,
-        month: 'September',
-        department: 'Pulmonology'
-      }
-    ];
-    
-    // Mock data for financial report
-    const mockFinancialData = [
-      {
-        id: '1',
-        category: 'Analgesic',
-        purchases: 2500,
-        sales: 3000,
-        profit: 500,
-        month: 'September'
-      },
-      {
-        id: '2',
-        category: 'Antibiotic',
-        purchases: 3000,
-        sales: 4500,
-        profit: 1500,
-        month: 'September'
-      },
-      {
-        id: '3',
-        category: 'Antidiabetic',
-        purchases: 1800,
-        sales: 2400,
-        profit: 600,
-        month: 'September'
-      },
-      {
-        id: '4',
-        category: 'Statin',
-        purchases: 3600,
-        sales: 5000,
-        profit: 1400,
-        month: 'September'
-      },
-      {
-        id: '5',
-        category: 'Bronchodilator',
-        purchases: 2000,
-        sales: 3200,
-        profit: 1200,
-        month: 'September'
-      }
-    ];
-    
-    setInventoryData(mockInventoryData);
-    setConsumptionData(mockConsumptionData);
-    setFinancialData(mockFinancialData);
-    setLoading(false);
+      setLoading(false);
+    };
+    fetchReports();
   }, []);
 
   const handleTabChange = (key: string) => {
@@ -203,19 +87,19 @@ const ReportsEnhanced: React.FC = () => {
   };
 
   const getTotalInventoryValue = () => {
-    return getFilteredInventoryData().reduce((total, item) => total + item.value, 0).toFixed(2);
+    return (inventorySummary.totalValue || getFilteredInventoryData().reduce((total: number, item: any) => total + (item.value || 0), 0)).toFixed(2);
   };
 
   const getLowStockCount = () => {
-    return getFilteredInventoryData().filter(item => item.status === 'Low Stock').length;
+    return inventorySummary.lowStock ?? getFilteredInventoryData().filter((item: any) => item.status === 'Low Stock').length;
   };
 
   const getTotalConsumption = () => {
-    return getFilteredConsumptionData().reduce((total, item) => total + item.consumed, 0);
+    return getFilteredConsumptionData().reduce((total: number, item: any) => total + (item.dispensed || item.consumed || 0), 0);
   };
 
   const getTotalProfit = () => {
-    return getFilteredFinancialData().reduce((total, item) => total + item.profit, 0).toFixed(2);
+    return getFilteredFinancialData().reduce((total: number, item: any) => total + (item.profit || 0), 0).toFixed(2);
   };
 
   const categories = [...new Set(inventoryData.map(item => item.category))];
