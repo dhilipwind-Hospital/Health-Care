@@ -715,6 +715,15 @@ const DoctorDashboard: React.FC = () => {
       }
     }
 
+    // Mark current queue item as served
+    if (currentQueueItem?.id) {
+      try {
+        await api.post(`/queue/${currentQueueItem.id}/serve`);
+      } catch (e) {
+        // Non-blocking — queue status update is best-effort
+      }
+    }
+
     // Advance visit to billing stage
     if (currentQueueItem?.visitId) {
       try {

@@ -606,7 +606,7 @@ export class AdmissionController {
               relations: ['medicine'],
             });
             for (const pi of prescItems) {
-              if (pi.medicine && pi.status !== 'cancelled') {
+              if (pi.medicine && pi.status === 'dispensed') {
                 const price = Number(pi.medicine.sellingPrice) || 0;
                 if (price > 0) {
                   itemDetails.push({

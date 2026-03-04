@@ -7,6 +7,11 @@ import { QueueItem, QueueStage, QueuePriority, QueueStatus } from '../models/Que
 import { VisitCounter } from '../models/VisitCounter';
 import { User } from '../models/User';
 import { UserRole } from '../types/roles';
+import { Bill, BillStatus } from '../models/Bill';
+import { LabOrder } from '../models/LabOrder';
+import { LabOrderItem } from '../models/LabOrderItem';
+import { Prescription } from '../models/pharmacy/Prescription';
+import { PrescriptionItem } from '../models/pharmacy/PrescriptionItem';
 
 const router = Router();
 
@@ -205,7 +210,108 @@ router.post('/:id/advance', async (req, res) => {
     const queueItem = qRepo.create(qi2);
     await qRepo.save(queueItem);
 
-    return res.json({ success: true, data: { visit, queueItem } });
+    // Auto-create OPD bill when advancing to billing (non-blocking)
+    let generatedBill: any = null;
+    if (String(toStage) === 'billing') {
+      try {
+        const billRepo = AppDataSource.getRepository(Bill);
+        const itemDetails: Array<{ name: string; quantity: number; unitPrice: number; total: number }> = [];
+
+        // 1. Consultation fee — find doctor from the doctor-stage queue item
+        const doctorQI = await qRepo.findOne({
+          where: { visitId: id, stage: 'doctor' as QueueStage, organizationId: orgId },
+          order: { createdAt: 'DESC' },
+        });
+        if (doctorQI?.assignedDoctorId) {
+          const doctor = await userRepo.findOne({ where: { id: doctorQI.assignedDoctorId } });
+          const fee = Number((doctor as any)?.consultationFee) || 0;
+          if (fee > 0) {
+            itemDetails.push({
+              name: `Consultation Fee - Dr. ${doctor?.firstName || ''} ${doctor?.lastName || ''}`.trim(),
+              quantity: 1,
+              unitPrice: fee,
+              total: fee,
+            });
+          }
+        }
+
+        // 2. Lab test charges linked to this visit
+        const labOrderRepo = AppDataSource.getRepository(LabOrder);
+        const labOrders = await labOrderRepo.find({
+          where: { patientId: visit.patientId, visitId: id, organizationId: orgId },
+        });
+        if (labOrders.length > 0) {
+          const labItemRepo = AppDataSource.getRepository(LabOrderItem);
+          for (const order of labOrders) {
+            const labItems = await labItemRepo.find({
+              where: { labOrderId: order.id },
+              relations: ['labTest'],
+            });
+            for (const li of labItems) {
+              if (li.labTest && li.status !== 'cancelled') {
+                const cost = Number(li.labTest.cost) || 0;
+                if (cost > 0) {
+                  itemDetails.push({ name: `Lab: ${li.labTest.name} (${li.labTest.code})`, quantity: 1, unitPrice: cost, total: cost });
+                }
+              }
+            }
+          }
+        }
+
+        // 3. Prescription/medicine charges linked to this visit (only dispensed)
+        const prescriptionRepo = AppDataSource.getRepository(Prescription);
+        const prescriptions = await prescriptionRepo.find({
+          where: { patientId: visit.patientId, visitId: id, organizationId: orgId },
+        });
+        if (prescriptions.length > 0) {
+          const prescItemRepo = AppDataSource.getRepository(PrescriptionItem);
+          for (const presc of prescriptions) {
+            const prescItems = await prescItemRepo.find({
+              where: { prescriptionId: presc.id },
+              relations: ['medicine'],
+            });
+            for (const pi of prescItems) {
+              if (pi.medicine && pi.status === 'dispensed') {
+                const price = Number(pi.medicine.sellingPrice) || 0;
+                if (price > 0) {
+                  itemDetails.push({ name: `Medicine: ${pi.medicine.name} (×${pi.quantity})`, quantity: pi.quantity, unitPrice: price, total: pi.quantity * price });
+                }
+              }
+            }
+          }
+        }
+
+        const subtotal = itemDetails.reduce((sum, item) => sum + item.total, 0);
+        if (subtotal > 0) {
+          const year = new Date().getFullYear();
+          const billCount = await billRepo.count({ where: { organizationId: orgId } });
+          const billNumber = `BIL-${year}-${String(billCount + 1).padStart(5, '0')}`;
+
+          const bill = billRepo.create({
+            organizationId: orgId,
+            visitId: id,
+            billNumber,
+            amount: subtotal,
+            subtotal,
+            grandTotal: subtotal,
+            balanceDue: subtotal,
+            billDate: new Date(),
+            dueDate: new Date(Date.now() + 30 * 86400000),
+            status: BillStatus.PENDING,
+            billType: 'opd',
+            description: `OPD bill for visit ${visit.visitNumber}`,
+            itemDetails,
+          } as any);
+          // Set patient relation via patientId
+          (bill as any).patient = { id: visit.patientId } as any;
+          generatedBill = await billRepo.save(bill);
+        }
+      } catch (billErr) {
+        console.error('Auto OPD billing failed (non-blocking):', billErr);
+      }
+    }
+
+    return res.json({ success: true, data: { visit, queueItem, ...(generatedBill && { bill: { id: generatedBill.id, billNumber: generatedBill.billNumber, amount: generatedBill.amount } }) } });
   } catch (e: any) {
     console.error('POST /api/visits/:id/advance error:', e);
     return res.status(500).json({ message: 'Failed to advance visit' });

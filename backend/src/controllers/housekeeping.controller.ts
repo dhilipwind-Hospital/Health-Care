@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { AppDataSource } from '../config/database';
 import { HousekeepingTask, HousekeepingStatus } from '../models/HousekeepingTask';
+import { Bed, BedStatus } from '../models/inpatient/Bed';
 
 export class HousekeepingController {
   static dashboard = async (req: Request, res: Response) => {
@@ -110,6 +111,21 @@ export class HousekeepingController {
       task.verifiedAt = new Date();
       task.verifiedById = (req as any).user?.id;
       await repo.save(task);
+
+      // Transition bed from CLEANING to AVAILABLE (non-blocking)
+      if (task.bedId) {
+        try {
+          const bedRepo = AppDataSource.getRepository(Bed);
+          const bed = await bedRepo.findOne({ where: { id: task.bedId } });
+          if (bed && bed.status === BedStatus.CLEANING) {
+            bed.status = BedStatus.AVAILABLE;
+            await bedRepo.save(bed);
+          }
+        } catch (bedErr) {
+          console.error('Bed status update failed (non-blocking):', bedErr);
+        }
+      }
+
       res.json({ success: true, data: task });
     } catch (error: any) {
       res.status(500).json({ success: false, message: error.message });
