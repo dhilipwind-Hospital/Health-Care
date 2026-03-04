@@ -97,6 +97,13 @@ import staffAttendanceRoutes from './routes/staff-attendance.routes';
 import housekeepingRoutes from './routes/housekeeping.routes';
 import mortuaryRoutes from './routes/mortuary.routes';
 import shiftHandoverRoutes from './routes/shift-handover.routes';
+import labRoutes from './routes/lab.routes';
+import symptomCheckerRoutes from './routes/symptom-checker.routes';
+import queueRoutes from './routes/queue.routes';
+import triageRoutes from './routes/triage.routes';
+import analyticsRoutes from './routes/analytics.routes';
+import superAdminRoutes from './routes/super-admin.routes';
+import auditLogRoutes from './routes/audit-log.routes';
 
 
 export class Server {
@@ -776,11 +783,10 @@ export class Server {
     this.app.use('/api/patients', patientRoutes);
     this.app.use('/api/access-grants', patientAccessGrantRoutes);
     this.app.use('/api/locations', locationRoutes);
-    this.app.use('/api/lab', require('./routes/lab.routes').default);
-    this.app.use('/api/queue', require('./routes/queue.routes').default);
-    this.app.use('/api/triage', require('./routes/triage.routes').default);
-    this.app.use('/api/analytics', require('./routes/analytics.routes').default);
-    // Note: telemedicine routes registered below with the India HMS modules (telemedicineRoutes import)
+    this.app.use('/api/lab', labRoutes);
+    this.app.use('/api/queue', queueRoutes);
+    this.app.use('/api/triage', triageRoutes);
+    this.app.use('/api/analytics', analyticsRoutes);
 
     // New India HMS modules
     this.app.use('/api/death-certificates', deathCertificateRoutes);
@@ -811,8 +817,8 @@ export class Server {
     this.app.use('/api/shift-handover', shiftHandoverRoutes);
 
     // Super Admin Routes
-    this.app.use('/api/super-admin', require('./routes/super-admin.routes').default);
-    this.app.use('/api/audit-logs', require('./routes/audit-log.routes').default);
+    this.app.use('/api/super-admin', superAdminRoutes);
+    this.app.use('/api/audit-logs', auditLogRoutes);
 
     // Sales Inquiry Routes (public POST, protected GET/PATCH for super_admin)
     this.app.use('/api/sales-inquiry', salesInquiryRoutes);
@@ -1447,42 +1453,10 @@ export class Server {
     this.app.use('/api/ambulance', ambulanceRoutes);
     this.app.use('/api/billing', billingRoutes);
 
-    // AI Symptom Checker (new feature)
-    try {
-      const symptomCheckerRoutes = require('./routes/symptom-checker.routes').default;
-      this.app.use('/api/symptom-checker', symptomCheckerRoutes);
-    } catch (e) {
-      console.warn('symptom-checker.routes not loaded:', (e as any)?.message || e);
-    }
+    // AI Symptom Checker
+    this.app.use('/api/symptom-checker', symptomCheckerRoutes);
 
-    // Visit & Queue (feature-flagged)
-    try {
-      const visitRoutes = require('./routes/visit.routes').default;
-      this.app.use('/api/visits', visitRoutes);
-    } catch (e) {
-      console.warn('visit.routes not loaded:', (e as any)?.message || e);
-    }
-    try {
-      const queueRoutes = require('./routes/queue.routes').default;
-      this.app.use('/api/queue', queueRoutes);
-    } catch (e) {
-      console.warn('queue.routes not loaded:', (e as any)?.message || e);
-    }
-    try {
-      const triageRoutes = require('./routes/triage.routes').default;
-      this.app.use('/api/triage', triageRoutes);
-    } catch (e) {
-      console.warn('triage.routes not loaded:', (e as any)?.message || e);
-    }
-    // Telemedicine /sessions routes now handled in telemedicine.routes.ts
-
-    // Laboratory Management routes
-    const labRoutes = require('./routes/lab.routes').default;
-    this.app.use('/api/lab', labRoutes);
-
-    // Analytics routes
-    const analyticsRoutes = require('./routes/analytics.routes').default;
-    this.app.use('/api/analytics', analyticsRoutes);
+    // Visit, Queue, Triage, Lab, Analytics routes are mounted above (lines ~779-788)
 
     // Public routes (no auth)
     this.app.get('/api/public/doctors', async (req: Request, res: Response, next: NextFunction) => {

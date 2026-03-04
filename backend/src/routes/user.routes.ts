@@ -148,7 +148,8 @@ router.patch('/me/organization', optionalTenantContext, errorHandler(UserControl
 // Apply tenantContext for other routes that require organization
 router.use(tenantContext);
 
-// TODO: Add doctors endpoint later when UserController is fixed
+// Doctors list (accessible to any authenticated user within the org)
+router.get('/doctors', errorHandler(UserController.listDoctors));
 
 // Doctor routes
 router.get('/doctor/my-patients', isDoctor, errorHandler(UserController.listDoctorPatients));
