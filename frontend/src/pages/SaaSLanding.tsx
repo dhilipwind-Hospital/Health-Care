@@ -31,7 +31,25 @@ import {
   BellOutlined,
   QrcodeOutlined,
   IdcardOutlined,
-  MobileOutlined
+  MobileOutlined,
+  AppstoreOutlined,
+  MedicineBoxFilled,
+  CarOutlined,
+  SolutionOutlined,
+  FileProtectOutlined,
+  ToolOutlined,
+  CalendarOutlined,
+  FundOutlined,
+  AlertOutlined,
+  FormOutlined,
+  EyeOutlined,
+  ReconciliationOutlined,
+  CoffeeOutlined,
+  ScissorOutlined,
+  BankOutlined,
+  PhoneOutlined,
+  SkinOutlined,
+  EnvironmentOutlined
 } from '@ant-design/icons';
 import { Button, Card, Row, Col, Typography, Space, Statistic, Modal, Form, Input, Select, message, Collapse } from 'antd';
 import api from '../services/api';
@@ -67,6 +85,7 @@ const SaaSLanding: React.FC = () => {
   const [modules, setModules] = React.useState(0);
   const [roles, setRoles] = React.useState(0);
   const [uptime, setUptime] = React.useState(0);
+  const [activeModuleTab, setActiveModuleTab] = React.useState('clinical');
 
   const handleTalkToSales = () => {
     setIsModalVisible(true);
@@ -120,16 +139,16 @@ const SaaSLanding: React.FC = () => {
             const moduleInterval = setInterval(() => {
               moduleCount += 1;
               setModules(moduleCount);
-              if (moduleCount >= 30) clearInterval(moduleInterval);
-            }, 30);
-            
+              if (moduleCount >= 50) clearInterval(moduleInterval);
+            }, 18);
+
             // Animate roles counter
             let roleCount = 0;
             const roleInterval = setInterval(() => {
               roleCount += 1;
               setRoles(roleCount);
-              if (roleCount >= 8) clearInterval(roleInterval);
-            }, 60);
+              if (roleCount >= 14) clearInterval(roleInterval);
+            }, 50);
             
             // Animate uptime counter
             let uptimeCount = 0;
@@ -299,6 +318,151 @@ const SaaSLanding: React.FC = () => {
         </div>
       </section>
 
+      {/* All Modules Section */}
+      <section className="modules-showcase-section">
+        <div className="section-container">
+          <div className="section-header scroll-animate" style={{ textAlign: 'center', marginBottom: '2rem' }}>
+            <Title level={2}>50+ Modules, One Platform</Title>
+            <Paragraph>Every department covered — from OPD to OT, Pharmacy to Physiotherapy</Paragraph>
+          </div>
+          <div className="module-tabs scroll-animate" style={{ display: 'flex', justifyContent: 'center', gap: '8px', flexWrap: 'wrap', marginBottom: '2.5rem' }}>
+            {[
+              { key: 'clinical', label: 'Clinical' },
+              { key: 'operations', label: 'Operations' },
+              { key: 'diagnostics', label: 'Diagnostics' },
+              { key: 'finance', label: 'Finance' },
+              { key: 'records', label: 'Records & Compliance' },
+              { key: 'hr', label: 'HR & Admin' },
+            ].map(tab => (
+              <button
+                key={tab.key}
+                onClick={() => setActiveModuleTab(tab.key)}
+                className={`module-tab-btn ${activeModuleTab === tab.key ? 'active' : ''}`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+          <div className="module-grid scroll-animate">
+            {activeModuleTab === 'clinical' && (
+              <Row gutter={[16, 16]}>
+                {[
+                  { icon: <TeamOutlined />, name: 'Patient Management' },
+                  { icon: <CalendarOutlined />, name: 'Appointments' },
+                  { icon: <ScheduleOutlined />, name: 'Queue & Tokens' },
+                  { icon: <SolutionOutlined />, name: 'Consultation' },
+                  { icon: <FormOutlined />, name: 'Prescriptions' },
+                  { icon: <PhoneOutlined />, name: 'Telemedicine' },
+                  { icon: <HomeOutlined />, name: 'Inpatient (IPD)' },
+                  { icon: <HeartOutlined />, name: 'Triage & Vitals' },
+                  { icon: <ReconciliationOutlined />, name: 'Physiotherapy' },
+                  { icon: <CoffeeOutlined />, name: 'Diet Management' },
+                  { icon: <AlertOutlined />, name: 'Dialysis' },
+                  { icon: <ScissorOutlined />, name: 'Operation Theatre' },
+                ].map((m, i) => (
+                  <Col key={i} xs={12} sm={8} md={6} lg={4}>
+                    <div className="module-chip">{m.icon} <span>{m.name}</span></div>
+                  </Col>
+                ))}
+              </Row>
+            )}
+            {activeModuleTab === 'operations' && (
+              <Row gutter={[16, 16]}>
+                {[
+                  { icon: <HomeOutlined />, name: 'Bed Management' },
+                  { icon: <ScheduleOutlined />, name: 'Ward Management' },
+                  { icon: <CarOutlined />, name: 'Ambulance & EMS' },
+                  { icon: <EyeOutlined />, name: 'Visitor Management' },
+                  { icon: <ToolOutlined />, name: 'Housekeeping' },
+                  { icon: <ToolOutlined />, name: 'Asset Management' },
+                  { icon: <AppstoreOutlined />, name: 'Service Catalog' },
+                  { icon: <EnvironmentOutlined />, name: 'Mortuary' },
+                  { icon: <BellOutlined />, name: 'Notifications' },
+                  { icon: <ThunderboltOutlined />, name: 'Smart Reminders' },
+                ].map((m, i) => (
+                  <Col key={i} xs={12} sm={8} md={6} lg={4}>
+                    <div className="module-chip">{m.icon} <span>{m.name}</span></div>
+                  </Col>
+                ))}
+              </Row>
+            )}
+            {activeModuleTab === 'diagnostics' && (
+              <Row gutter={[16, 16]}>
+                {[
+                  { icon: <ExperimentOutlined />, name: 'Laboratory' },
+                  { icon: <MedicineBoxOutlined />, name: 'Pharmacy' },
+                  { icon: <FundOutlined />, name: 'Radiology' },
+                  { icon: <MedicineBoxFilled />, name: 'Blood Bank' },
+                  { icon: <FileProtectOutlined />, name: 'Drug Register' },
+                  { icon: <SkinOutlined />, name: 'Inventory Management' },
+                ].map((m, i) => (
+                  <Col key={i} xs={12} sm={8} md={6} lg={4}>
+                    <div className="module-chip">{m.icon} <span>{m.name}</span></div>
+                  </Col>
+                ))}
+              </Row>
+            )}
+            {activeModuleTab === 'finance' && (
+              <Row gutter={[16, 16]}>
+                {[
+                  { icon: <DollarOutlined />, name: 'Billing & Invoices' },
+                  { icon: <BankOutlined />, name: 'Packages & Deposits' },
+                  { icon: <SafetyOutlined />, name: 'Insurance / TPA' },
+                  { icon: <FileProtectOutlined />, name: 'Insurance Claims' },
+                  { icon: <BarChartOutlined />, name: 'Financial Reports' },
+                  { icon: <FundOutlined />, name: 'Revenue Analytics' },
+                ].map((m, i) => (
+                  <Col key={i} xs={12} sm={8} md={6} lg={4}>
+                    <div className="module-chip">{m.icon} <span>{m.name}</span></div>
+                  </Col>
+                ))}
+              </Row>
+            )}
+            {activeModuleTab === 'records' && (
+              <Row gutter={[16, 16]}>
+                {[
+                  { icon: <FileProtectOutlined />, name: 'Death Certificates' },
+                  { icon: <FormOutlined />, name: 'Birth Register' },
+                  { icon: <ReconciliationOutlined />, name: 'Consent Management' },
+                  { icon: <AlertOutlined />, name: 'MLC (Medico-Legal)' },
+                  { icon: <EnvironmentOutlined />, name: 'Biomedical Waste' },
+                  { icon: <AlertOutlined />, name: 'Incident Reports' },
+                  { icon: <SafetyOutlined />, name: 'Infection Control' },
+                  { icon: <IdcardOutlined />, name: 'ABHA / ABDM' },
+                  { icon: <FormOutlined />, name: 'PCPNDT Form F' },
+                  { icon: <SolutionOutlined />, name: 'Records Digitization' },
+                  { icon: <AuditOutlined />, name: 'Audit Logs' },
+                ].map((m, i) => (
+                  <Col key={i} xs={12} sm={8} md={6} lg={4}>
+                    <div className="module-chip">{m.icon} <span>{m.name}</span></div>
+                  </Col>
+                ))}
+              </Row>
+            )}
+            {activeModuleTab === 'hr' && (
+              <Row gutter={[16, 16]}>
+                {[
+                  { icon: <CalendarOutlined />, name: 'Duty Roster' },
+                  { icon: <IdcardOutlined />, name: 'Staff Attendance' },
+                  { icon: <ReconciliationOutlined />, name: 'Shift Handover' },
+                  { icon: <TeamOutlined />, name: 'Staff HR' },
+                  { icon: <LockOutlined />, name: 'Roles & Permissions' },
+                  { icon: <GlobalOutlined />, name: 'Locations & Branches' },
+                  { icon: <AppstoreOutlined />, name: 'Departments' },
+                  { icon: <BarChartOutlined />, name: 'Global Analytics' },
+                  { icon: <BellOutlined />, name: 'Broadcast Alerts' },
+                  { icon: <CustomerServiceOutlined />, name: 'System Feedback' },
+                ].map((m, i) => (
+                  <Col key={i} xs={12} sm={8} md={6} lg={4}>
+                    <div className="module-chip">{m.icon} <span>{m.name}</span></div>
+                  </Col>
+                ))}
+              </Row>
+            )}
+          </div>
+        </div>
+      </section>
+
       {/* Patient Journey Section */}
       <section className="journey-section" style={{ background: '#F8FAFC', padding: '4rem 0' }}>
         <div className="section-container">
@@ -459,7 +623,7 @@ const SaaSLanding: React.FC = () => {
                       <Card className="stat-card scroll-animate-stagger">
                         <Statistic
                           title="Modules"
-                          value="30+"
+                          value="50+"
                           valueStyle={{ color: '#10B981' }}
                         />
                       </Card>
@@ -468,7 +632,7 @@ const SaaSLanding: React.FC = () => {
                       <Card className="stat-card scroll-animate-stagger">
                         <Statistic
                           title="User Roles"
-                          value="8"
+                          value="14"
                           valueStyle={{ color: '#10B981' }}
                         />
                       </Card>
@@ -477,7 +641,7 @@ const SaaSLanding: React.FC = () => {
                       <Card className="stat-card scroll-animate-stagger">
                         <Statistic
                           title="Departments"
-                          value="10+"
+                          value="100+"
                           valueStyle={{ color: '#10B981' }}
                         />
                       </Card>
@@ -543,13 +707,19 @@ const SaaSLanding: React.FC = () => {
             </Title>
             <Row gutter={[24, 24]} justify="center">
               {[
-                { icon: '👨‍⚕️', role: 'Doctor', desc: 'Queue & Prescriptions' },
+                { icon: '👨‍⚕️', role: 'Doctor', desc: 'Consultation & Rx' },
+                { icon: '👩‍⚕️', role: 'Nurse', desc: 'Vitals & Ward Care' },
                 { icon: '📋', role: 'Receptionist', desc: 'Check-in & Tokens' },
-                { icon: '💊', role: 'Pharmacist', desc: 'Inventory Management' },
-                { icon: '🧪', role: 'Lab Tech', desc: 'Test Results' },
-                { icon: '👩‍⚕️', role: 'Nurse', desc: 'Vitals & Care' },
-                { icon: '💰', role: 'Accountant', desc: 'Billing & GST' },
-                { icon: '⚙️', role: 'Admin', desc: 'Analytics Dashboard' },
+                { icon: '💊', role: 'Pharmacist', desc: 'Dispensing & Stock' },
+                { icon: '🧪', role: 'Lab Tech', desc: 'Samples & Results' },
+                { icon: '🔬', role: 'Pathologist', desc: 'Lab Management' },
+                { icon: '📡', role: 'Radiologist', desc: 'Imaging & Reports' },
+                { icon: '💰', role: 'Finance', desc: 'Billing & Revenue' },
+                { icon: '🏥', role: 'Admin', desc: 'Analytics Dashboard' },
+                { icon: '🦴', role: 'Physiotherapist', desc: 'Rehab Sessions' },
+                { icon: '🍽️', role: 'Dietitian', desc: 'Meal Planning' },
+                { icon: '⚙️', role: 'Super Admin', desc: 'Platform & SaaS' },
+                { icon: '🩺', role: 'Allied Health', desc: 'Multi-specialty' },
                 { icon: '👤', role: 'Patient', desc: 'Self-service Portal' }
               ].map((item, index) => (
                 <Col key={index} xs={12} sm={6} md={3} className="scroll-animate-stagger">
@@ -743,7 +913,7 @@ const SaaSLanding: React.FC = () => {
                 {
                   key: '1',
                   label: 'What modules are included in Ayphen Care?',
-                  children: <Paragraph>Ayphen Care includes 30+ modules: OPD Management, Appointments, Patient Registration, Pharmacy & Inventory, Laboratory, Billing & GST, Inpatient (IPD), Radiology, Blood Bank, Diet Management, OT Management, Telemedicine, Staff Management, and more. All modules work seamlessly together.</Paragraph>
+                  children: <Paragraph>Ayphen Care includes 50+ modules across every department: OPD, Appointments, Queue, Triage, Consultation, Prescriptions, Inpatient (IPD), Operation Theatre, Dialysis, Physiotherapy, Diet Management, Telemedicine, Pharmacy, Laboratory, Radiology, Blood Bank, Billing, Insurance/TPA, Financial Reports, Bed &amp; Ward Management, Ambulance, Housekeeping, Visitor Management, Mortuary, Staff Attendance, Duty Roster, Shift Handover, Audit Logs, ABHA/ABDM, Consent Management, Birth/Death Certificates, Infection Control, Biomedical Waste, Incident Reports, MLC, PCPNDT Form F, Records Digitization, and more. All modules work seamlessly together.</Paragraph>
                 },
                 {
                   key: '2',
@@ -753,7 +923,7 @@ const SaaSLanding: React.FC = () => {
                 {
                   key: '3',
                   label: 'Is my patient data secure?',
-                  children: <Paragraph>Absolutely. We use enterprise-grade encryption (AES-256), role-based access control with 8 different user roles, audit logging, and regular security updates. Your data is hosted on Tier-1 cloud infrastructure with 99.9% uptime SLA.</Paragraph>
+                  children: <Paragraph>Absolutely. We use enterprise-grade encryption (AES-256), role-based access control with 14 specialized user roles, complete audit logging, and regular security updates. Your data is hosted on Tier-1 cloud infrastructure with 99.9% uptime SLA.</Paragraph>
                 },
                 {
                   key: '4',
@@ -773,7 +943,7 @@ const SaaSLanding: React.FC = () => {
                 {
                   key: '7',
                   label: 'What user roles are supported?',
-                  children: <Paragraph>Ayphen Care supports 8 specialized roles: Doctor (patient queue, prescriptions, lab orders), Receptionist (appointments, check-in, tokens), Pharmacist (inventory, dispensing), Lab Technician (test management), Nurse (patient care, vitals), Accountant (billing, GST invoices), Admin (analytics, user management), and Patient (self-service portal). Each role has a customized dashboard with only the features they need.</Paragraph>
+                  children: <Paragraph>Ayphen Care supports 14 specialized roles: Super Admin (SaaS platform management), Admin (analytics, user management), Doctor (consultation, prescriptions, lab orders), Nurse (vitals, ward care, medication), Receptionist (appointments, check-in, tokens), Pharmacist (dispensing, inventory), Lab Technician (sample collection, results), Pathologist (lab management), Radiologist (imaging, reports), Finance Officer (billing, insurance, revenue), Physiotherapist (rehab sessions), Dietitian (meal planning), Allied Health Professional (multi-specialty), and Patient (self-service portal). Each role has a customized dashboard with only the features they need.</Paragraph>
                 },
                 {
                   key: '8',
