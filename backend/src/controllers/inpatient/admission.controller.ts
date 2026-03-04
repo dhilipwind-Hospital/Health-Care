@@ -208,6 +208,11 @@ export class AdmissionController {
         queryBuilder.andWhere('admission.patientId = :patientId', { patientId });
       }
 
+      // Default pagination — max 200 records
+      const page = Math.max(1, Number(req.query.page) || 1);
+      const limit = Math.min(200, Math.max(1, Number(req.query.limit) || 50));
+      queryBuilder.skip((page - 1) * limit).take(limit);
+
       const admissions = await queryBuilder.getMany();
 
       // Return in format frontend expects
@@ -343,6 +348,7 @@ export class AdmissionController {
         .where('admission.patientId = :patientId', { patientId })
         .andWhere('admission.organizationId = :tenantId', { tenantId })
         .orderBy('admission.admissionDateTime', 'DESC')
+        .take(100)
         .getMany();
 
       return res.json({
@@ -384,6 +390,7 @@ export class AdmissionController {
         .andWhere('admission.status = :status', { status: AdmissionStatus.ADMITTED })
         .andWhere('admission.organizationId = :tenantId', { tenantId })
         .orderBy('admission.admissionDateTime', 'DESC')
+        .take(100)
         .getMany();
 
       return res.json({
@@ -509,10 +516,10 @@ export class AdmissionController {
         });
       }
 
-      if (admission.status === AdmissionStatus.DISCHARGED) {
+      if (admission.status !== AdmissionStatus.ADMITTED) {
         return res.status(400).json({
           success: false,
-          message: 'Patient already discharged'
+          message: `Cannot discharge — admission is in '${admission.status}' state (must be 'admitted')`
         });
       }
 

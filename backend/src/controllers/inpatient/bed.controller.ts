@@ -280,7 +280,12 @@ export class BedController {
       // Update fields
       if (bedNumber) bed.bedNumber = bedNumber;
       if (roomId) bed.roomId = roomId;
-      if (status) bed.status = status;
+      if (status) {
+        if (!Object.values(BedStatus).includes(status)) {
+          return res.status(400).json({ success: false, message: `Invalid bed status. Must be one of: ${Object.values(BedStatus).join(', ')}` });
+        }
+        bed.status = status;
+      }
       if (notes !== undefined) bed.notes = notes;
 
       await bedRepository.save(bed);
@@ -334,6 +339,9 @@ export class BedController {
         });
       }
 
+      if (!Object.values(BedStatus).includes(status)) {
+        return res.status(400).json({ success: false, message: `Invalid bed status. Must be one of: ${Object.values(BedStatus).join(', ')}` });
+      }
       bed.status = status;
       if (notes !== undefined) bed.notes = notes;
 

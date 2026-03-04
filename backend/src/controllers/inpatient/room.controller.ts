@@ -129,6 +129,12 @@ export class RoomController {
           message: 'Room number, ward, capacity, and daily rate are required'
         });
       }
+      if (Number(capacity) <= 0) {
+        return res.status(400).json({ success: false, message: 'Capacity must be a positive number' });
+      }
+      if (Number(dailyRate) < 0) {
+        return res.status(400).json({ success: false, message: 'Daily rate must be non-negative' });
+      }
 
       const roomRepository = AppDataSource.getRepository(Room);
       const wardRepository = AppDataSource.getRepository(Ward);
@@ -211,6 +217,14 @@ export class RoomController {
             message: 'Room number already exists'
           });
         }
+      }
+
+      // Validate numeric fields
+      if (capacity !== undefined && Number(capacity) <= 0) {
+        return res.status(400).json({ success: false, message: 'Capacity must be a positive number' });
+      }
+      if (dailyRate !== undefined && Number(dailyRate) < 0) {
+        return res.status(400).json({ success: false, message: 'Daily rate must be non-negative' });
       }
 
       // Update fields

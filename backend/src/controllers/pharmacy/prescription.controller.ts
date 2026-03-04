@@ -458,7 +458,10 @@ export class PrescriptionController {
             throw new Error(`Prescription item with ID ${itemUpdate.id} not found`);
           }
 
-          // Update prescription item status
+          // Validate and update prescription item status
+          if (!Object.values(PrescriptionItemStatus).includes(itemUpdate.status)) {
+            throw new Error(`Invalid status '${itemUpdate.status}'. Must be one of: ${Object.values(PrescriptionItemStatus).join(', ')}`);
+          }
           prescriptionItem.status = itemUpdate.status;
           await prescriptionItemRepository.save(prescriptionItem);
 

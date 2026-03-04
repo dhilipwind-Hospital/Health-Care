@@ -187,7 +187,9 @@ export class BillingEnhancedController {
       const bill = await repo.findOne({ where: bw1 });
       if (!bill) return res.status(404).json({ success: false, message: 'Not found' });
 
-      bill.discountAmount = req.body.amount || 0;
+      const discountAmt = Number(req.body.amount) || 0;
+      if (discountAmt < 0) return res.status(400).json({ success: false, message: 'Discount amount must be non-negative' });
+      bill.discountAmount = discountAmt;
       bill.discountPercent = req.body.percent;
       bill.discountReason = req.body.reason;
       bill.discountApprovedBy = (req as any).user?.id;
@@ -212,7 +214,9 @@ export class BillingEnhancedController {
       const bill = await repo.findOne({ where: bw2 });
       if (!bill) return res.status(404).json({ success: false, message: 'Not found' });
 
-      bill.waiverAmount = req.body.amount || 0;
+      const waiverAmt = Number(req.body.amount) || 0;
+      if (waiverAmt < 0) return res.status(400).json({ success: false, message: 'Waiver amount must be non-negative' });
+      bill.waiverAmount = waiverAmt;
       bill.waiverReason = req.body.reason;
       bill.waiverApprovedBy = (req as any).user?.id;
 
@@ -236,6 +240,7 @@ export class BillingEnhancedController {
       if (!bill) return res.status(404).json({ success: false, message: 'Not found' });
 
       const payAmount = parseFloat(req.body.amount);
+      if (!payAmount || payAmount <= 0) return res.status(400).json({ success: false, message: 'Payment amount must be positive' });
       bill.paidAmount = Number(bill.paidAmount) + payAmount;
       bill.paymentMethod = req.body.paymentMethod;
       if (req.body.transactionId) bill.transactionId = req.body.transactionId;
@@ -271,7 +276,9 @@ export class BillingEnhancedController {
       const bill = await repo.findOne({ where: bw4 });
       if (!bill) return res.status(404).json({ success: false, message: 'Not found' });
 
-      bill.refundAmount = req.body.amount;
+      const refundAmt = Number(req.body.amount);
+      if (!refundAmt || refundAmt <= 0) return res.status(400).json({ success: false, message: 'Refund amount must be positive' });
+      bill.refundAmount = refundAmt;
       bill.refundDate = new Date() as any;
       bill.refundReason = req.body.reason;
       bill.status = 'refunded' as any;
