@@ -23,17 +23,22 @@ const yyyymmdd = (d = new Date()) => {
 const toOrgCode = (sub?: string) => String(sub || 'ORG').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 8);
 
 const nextTokenNumber = async (organizationId: string, subdomain?: string) => {
-  const repo = AppDataSource.getRepository(VisitCounter);
   const today = yyyymmdd();
-  let counter = await repo.findOne({ where: { organizationId, dateKey: today } });
-  if (!counter) {
-    counter = repo.create({ organizationId, dateKey: today, nextVisitSeq: 1, nextTokenSeq: 1 });
-  }
-  const tokenSeq = counter.nextTokenSeq;
-  counter.nextTokenSeq = tokenSeq + 1;
-  await repo.save(counter);
-  const orgCode = toOrgCode(subdomain);
-  return `T-${orgCode}-${today.slice(2)}-${String(tokenSeq).padStart(4, '0')}`;
+  return AppDataSource.transaction(async (manager) => {
+    const repo = manager.getRepository(VisitCounter);
+    let counter = await repo.findOne({
+      where: { organizationId, dateKey: today },
+      lock: { mode: 'pessimistic_write' },
+    });
+    if (!counter) {
+      counter = repo.create({ organizationId, dateKey: today, nextVisitSeq: 1, nextTokenSeq: 1 });
+    }
+    const tokenSeq = counter.nextTokenSeq;
+    counter.nextTokenSeq = tokenSeq + 1;
+    await repo.save(counter);
+    const orgCode = toOrgCode(subdomain);
+    return `T-${orgCode}-${today.slice(2)}-${String(tokenSeq).padStart(4, '0')}`;
+  });
 };
 
 // Upsert triage by visit + advance to doctor queue

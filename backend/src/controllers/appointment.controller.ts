@@ -1262,7 +1262,6 @@ export class AppointmentController {
 
       const visitRepo = AppDataSource.getRepository(Visit);
       const queueRepo = AppDataSource.getRepository(QueueItem);
-      const counterRepo = AppDataSource.getRepository(VisitCounter);
 
       // 5. Generate visit and token numbers (reusing existing logic from visit.routes.ts)
       const yyyymmdd = (d = new Date()) => {
@@ -1273,15 +1272,22 @@ export class AppointmentController {
       };
 
       const today = yyyymmdd();
-      let counter = await counterRepo.findOne({ where: { organizationId: tenantId, dateKey: today } });
-      if (!counter) {
-        counter = counterRepo.create({ organizationId: tenantId, dateKey: today, nextVisitSeq: 1, nextTokenSeq: 1 });
-      }
-      const visitSeq = counter.nextVisitSeq;
-      const tokenSeq = counter.nextTokenSeq;
-      counter.nextVisitSeq = visitSeq + 1;
-      counter.nextTokenSeq = tokenSeq + 1;
-      await counterRepo.save(counter);
+      const { visitSeq, tokenSeq } = await AppDataSource.transaction(async (manager) => {
+        const cRepo = manager.getRepository(VisitCounter);
+        let ctr = await cRepo.findOne({
+          where: { organizationId: tenantId, dateKey: today },
+          lock: { mode: 'pessimistic_write' },
+        });
+        if (!ctr) {
+          ctr = cRepo.create({ organizationId: tenantId, dateKey: today, nextVisitSeq: 1, nextTokenSeq: 1 });
+        }
+        const vs = ctr.nextVisitSeq;
+        const ts = ctr.nextTokenSeq;
+        ctr.nextVisitSeq = vs + 1;
+        ctr.nextTokenSeq = ts + 1;
+        await cRepo.save(ctr);
+        return { visitSeq: vs, tokenSeq: ts };
+      });
 
       // Get org code for token generation
       const orgCode = 'ORG'; // Default, could be fetched from tenant subdomain

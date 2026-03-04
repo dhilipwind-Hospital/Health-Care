@@ -7,6 +7,7 @@ import {
   JoinColumn,
   CreateDateColumn,
   UpdateDateColumn,
+  Index,
 } from 'typeorm';
 import { Room } from './Room';
 import { Admission } from './Admission';
@@ -21,6 +22,7 @@ export enum BedStatus {
 }
 
 @Entity('beds')
+@Index(['organizationId', 'bedNumber'], { unique: true })
 export class Bed {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
@@ -32,7 +34,7 @@ export class Bed {
   @Column({ name: 'organization_id' })
   organizationId!: string;
 
-  @Column({ unique: true })
+  @Column()
   bedNumber!: string;
 
   @ManyToOne(() => Room, room => room.beds)

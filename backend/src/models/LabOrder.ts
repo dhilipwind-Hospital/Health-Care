@@ -1,9 +1,10 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToOne, OneToMany, JoinColumn } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToOne, OneToMany, JoinColumn, Index } from 'typeorm';
 import { User } from './User';
 import { LabOrderItem } from './LabOrderItem';
 import { Organization } from './Organization';
 
 @Entity('lab_orders')
+@Index(['organizationId', 'orderNumber'], { unique: true })
 export class LabOrder {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
@@ -15,7 +16,7 @@ export class LabOrder {
   @Column({ name: 'organization_id' })
   organizationId!: string;
 
-  @Column({ unique: true })
+  @Column()
   orderNumber!: string; // Human-readable order number (e.g., LAB-2025-0001)
 
   @ManyToOne(() => User)

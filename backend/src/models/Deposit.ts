@@ -6,6 +6,7 @@ import {
   JoinColumn,
   CreateDateColumn,
   UpdateDateColumn,
+  Index,
 } from 'typeorm';
 import { Organization } from './Organization';
 import { User } from './User';
@@ -25,6 +26,7 @@ export enum DepositStatus {
 }
 
 @Entity('deposits')
+@Index(['organizationId', 'receiptNumber'], { unique: true })
 export class Deposit {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
@@ -46,7 +48,7 @@ export class Deposit {
   @Column({ name: 'admission_id', type: 'uuid', nullable: true })
   admissionId?: string;
 
-  @Column({ unique: true })
+  @Column()
   receiptNumber!: string;
 
   @Column({ type: 'decimal', precision: 10, scale: 2 })

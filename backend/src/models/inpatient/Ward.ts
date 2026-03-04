@@ -7,12 +7,14 @@ import {
   JoinColumn,
   CreateDateColumn,
   UpdateDateColumn,
+  Index,
 } from 'typeorm';
 import { Department } from '../Department';
 import { Room } from './Room';
 import { Organization } from '../Organization';
 
 @Entity('wards')
+@Index(['organizationId', 'wardNumber'], { unique: true })
 export class Ward {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
@@ -27,7 +29,7 @@ export class Ward {
   @Column()
   name!: string;
 
-  @Column({ unique: true })
+  @Column()
   wardNumber!: string;
 
   @Column({ type: 'text', nullable: true })

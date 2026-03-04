@@ -73,6 +73,17 @@ export class AdmissionController {
         });
       }
 
+      // Prevent duplicate active admissions for same patient
+      const existingAdmission = await admissionRepository.findOne({
+        where: { patientId, organizationId: tenantId, status: AdmissionStatus.ADMITTED }
+      });
+      if (existingAdmission) {
+        return res.status(409).json({
+          success: false,
+          message: `Patient already has an active admission (${existingAdmission.admissionNumber})`
+        });
+      }
+
       // CRITICAL: Verify doctor exists within organization
       const doctor = await userRepository.findOne({
         where: { id: admittingDoctorId, role: UserRole.DOCTOR, organizationId: tenantId }
@@ -545,7 +556,6 @@ export class AdmissionController {
       // Auto-generate discharge bill (non-blocking)
       let generatedBill: any = null;
       try {
-        const billRepo = AppDataSource.getRepository(Bill);
         const roomRepo = AppDataSource.getRepository(Room);
         const labOrderRepo = AppDataSource.getRepository(LabOrder);
         const prescriptionRepo = AppDataSource.getRepository(Prescription);
@@ -625,28 +635,39 @@ export class AdmissionController {
         const subtotal = itemDetails.reduce((sum, item) => sum + item.total, 0);
 
         if (subtotal > 0) {
-          // Generate bill number
-          const year = new Date().getFullYear();
-          const billCount = await billRepo.count({ where: { organizationId: tenantId } });
-          const billNumber = `BIL-${year}-${String(billCount + 1).padStart(5, '0')}`;
+          // Generate bill number atomically inside a transaction
+          generatedBill = await AppDataSource.transaction(async (manager) => {
+            const bRepo = manager.getRepository(Bill);
+            const year = new Date().getFullYear();
+            const prefix = `BIL-${year}-`;
+            const latest = await bRepo
+              .createQueryBuilder('b')
+              .where('b.organizationId = :orgId', { orgId: tenantId })
+              .andWhere('b.billNumber LIKE :prefix', { prefix: `${prefix}%` })
+              .orderBy('b.billNumber', 'DESC')
+              .setLock('pessimistic_write')
+              .getOne();
+            const lastSeq = latest ? parseInt(latest.billNumber.replace(prefix, ''), 10) || 0 : 0;
+            const billNumber = `${prefix}${String(lastSeq + 1).padStart(5, '0')}`;
 
-          const bill = billRepo.create({
-            patient: admission.patient,
-            organizationId: tenantId,
-            admissionId: admission.id,
-            billNumber,
-            amount: subtotal,
-            subtotal,
-            grandTotal: subtotal,
-            balanceDue: subtotal,
-            billDate: new Date(),
-            dueDate: new Date(Date.now() + 30 * 86400000), // 30 days
-            status: BillStatus.PENDING,
-            billType: 'ipd',
-            description: `Discharge bill for admission ${admission.admissionNumber}`,
-            itemDetails,
+            const bill = bRepo.create({
+              patient: admission.patient,
+              organizationId: tenantId,
+              admissionId: admission.id,
+              billNumber,
+              amount: subtotal,
+              subtotal,
+              grandTotal: subtotal,
+              balanceDue: subtotal,
+              billDate: new Date(),
+              dueDate: new Date(Date.now() + 30 * 86400000),
+              status: BillStatus.PENDING,
+              billType: 'ipd',
+              description: `Discharge bill for admission ${admission.admissionNumber}`,
+              itemDetails,
+            });
+            return bRepo.save(bill);
           });
-          generatedBill = await billRepo.save(bill);
         }
       } catch (billErr) {
         console.error('Auto-billing on discharge failed (non-blocking):', billErr);

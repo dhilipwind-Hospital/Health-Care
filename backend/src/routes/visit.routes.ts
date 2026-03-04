@@ -31,18 +31,23 @@ const yyyymmdd = (d = new Date()) => {
 const toOrgCode = (sub?: string) => String(sub || 'ORG').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 8);
 
 const nextNumbers = async (organizationId: string) => {
-  const repo = AppDataSource.getRepository(VisitCounter);
   const today = yyyymmdd();
-  let counter = await repo.findOne({ where: { organizationId, dateKey: today } });
-  if (!counter) {
-    counter = repo.create({ organizationId, dateKey: today, nextVisitSeq: 1, nextTokenSeq: 1 });
-  }
-  const visitSeq = counter.nextVisitSeq;
-  const tokenSeq = counter.nextTokenSeq;
-  counter.nextVisitSeq = visitSeq + 1;
-  counter.nextTokenSeq = tokenSeq + 1;
-  await repo.save(counter);
-  return { visitSeq, tokenSeq, dateKey: today };
+  return AppDataSource.transaction(async (manager) => {
+    const repo = manager.getRepository(VisitCounter);
+    let counter = await repo.findOne({
+      where: { organizationId, dateKey: today },
+      lock: { mode: 'pessimistic_write' },
+    });
+    if (!counter) {
+      counter = repo.create({ organizationId, dateKey: today, nextVisitSeq: 1, nextTokenSeq: 1 });
+    }
+    const visitSeq = counter.nextVisitSeq;
+    const tokenSeq = counter.nextTokenSeq;
+    counter.nextVisitSeq = visitSeq + 1;
+    counter.nextTokenSeq = tokenSeq + 1;
+    await repo.save(counter);
+    return { visitSeq, tokenSeq, dateKey: today };
+  });
 };
 
 router.post('/', async (req, res) => {
@@ -214,7 +219,6 @@ router.post('/:id/advance', async (req, res) => {
     let generatedBill: any = null;
     if (String(toStage) === 'billing') {
       try {
-        const billRepo = AppDataSource.getRepository(Bill);
         const itemDetails: Array<{ name: string; quantity: number; unitPrice: number; total: number }> = [];
 
         // 1. Consultation fee — find doctor from the doctor-stage queue item
@@ -283,28 +287,38 @@ router.post('/:id/advance', async (req, res) => {
 
         const subtotal = itemDetails.reduce((sum, item) => sum + item.total, 0);
         if (subtotal > 0) {
-          const year = new Date().getFullYear();
-          const billCount = await billRepo.count({ where: { organizationId: orgId } });
-          const billNumber = `BIL-${year}-${String(billCount + 1).padStart(5, '0')}`;
+          generatedBill = await AppDataSource.transaction(async (manager) => {
+            const bRepo = manager.getRepository(Bill);
+            const year = new Date().getFullYear();
+            const prefix = `BIL-${year}-`;
+            const latest = await bRepo
+              .createQueryBuilder('b')
+              .where('b.organizationId = :orgId', { orgId })
+              .andWhere('b.billNumber LIKE :prefix', { prefix: `${prefix}%` })
+              .orderBy('b.billNumber', 'DESC')
+              .setLock('pessimistic_write')
+              .getOne();
+            const lastSeq = latest ? parseInt(latest.billNumber.replace(prefix, ''), 10) || 0 : 0;
+            const billNumber = `${prefix}${String(lastSeq + 1).padStart(5, '0')}`;
 
-          const bill = billRepo.create({
-            organizationId: orgId,
-            visitId: id,
-            billNumber,
-            amount: subtotal,
-            subtotal,
-            grandTotal: subtotal,
-            balanceDue: subtotal,
-            billDate: new Date(),
-            dueDate: new Date(Date.now() + 30 * 86400000),
-            status: BillStatus.PENDING,
-            billType: 'opd',
-            description: `OPD bill for visit ${visit.visitNumber}`,
-            itemDetails,
-          } as any);
-          // Set patient relation via patientId
-          (bill as any).patient = { id: visit.patientId } as any;
-          generatedBill = await billRepo.save(bill);
+            const bill = bRepo.create({
+              organizationId: orgId,
+              visitId: id,
+              billNumber,
+              amount: subtotal,
+              subtotal,
+              grandTotal: subtotal,
+              balanceDue: subtotal,
+              billDate: new Date(),
+              dueDate: new Date(Date.now() + 30 * 86400000),
+              status: BillStatus.PENDING,
+              billType: 'opd',
+              description: `OPD bill for visit ${visit.visitNumber}`,
+              itemDetails,
+            } as any);
+            (bill as any).patient = { id: visit.patientId } as any;
+            return bRepo.save(bill);
+          });
         }
       } catch (billErr) {
         console.error('Auto OPD billing failed (non-blocking):', billErr);

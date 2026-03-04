@@ -87,23 +87,30 @@ export class BillingEnhancedController {
 
   static receiveDeposit = async (req: Request, res: Response) => {
     try {
-      const repo = AppDataSource.getRepository(Deposit);
       const orgId = (req as any).user?.organizationId || (req as any).tenant?.id;
 
-      const depCW: any = {};
-      if (orgId) depCW.organizationId = orgId;
-      const count = await repo.count({ where: depCW });
-      const year = new Date().getFullYear();
-      const receiptNumber = `DEP-${year}-${String(count + 1).padStart(4, '0')}`;
+      const saved = await AppDataSource.transaction(async (manager) => {
+        const dRepo = manager.getRepository(Deposit);
+        const year = new Date().getFullYear();
+        const prefix = `DEP-${year}-`;
+        const latest = await dRepo
+          .createQueryBuilder('d')
+          .where('d.organizationId = :orgId', { orgId })
+          .andWhere('d.receiptNumber LIKE :prefix', { prefix: `${prefix}%` })
+          .orderBy('d.receiptNumber', 'DESC')
+          .setLock('pessimistic_write')
+          .getOne();
+        const lastSeq = latest ? parseInt(latest.receiptNumber.replace(prefix, ''), 10) || 0 : 0;
+        const receiptNumber = `${prefix}${String(lastSeq + 1).padStart(4, '0')}`;
 
-      const deposit = new Deposit();
-      Object.assign(deposit, req.body);
-      deposit.organizationId = orgId;
-      deposit.receiptNumber = receiptNumber;
-      deposit.receivedBy = (req as any).user?.id;
-      deposit.receivedAt = new Date();
-
-      const saved = await repo.save(deposit);
+        const deposit = new Deposit();
+        Object.assign(deposit, req.body);
+        deposit.organizationId = orgId;
+        deposit.receiptNumber = receiptNumber;
+        deposit.receivedBy = (req as any).user?.id;
+        deposit.receivedAt = new Date();
+        return dRepo.save(deposit);
+      });
       res.status(201).json({ success: true, data: saved });
     } catch (error: any) {
       res.status(500).json({ success: false, message: error.message });
@@ -238,9 +245,12 @@ export class BillingEnhancedController {
       const totalPaid = Number(bill.paidAmount) + Number(bill.depositAmount || 0) + Number(bill.discountAmount || 0) + Number(bill.waiverAmount || 0);
       bill.balanceDue = grandTotal - totalPaid;
 
-      if (bill.balanceDue <= 0) {
+      if (bill.balanceDue <= 0 && Number(bill.paidAmount) > 0) {
         bill.status = 'paid' as any;
         bill.paidDate = new Date() as any;
+      } else if (bill.balanceDue <= 0 && Number(bill.paidAmount) === 0) {
+        // Fully covered by deposits/discounts/waivers — settled but no direct payment
+        bill.status = 'paid' as any;
       } else if (Number(bill.paidAmount) > 0) {
         bill.status = 'partially_paid' as any;
       }

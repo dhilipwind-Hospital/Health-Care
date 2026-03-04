@@ -8,6 +8,7 @@ import {
   JoinColumn,
   CreateDateColumn,
   UpdateDateColumn,
+  Index,
 } from 'typeorm';
 import { User } from '../User';
 import { Bed } from './Bed';
@@ -27,6 +28,7 @@ export enum AdmissionStatus {
 }
 
 @Entity('admissions')
+@Index(['organizationId', 'admissionNumber'], { unique: true })
 export class Admission {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
@@ -38,7 +40,7 @@ export class Admission {
   @Column({ name: 'organization_id' })
   organizationId!: string;
 
-  @Column({ unique: true })
+  @Column()
   admissionNumber!: string; // Human-readable admission number (e.g., ADM-2025-0001)
 
   @ManyToOne(() => User)
