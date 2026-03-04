@@ -664,6 +664,18 @@ export class Server {
       }
     });
 
+    // Seed HMS modules (Blood Bank, Dialysis, OT, Physio, Diet)
+    this.app.post('/api/seed-hms-modules', async (req: Request, res: Response) => {
+      try {
+        const seedModule = await import(path.join(__dirname, 'scripts', 'seed-hms-modules'));
+        const result = await seedModule.seedHmsModules();
+        res.status(201).json({ message: 'HMS modules seeded successfully', ...result });
+      } catch (error: any) {
+        console.error('Seed HMS modules error:', error);
+        res.status(500).json({ message: 'Failed to seed HMS modules', error: error.message, stack: error.stack });
+      }
+    });
+
     // Seed super admin endpoint (one-time use)
     this.app.post('/api/seed-super-admin', async (req: Request, res: Response) => {
       try {

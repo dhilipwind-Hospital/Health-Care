@@ -35,14 +35,17 @@ const daysAgo = (n: number) => { const d = new Date(); d.setDate(d.getDate() - n
 const daysFromNow = (n: number) => { const d = new Date(); d.setDate(d.getDate() + n); return d; };
 const dateStr = (d: Date) => d.toISOString().split('T')[0];
 
-async function main() {
-  await AppDataSource.initialize();
-  console.log('🔌 Database connected');
+export async function seedHmsModules() {
+  // Initialize only if not already connected (standalone CLI mode)
+  if (!AppDataSource.isInitialized) {
+    await AppDataSource.initialize();
+    console.log('🔌 Database connected');
+  }
 
   // Find org
   const orgRepo = AppDataSource.getRepository(Organization);
   const org = await orgRepo.findOne({ where: { isActive: true }, order: { createdAt: 'ASC' } });
-  if (!org) { console.error('❌ No active organization found'); process.exit(1); }
+  if (!org) { throw new Error('No active organization found'); }
   const orgId = org.id;
   console.log(`🏥 Organization: ${org.name} (${orgId})`);
 
@@ -405,8 +408,12 @@ async function main() {
   Diet:           4 diet orders
 `);
 
-  await AppDataSource.destroy();
-  process.exit(0);
+  return { success: true, organization: org.name };
 }
 
-main().catch(err => { console.error('❌ Seed error:', err); process.exit(1); });
+// Allow standalone CLI execution: npx ts-node src/scripts/seed-hms-modules.ts
+if (require.main === module) {
+  seedHmsModules()
+    .then(() => { AppDataSource.destroy(); process.exit(0); })
+    .catch(err => { console.error('❌ Seed error:', err); process.exit(1); });
+}
