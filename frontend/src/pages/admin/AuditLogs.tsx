@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Card, Table, Tag, Typography, DatePicker, Space, Input, Button } from 'antd';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Card, Table, Tag, Typography, DatePicker, Space, Input, Button, message } from 'antd';
 import { SafetyOutlined, SearchOutlined, ReloadOutlined } from '@ant-design/icons';
 import api from '../../services/api';
 
@@ -9,76 +9,83 @@ const { RangePicker } = DatePicker;
 const AuditLogs: React.FC = () => {
     const [logs, setLogs] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
+    const [searchText, setSearchText] = useState('');
+    const [pagination, setPagination] = useState({ current: 1, pageSize: 20, total: 0 });
 
-    // Mock data for immediate display until backend API is fully integrated
-    const mockLogs = [
-        { id: 1, action: 'LOGIN', user: 'admin@system.com', resource: 'Auth', status: 'SUCCESS', ip: '192.168.1.1', timestamp: new Date().toISOString() },
-        { id: 2, action: 'CREATE_TENANT', user: 'superadmin@ayphen.com', resource: 'Organization', status: 'SUCCESS', ip: '10.0.0.1', timestamp: new Date(Date.now() - 3600000).toISOString() },
-        { id: 3, action: 'DELETE_USER', user: 'admin@care.com', resource: 'User', status: 'DENIED', ip: '172.16.0.5', timestamp: new Date(Date.now() - 7200000).toISOString() },
-        { id: 4, action: 'VIEW_RECORDS', user: 'doctor@care.com', resource: 'Patient Record: P-1002', status: 'SUCCESS', ip: '192.168.1.50', timestamp: new Date(Date.now() - 8640000).toISOString() },
-    ];
-
-    const fetchLogs = async () => {
+    const fetchLogs = useCallback(async (page = 1, action?: string) => {
         setLoading(true);
         try {
-            // const res = await api.get('/audit-logs');
-            // setLogs(res.data);
+            const params = new URLSearchParams();
+            params.set('page', String(page));
+            params.set('limit', '20');
+            if (action) params.set('action', action);
 
-            // Simulate API delay
-            setTimeout(() => {
-                setLogs(mockLogs);
-                setLoading(false);
-            }, 800);
-        } catch (error) {
-            console.error(error);
+            const res = await api.get(`/audit-logs?${params.toString()}`);
+            setLogs(res.data?.data || []);
+            const pg = res.data?.pagination;
+            if (pg) {
+                setPagination({ current: pg.current || page, pageSize: pg.pageSize || 20, total: pg.total || 0 });
+            }
+        } catch (error: any) {
+            if (error.response?.status === 403) {
+                message.error('Access denied: Admin role required');
+            } else {
+                message.error('Failed to fetch audit logs');
+            }
+        } finally {
             setLoading(false);
         }
-    };
+    }, []);
 
     useEffect(() => {
         fetchLogs();
-    }, []);
+    }, [fetchLogs]);
+
+    const handleSearch = () => {
+        fetchLogs(1, searchText || undefined);
+    };
+
+    const actionColorMap: Record<string, string> = {
+        LOGIN: 'green', LOGOUT: 'blue',
+        CREATE_USER: 'cyan', UPDATE_USER: 'gold', DELETE_USER: 'red',
+        CREATE_APPOINTMENT: 'purple', UPDATE_APPOINTMENT: 'orange', CANCEL_APPOINTMENT: 'volcano',
+    };
 
     const columns = [
         {
             title: 'Timestamp',
-            dataIndex: 'timestamp',
-            key: 'timestamp',
-            render: (text: string) => new Date(text).toLocaleString(),
+            dataIndex: 'time',
+            key: 'time',
+            render: (text: string) => text ? new Date(text).toLocaleString() : '-',
             width: 200,
         },
         {
             title: 'Action',
             dataIndex: 'action',
             key: 'action',
-            render: (text: string) => <Tag color="blue">{text}</Tag>
+            render: (text: string) => <Tag color={actionColorMap[text] || 'blue'}>{text}</Tag>,
         },
         {
-            title: 'User',
-            dataIndex: 'user',
-            key: 'user',
+            title: 'Actor',
+            dataIndex: 'actor',
+            key: 'actor',
         },
         {
-            title: 'Resource',
-            dataIndex: 'resource',
-            key: 'resource',
+            title: 'Entity',
+            dataIndex: 'entity',
+            key: 'entity',
         },
         {
-            title: 'Status',
-            dataIndex: 'status',
-            key: 'status',
-            render: (text: string) => (
-                <Tag color={text === 'SUCCESS' ? 'green' : 'red'}>
-                    {text}
-                </Tag>
-            )
+            title: 'Organization',
+            dataIndex: 'organization',
+            key: 'organization',
         },
         {
             title: 'IP Address',
             dataIndex: 'ip',
             key: 'ip',
-            render: (text: string) => <Text type="secondary" code>{text}</Text>
-        }
+            render: (text: string) => text ? <Text type="secondary" code>{text}</Text> : '-',
+        },
     ];
 
     return (
@@ -90,8 +97,14 @@ const AuditLogs: React.FC = () => {
                 </div>
                 <Space>
                     <RangePicker />
-                    <Input placeholder="Search user or action" prefix={<SearchOutlined />} />
-                    <Button icon={<ReloadOutlined />} onClick={fetchLogs}>Refresh</Button>
+                    <Input
+                        placeholder="Search action (e.g. LOGIN)"
+                        prefix={<SearchOutlined />}
+                        value={searchText}
+                        onChange={(e) => setSearchText(e.target.value)}
+                        onPressEnter={handleSearch}
+                    />
+                    <Button icon={<ReloadOutlined />} onClick={() => fetchLogs()}>Refresh</Button>
                 </Space>
             </div>
 
@@ -101,7 +114,13 @@ const AuditLogs: React.FC = () => {
                     columns={columns}
                     rowKey="id"
                     loading={loading}
-                    pagination={{ pageSize: 10 }}
+                    pagination={{
+                        current: pagination.current,
+                        pageSize: pagination.pageSize,
+                        total: pagination.total,
+                        showTotal: (total) => `Total ${total} logs`,
+                        onChange: (page) => fetchLogs(page, searchText || undefined),
+                    }}
                 />
             </Card>
         </div>

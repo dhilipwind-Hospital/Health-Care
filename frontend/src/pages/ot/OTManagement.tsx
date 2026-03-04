@@ -1,29 +1,38 @@
 import React, { useEffect, useState } from 'react';
-import { Card, Table, Button, Modal, Form, Input, Select, DatePicker, TimePicker, Row, Col, Space, Tag, message, Tabs, Statistic, Checkbox, Calendar, List } from 'antd';
-import { EditOutlined, DeleteOutlined, CheckOutlined, ClockCircleOutlined, TeamOutlined, ToolOutlined } from '@ant-design/icons';
+import { Card, Table, Button, Modal, Form, Input, Select, DatePicker, TimePicker, Row, Col, Space, Tag, message, Tabs, Statistic, Calendar, List } from 'antd';
+import { EditOutlined, DeleteOutlined, CheckOutlined, ClockCircleOutlined } from '@ant-design/icons';
 import api from '../../services/api';
 import dayjs, { Dayjs } from 'dayjs';
 
 const { Option } = Select;
 
-interface OTRoom { id: string; name: string; status: 'available' | 'in_use' | 'maintenance' | 'cleaning'; }
-interface Surgery {
-  id: string; otRoomId: string; patientName: string; doctorName: string; procedure: string;
-  priority: 'Emergency' | 'Urgent' | 'Elective'; date: string; startTime: string; durationMinutes: number;
-  status: 'Scheduled' | 'In Progress' | 'Completed' | 'Cancelled';
+interface OTRoom {
+  id: string; name: string; code: string;
+  status: 'available' | 'in_use' | 'maintenance' | 'cleaning' | 'reserved';
+  equipment?: { name: string; status: string }[];
 }
-interface Checklist { id: string; surgeryId: string; items: { name: string; completed: boolean }[]; }
-interface Equipment { id: string; otRoomId: string; name: string; status: 'available' | 'in_use' | 'maintenance'; }
+interface Surgery {
+  id: string; otRoomId: string; surgeryNumber?: string;
+  patientId: string; patient?: { firstName: string; lastName: string };
+  primarySurgeonId: string; primarySurgeon?: { firstName: string; lastName: string };
+  procedureName: string;
+  priority: 'emergency' | 'urgent' | 'elective';
+  scheduledDate: string; scheduledStartTime: string; scheduledEndTime?: string;
+  estimatedDuration: number;
+  status: 'scheduled' | 'pre_op' | 'in_progress' | 'post_op' | 'completed' | 'cancelled' | 'postponed';
+}
+interface Equipment { id: string; otRoomId: string; roomName: string; name: string; status: string; }
 interface Analytics { completed: number; scheduled: number; inProgress: number; avgDuration: number; total: number; }
-
 interface Doctor { id: string; firstName: string; lastName: string; }
 interface Patient { id: string; firstName: string; lastName: string; }
+
+const getPatientName = (s: Surgery) => s.patient ? `${s.patient.firstName} ${s.patient.lastName}` : 'N/A';
+const getDoctorName = (s: Surgery) => s.primarySurgeon ? `Dr. ${s.primarySurgeon.firstName} ${s.primarySurgeon.lastName}` : 'N/A';
 
 const OTManagement: React.FC = () => {
   const [rooms, setRooms] = useState<OTRoom[]>([]);
   const [surgeries, setSurgeries] = useState<Surgery[]>([]);
   const [queue, setQueue] = useState<Surgery[]>([]);
-  const [equipment, setEquipment] = useState<Equipment[]>([]);
   const [analytics, setAnalytics] = useState<Analytics | null>(null);
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [patients, setPatients] = useState<Patient[]>([]);
@@ -36,11 +45,10 @@ const OTManagement: React.FC = () => {
   const loadAll = async () => {
     try {
       setLoading(true);
-      const [roomsRes, surgeriesRes, queueRes, equipRes, analyticsRes, doctorsRes, patientsRes] = await Promise.all([
+      const [roomsRes, surgeriesRes, queueRes, analyticsRes, doctorsRes, patientsRes] = await Promise.all([
         api.get('/ot/rooms'),
         api.get('/ot/surgeries'),
         api.get('/ot/queue'),
-        api.get('/ot/equipment'),
         api.get('/ot/analytics'),
         api.get('/users?role=doctor&limit=100'),
         api.get('/users?role=patient&limit=100'),
@@ -48,12 +56,11 @@ const OTManagement: React.FC = () => {
       setRooms(roomsRes.data?.data || []);
       setSurgeries(surgeriesRes.data?.data || []);
       setQueue(queueRes.data?.data || []);
-      setEquipment(equipRes.data?.data || []);
       setAnalytics(analyticsRes.data?.data || null);
       setDoctors(doctorsRes.data?.data || doctorsRes.data || []);
       setPatients(patientsRes.data?.data || patientsRes.data || []);
     } catch (e: any) {
-      message.error('Failed to load data');
+      if (e.response?.status !== 404) message.error('Failed to load data');
     } finally {
       setLoading(false);
     }
@@ -62,28 +69,33 @@ const OTManagement: React.FC = () => {
   const handleSave = async (values: any) => {
     try {
       setLoading(true);
+      const startTime = values.startTime.format('HH:mm:ss');
+      const duration = Number(values.estimatedDuration) || 60;
+      const endTime = values.startTime.add(duration, 'minute').format('HH:mm:ss');
+
       const payload = {
         otRoomId: values.otRoomId,
-        patientName: values.patientName,
-        doctorName: values.doctorName,
-        procedure: values.procedure,
+        patientId: values.patientId,
+        primarySurgeonId: values.primarySurgeonId,
+        procedureName: values.procedureName,
         priority: values.priority,
-        date: values.date.format('YYYY-MM-DD'),
-        startTime: values.startTime.format('HH:mm'),
-        durationMinutes: Number(values.durationMinutes),
+        scheduledDate: values.date.format('YYYY-MM-DD'),
+        scheduledStartTime: startTime,
+        scheduledEndTime: endTime,
+        estimatedDuration: duration,
+        surgeryType: values.priority === 'emergency' ? 'emergency' : 'elective',
       };
       if (editingSurgery) {
         await api.put(`/ot/surgeries/${editingSurgery.id}`, payload);
-        setSurgeries(surgeries.map(s => s.id === editingSurgery.id ? { ...s, ...payload } : s));
         message.success('Surgery updated');
       } else {
-        const res = await api.post('/ot/surgeries', payload);
-        setSurgeries([...surgeries, res.data?.data]);
+        await api.post('/ot/surgeries', payload);
         message.success('Surgery scheduled');
       }
       setIsModalOpen(false);
       form.resetFields();
       setEditingSurgery(null);
+      loadAll();
     } catch (e: any) {
       message.error(e.response?.data?.message || 'Failed to save surgery');
     } finally {
@@ -91,11 +103,11 @@ const OTManagement: React.FC = () => {
     }
   };
 
-  const handleStatusUpdate = async (surgeryId: string, newStatus: Surgery['status']) => {
+  const handleStatusUpdate = async (surgeryId: string, newStatus: string) => {
     try {
       await api.patch(`/ot/surgeries/${surgeryId}/status`, { status: newStatus });
-      setSurgeries(surgeries.map(s => s.id === surgeryId ? { ...s, status: newStatus } : s));
       message.success(`Status updated to ${newStatus}`);
+      loadAll();
     } catch (e: any) {
       message.error('Failed to update status');
     }
@@ -104,20 +116,10 @@ const OTManagement: React.FC = () => {
   const handleDelete = async (id: string) => {
     try {
       await api.delete(`/ot/surgeries/${id}`);
-      setSurgeries(surgeries.filter(s => s.id !== id));
       message.success('Surgery deleted');
+      loadAll();
     } catch (e: any) {
       message.error('Failed to delete surgery');
-    }
-  };
-
-  const handleEditEquipment = async (equipId: string, newStatus: Equipment['status']) => {
-    try {
-      await api.put(`/ot/equipment/${equipId}`, { status: newStatus });
-      setEquipment(equipment.map(e => e.id === equipId ? { ...e, status: newStatus } : e));
-      message.success('Equipment status updated');
-    } catch (e: any) {
-      message.error('Failed to update equipment');
     }
   };
 
@@ -125,51 +127,64 @@ const OTManagement: React.FC = () => {
     loadAll();
   }, []);
 
+  // Derive equipment list from rooms' equipment JSONB
+  const equipmentList: Equipment[] = rooms.flatMap(room =>
+    (room.equipment || []).map((e, i) => ({
+      id: `${room.id}-${i}`,
+      otRoomId: room.id,
+      roomName: room.name || room.code,
+      name: e.name,
+      status: e.status,
+    }))
+  );
+
+  const priorityColor = (p: string) => p === 'emergency' ? 'red' : p === 'urgent' ? 'orange' : 'blue';
+  const statusColor: Record<string, string> = {
+    scheduled: 'gold', pre_op: 'cyan', in_progress: 'green',
+    post_op: 'purple', completed: 'blue', cancelled: 'red', postponed: 'default',
+  };
+
   const surgeryColumns = [
     { title: 'OT', dataIndex: 'otRoomId', key: 'otRoomId', render: (v: string) => rooms.find(r => r.id === v)?.name || v },
-    { title: 'Patient', dataIndex: 'patientName', key: 'patientName' },
-    { title: 'Doctor', dataIndex: 'doctorName', key: 'doctorName' },
-    { title: 'Procedure', dataIndex: 'procedure', key: 'procedure' },
-    { title: 'Priority', dataIndex: 'priority', key: 'priority', render: (p: Surgery['priority']) => {
-      const color = p === 'Emergency' ? 'red' : p === 'Urgent' ? 'orange' : 'blue';
-      return <Tag color={color}>{p}</Tag>;
-    } },
-    { title: 'Date/Time', key: 'datetime', render: (_: any, r: Surgery) => `${r.date} ${r.startTime}` },
-    { title: 'Status', dataIndex: 'status', key: 'status', render: (s: Surgery['status']) => {
-      const map: any = { 'Scheduled': 'gold', 'In Progress': 'green', 'Completed': 'blue', 'Cancelled': 'red' };
-      return <Tag color={map[s] || 'default'}>{s}</Tag>;
-    } },
+    { title: 'Patient', key: 'patient', render: (_: any, r: Surgery) => getPatientName(r) },
+    { title: 'Surgeon', key: 'surgeon', render: (_: any, r: Surgery) => getDoctorName(r) },
+    { title: 'Procedure', dataIndex: 'procedureName', key: 'procedureName' },
+    { title: 'Priority', dataIndex: 'priority', key: 'priority', render: (p: string) => <Tag color={priorityColor(p)}>{p?.toUpperCase()}</Tag> },
+    { title: 'Date/Time', key: 'datetime', render: (_: any, r: Surgery) => `${r.scheduledDate} ${r.scheduledStartTime || ''}` },
+    { title: 'Status', dataIndex: 'status', key: 'status', render: (s: string) => <Tag color={statusColor[s] || 'default'}>{s?.replace('_', ' ').toUpperCase()}</Tag> },
     { title: 'Actions', key: 'actions', render: (_: any, r: Surgery) => (
       <Space size="small">
         <Button size="small" icon={<EditOutlined />} onClick={() => {
           setEditingSurgery(r);
-          form.setFieldsValue({ ...r, date: dayjs(r.date), startTime: dayjs(r.startTime, 'HH:mm') });
+          form.setFieldsValue({
+            patientId: r.patientId,
+            primarySurgeonId: r.primarySurgeonId,
+            procedureName: r.procedureName,
+            priority: r.priority,
+            otRoomId: r.otRoomId,
+            date: r.scheduledDate ? dayjs(r.scheduledDate) : undefined,
+            startTime: r.scheduledStartTime ? dayjs(r.scheduledStartTime, 'HH:mm:ss') : undefined,
+            estimatedDuration: r.estimatedDuration,
+          });
           setIsModalOpen(true);
         }} />
-        {r.status === 'Scheduled' && <Button size="small" onClick={() => handleStatusUpdate(r.id, 'In Progress')}>Start</Button>}
-        {r.status === 'In Progress' && <Button size="small" onClick={() => handleStatusUpdate(r.id, 'Completed')}>Complete</Button>}
+        {r.status === 'scheduled' && <Button size="small" onClick={() => handleStatusUpdate(r.id, 'in_progress')}>Start</Button>}
+        {r.status === 'in_progress' && <Button size="small" onClick={() => handleStatusUpdate(r.id, 'completed')}>Complete</Button>}
         <Button size="small" danger icon={<DeleteOutlined />} onClick={() => handleDelete(r.id)} />
       </Space>
     ) },
   ];
 
   const equipmentColumns = [
-    { title: 'OT Room', dataIndex: 'otRoomId', key: 'otRoomId', render: (v: string) => rooms.find(r => r.id === v)?.name || v },
+    { title: 'OT Room', dataIndex: 'roomName', key: 'roomName' },
     { title: 'Equipment', dataIndex: 'name', key: 'name' },
-    { title: 'Status', dataIndex: 'status', key: 'status', render: (s: Equipment['status']) => {
+    { title: 'Status', dataIndex: 'status', key: 'status', render: (s: string) => {
       const color = s === 'available' ? 'green' : s === 'in_use' ? 'blue' : 'red';
       return <Tag color={color}>{s}</Tag>;
     } },
-    { title: 'Action', key: 'action', render: (_: any, r: Equipment) => (
-      <Select value={r.status} onChange={(v) => handleEditEquipment(r.id, v)} style={{ width: 120 }}>
-        <Option value="available">Available</Option>
-        <Option value="in_use">In Use</Option>
-        <Option value="maintenance">Maintenance</Option>
-      </Select>
-    ) },
   ];
 
-  const calendarSurgeries = surgeries.filter(s => s.date === selectedDate.format('YYYY-MM-DD'));
+  const calendarSurgeries = surgeries.filter(s => s.scheduledDate === selectedDate.format('YYYY-MM-DD'));
 
   return (
     <div style={{ padding: 16 }}>
@@ -199,10 +214,13 @@ const OTManagement: React.FC = () => {
           key: '3',
           label: '🚨 Emergency Queue',
           children: (
-            <List dataSource={queue} renderItem={(s) => (
+            <List dataSource={queue} renderItem={(s: Surgery) => (
               <List.Item>
-                <List.Item.Meta title={`${s.patientName} - ${s.procedure}`} description={`Priority: ${s.priority} | Doctor: ${s.doctorName}`} />
-                <Button onClick={() => handleStatusUpdate(s.id, 'In Progress')}>Start Surgery</Button>
+                <List.Item.Meta
+                  title={`${getPatientName(s)} - ${s.procedureName}`}
+                  description={`Priority: ${s.priority} | Surgeon: ${getDoctorName(s)}`}
+                />
+                {s.status === 'scheduled' && <Button onClick={() => handleStatusUpdate(s.id, 'in_progress')}>Start Surgery</Button>}
               </List.Item>
             )} />
           ),
@@ -220,9 +238,9 @@ const OTManagement: React.FC = () => {
                   {calendarSurgeries.length > 0 ? (
                     calendarSurgeries.map(s => (
                       <div key={s.id} style={{ marginBottom: 12, padding: 8, border: '1px solid #f0f0f0', borderRadius: 4 }}>
-                        <div><strong>{s.patientName}</strong> - {s.procedure}</div>
-                        <div>{s.startTime} ({s.durationMinutes}m)</div>
-                        <Tag color={s.priority === 'Emergency' ? 'red' : 'blue'}>{s.priority}</Tag>
+                        <div><strong>{getPatientName(s)}</strong> - {s.procedureName}</div>
+                        <div>{s.scheduledStartTime} ({s.estimatedDuration}m)</div>
+                        <Tag color={priorityColor(s.priority)}>{s.priority}</Tag>
                       </div>
                     ))
                   ) : (
@@ -237,41 +255,41 @@ const OTManagement: React.FC = () => {
           key: '5',
           label: '🔧 Equipment',
           children: (
-            <Table rowKey="id" columns={equipmentColumns as any} dataSource={equipment} loading={loading} />
+            <Table rowKey="id" columns={equipmentColumns as any} dataSource={equipmentList} loading={loading} />
           ),
         },
       ]} />
 
       <Modal open={isModalOpen} title={editingSurgery ? 'Edit Surgery' : 'Schedule Surgery'} onCancel={() => { setIsModalOpen(false); setEditingSurgery(null); }} footer={null} destroyOnClose>
-        <Form layout="vertical" form={form} onFinish={handleSave} initialValues={{ priority: 'Elective', durationMinutes: 60 }}>
+        <Form layout="vertical" form={form} onFinish={handleSave} initialValues={{ priority: 'elective', estimatedDuration: 60 }}>
           <Row gutter={16}>
             <Col span={12}>
-              <Form.Item name="patientName" label="Patient" rules={[{ required: true }]}>
+              <Form.Item name="patientId" label="Patient" rules={[{ required: true }]}>
                 <Select showSearch placeholder="Select patient" optionFilterProp="children" filterOption={(input, option) => (option?.children as unknown as string)?.toLowerCase().includes(input.toLowerCase())}>
-                  {patients.map(p => <Option key={p.id} value={`${p.firstName} ${p.lastName}`}>{p.firstName} {p.lastName}</Option>)}
+                  {patients.map(p => <Option key={p.id} value={p.id}>{p.firstName} {p.lastName}</Option>)}
                 </Select>
               </Form.Item>
             </Col>
             <Col span={12}>
-              <Form.Item name="doctorName" label="Doctor" rules={[{ required: true }]}>
-                <Select showSearch placeholder="Select doctor" optionFilterProp="children" filterOption={(input, option) => (option?.children as unknown as string)?.toLowerCase().includes(input.toLowerCase())}>
-                  {doctors.map(d => <Option key={d.id} value={`Dr. ${d.firstName} ${d.lastName}`}>Dr. {d.firstName} {d.lastName}</Option>)}
+              <Form.Item name="primarySurgeonId" label="Surgeon" rules={[{ required: true }]}>
+                <Select showSearch placeholder="Select surgeon" optionFilterProp="children" filterOption={(input, option) => (option?.children as unknown as string)?.toLowerCase().includes(input.toLowerCase())}>
+                  {doctors.map(d => <Option key={d.id} value={d.id}>Dr. {d.firstName} {d.lastName}</Option>)}
                 </Select>
               </Form.Item>
             </Col>
           </Row>
           <Row gutter={16}>
             <Col span={12}>
-              <Form.Item name="procedure" label="Procedure" rules={[{ required: true }]}>
+              <Form.Item name="procedureName" label="Procedure" rules={[{ required: true }]}>
                 <Input />
               </Form.Item>
             </Col>
             <Col span={12}>
               <Form.Item name="priority" label="Priority" rules={[{ required: true }]}>
                 <Select>
-                  <Option value="Emergency">Emergency</Option>
-                  <Option value="Urgent">Urgent</Option>
-                  <Option value="Elective">Elective</Option>
+                  <Option value="emergency">Emergency</Option>
+                  <Option value="urgent">Urgent</Option>
+                  <Option value="elective">Elective</Option>
                 </Select>
               </Form.Item>
             </Col>
@@ -290,7 +308,7 @@ const OTManagement: React.FC = () => {
           </Row>
           <Row gutter={16}>
             <Col span={12}>
-              <Form.Item name="durationMinutes" label="Duration (min)" rules={[{ required: true }]}>
+              <Form.Item name="estimatedDuration" label="Duration (min)" rules={[{ required: true }]}>
                 <Input type="number" min={15} step={15} />
               </Form.Item>
             </Col>

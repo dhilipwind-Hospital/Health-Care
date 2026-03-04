@@ -11,6 +11,7 @@ import { NotFoundException, BadRequestException, ConflictException } from '../ex
 import { AppointmentHistory } from '../models/AppointmentHistory';
 import { createTenantRepository } from '../repositories/TenantRepository';
 import { EmailService } from '../services/email.service';
+import { AuditLogController } from './audit-log.controller';
 
 interface PaginationOptions {
   page: number;
@@ -205,6 +206,7 @@ export class AppointmentController {
       const saved = await apptRepo.save(appointment);
       const withRels = await apptRepo.findOne({ where: { id: saved.id }, relations: ['patient', 'doctor', 'service'] });
       await addHistory(saved.id, 'follow_up_created', `Doctor ${doctorId} created follow-up for patient ${patientId}`, String(doctorId));
+      AuditLogController.log(String(doctorId), tenantId || '', 'APPOINTMENT_CREATED', 'Appointment', saved.id, { patientId, type: 'doctor_followup' }, req).catch(() => {});
       return res.status(201).json(withRels);
     } catch (e) {
       console.error('Doctor create appointment error:', e);
@@ -238,6 +240,7 @@ export class AppointmentController {
       if (!appt) return res.status(404).json({ message: 'Appointment not found' });
       appt.status = AppointmentStatus.CANCELLED;
       await appointmentRepository.save(appt);
+      AuditLogController.log((req as any).user?.id || '', tenantId || '', 'APPOINTMENT_CANCELLED', 'Appointment', id, { cancelledBy: 'admin' }, req).catch(() => {});
       return res.json({ message: 'Appointment cancelled successfully' });
     } catch (e) {
       console.error('Admin cancel appointment error:', e);
@@ -626,6 +629,7 @@ export class AppointmentController {
         response.suggestion = suggestion;
       }
       await addHistory(appointment.id, 'created', `Booked service ${service.id} from ${new Date(startTime).toISOString()} to ${new Date(endTime).toISOString()}`, String(userId));
+      AuditLogController.log(String(userId), (appointment as any).organizationId || '', 'APPOINTMENT_BOOKED', 'Appointment', appointment.id, { serviceId: service.id, startTime }, req).catch(() => {});
       return res.status(201).json(response);
     } catch (error) {
       console.error('Error creating appointment:', error);

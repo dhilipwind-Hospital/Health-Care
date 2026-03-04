@@ -9,6 +9,7 @@ import { Location } from '../models/Location';
 import * as crypto from 'crypto';
 import { UserRole } from '../types/roles';
 import { EmailService } from '../services/email.service';
+import { AuditLogController } from './audit-log.controller';
 
 type ErrorWithMessage = {
   message: string;
@@ -148,6 +149,9 @@ export class AuthController {
         sameSite: 'strict',
         maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
       });
+
+      // Fire-and-forget audit log
+      AuditLogController.log(user.id, user.organizationId || '', 'LOGIN', 'User', user.id, { email: user.email, role: user.role }, req).catch(() => {});
 
       return res.json({
         message: 'Login successful',
@@ -305,6 +309,11 @@ export class AuthController {
 
         // Clear the refresh token cookie
         res.clearCookie('refreshToken');
+      }
+
+      const logoutUser = (req as any).user;
+      if (logoutUser) {
+        AuditLogController.log(logoutUser.id, logoutUser.organizationId || '', 'LOGOUT', 'User', logoutUser.id, { email: logoutUser.email }, req).catch(() => {});
       }
 
       return res.status(200).json({ message: 'Successfully logged out' });

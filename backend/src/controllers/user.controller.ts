@@ -7,6 +7,7 @@ import { Appointment } from '../models/Appointment';
 import { UserRole } from '../types/roles';
 import { EmailService } from '../services/email.service';
 import { Admission } from '../models/inpatient/Admission';
+import { AuditLogController } from './audit-log.controller';
 
 export class UserController {
   // Admin: list users with filters (role, search, status)
@@ -507,6 +508,7 @@ export class UserController {
       }
       await userRepository.save(user);
       const { password, ...rest } = user as any;
+      AuditLogController.log((req as any).user?.id || '', (req as any).user?.organizationId || '', 'UPDATE_USER', 'User', id, { updatedFields: Object.keys(updateData) }, req).catch(() => {});
       return res.json(rest);
     } catch (e) {
       console.error('Admin update user error:', e);
@@ -734,6 +736,7 @@ export class UserController {
       }
 
       const { password: _, ...rest } = saved as any;
+      AuditLogController.log((req as any).user?.id || '', (req as any).user?.organizationId || '', 'CREATE_USER', 'User', saved.id, { email: (saved as any).email, role: (saved as any).role }, req).catch(() => {});
       return res.status(201).json(rest);
     } catch (e) {
       console.error('Admin create user error:', e);
@@ -749,6 +752,7 @@ export class UserController {
       const user = await repo.findOne({ where: { id } });
       if (!user) return res.status(404).json({ message: 'User not found' });
       await repo.remove(user);
+      AuditLogController.log((req as any).user?.id || '', (req as any).user?.organizationId || '', 'DELETE_USER', 'User', id, { email: (user as any).email, role: (user as any).role }, req).catch(() => {});
       return res.json({ message: 'User deleted' });
     } catch (e) {
       console.error('Admin delete user error:', e);

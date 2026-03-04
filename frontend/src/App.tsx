@@ -463,7 +463,7 @@ const App: React.FC = () => {
         { path: '/saas/system-health', element: <SaaSLayout><RequireRole roles={['super_admin']}><SuperAdminDashboard /></RequireRole></SaaSLayout> },
         { path: '/saas/analytics', element: <SaaSLayout><RequireRole roles={['super_admin']}><ReportsAdmin /></RequireRole></SaaSLayout> },
         { path: '/saas/api', element: <SaaSLayout><RequireRole roles={['super_admin']}><Dashboard /></RequireRole></SaaSLayout> },
-        { path: '/admin/logs', element: <SaaSLayout><RequireRole roles={['super_admin']}><AuditLogs /></RequireRole></SaaSLayout> },
+        { path: '/admin/logs', element: <SaaSLayout><RequireRole roles={['admin', 'super_admin']}><AuditLogs /></RequireRole></SaaSLayout> },
 
         // Telemedicine
         { path: '/telemedicine', element: <SaaSLayout><RequireRole roles={['doctor', 'admin', 'super_admin', 'nurse']}><TelemedicineHub /></RequireRole></SaaSLayout> },
