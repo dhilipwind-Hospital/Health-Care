@@ -332,11 +332,98 @@ export class ConsultationController {
         return res.status(404).json({ message: 'Consultation not found' });
       }
 
-      // TODO: Implement PDF generation
-      return res.json({
-        message: 'PDF generation not yet implemented',
-        data: consultation
-      });
+      // Generate PDF using PDFKit
+      const PDFDocument = require('pdfkit');
+      const doc = new PDFDocument({ margin: 50 });
+
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename=consultation-${consultation.id}.pdf`);
+      doc.pipe(res);
+
+      // Header
+      doc.fontSize(20).text('Consultation Note', { align: 'center' });
+      doc.moveDown();
+
+      // Patient & Doctor info
+      doc.fontSize(12);
+      if (consultation.patient) {
+        doc.text(`Patient: ${consultation.patient.firstName} ${consultation.patient.lastName}`);
+      }
+      if (consultation.doctor) {
+        doc.text(`Doctor: Dr. ${consultation.doctor.firstName} ${consultation.doctor.lastName}`);
+      }
+      if (consultation.appointment?.startTime) {
+        doc.text(`Date: ${new Date(consultation.appointment.startTime).toLocaleDateString()}`);
+      }
+      doc.moveDown();
+
+      // Clinical sections
+      doc.fontSize(14).text('Chief Complaint', { underline: true });
+      doc.fontSize(11).text(consultation.chiefComplaint || 'N/A');
+      doc.moveDown();
+
+      if (consultation.historyPresentIllness) {
+        doc.fontSize(14).text('History of Present Illness', { underline: true });
+        doc.fontSize(11).text(consultation.historyPresentIllness);
+        doc.moveDown();
+      }
+
+      if (consultation.pastMedicalHistory) {
+        doc.fontSize(14).text('Past Medical History', { underline: true });
+        doc.fontSize(11).text(consultation.pastMedicalHistory);
+        doc.moveDown();
+      }
+
+      if (consultation.currentMedications) {
+        doc.fontSize(14).text('Current Medications', { underline: true });
+        doc.fontSize(11).text(consultation.currentMedications);
+        doc.moveDown();
+      }
+
+      if (consultation.physicalExamination) {
+        doc.fontSize(14).text('Physical Examination', { underline: true });
+        doc.fontSize(11).text(consultation.physicalExamination);
+        doc.moveDown();
+      }
+
+      if (consultation.assessment) {
+        doc.fontSize(14).text('Assessment', { underline: true });
+        doc.fontSize(11).text(consultation.assessment);
+        doc.moveDown();
+      }
+
+      if (consultation.plan) {
+        doc.fontSize(14).text('Plan', { underline: true });
+        doc.fontSize(11).text(consultation.plan);
+        doc.moveDown();
+      }
+
+      if (consultation.doctorNotes) {
+        doc.fontSize(14).text('Doctor Notes', { underline: true });
+        doc.fontSize(11).text(consultation.doctorNotes);
+        doc.moveDown();
+      }
+
+      if (consultation.followUpDate) {
+        doc.fontSize(14).text('Follow-Up', { underline: true });
+        doc.fontSize(11).text(`Date: ${new Date(consultation.followUpDate).toLocaleDateString()}`);
+        if (consultation.followUpInstructions) {
+          doc.text(`Instructions: ${consultation.followUpInstructions}`);
+        }
+        doc.moveDown();
+      }
+
+      // Signature
+      if (consultation.signedBy) {
+        doc.moveDown();
+        doc.fontSize(11).text(`Signed by: Dr. ${consultation.signedBy.firstName} ${consultation.signedBy.lastName}`);
+        if (consultation.signedAt) {
+          doc.text(`Signed at: ${new Date(consultation.signedAt).toLocaleString()}`);
+        }
+      }
+
+      doc.end();
+      return;
     } catch (error) {
       console.error('Error generating PDF:', error);
       return res.status(500).json({ message: 'Error generating PDF' });

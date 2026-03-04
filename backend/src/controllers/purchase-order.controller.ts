@@ -11,12 +11,19 @@ export class PurchaseOrderController {
   static getPurchaseOrders = async (req: Request, res: Response) => {
     try {
       const { status, supplierId } = req.query;
+      const tenantId = (req as any).tenant?.id || (req as any).user?.organizationId;
+
+      if (!tenantId) {
+        return res.status(400).json({ message: 'Organization context required' });
+      }
+
       const poRepo = AppDataSource.getRepository(PurchaseOrder);
 
       const queryBuilder = poRepo.createQueryBuilder('po')
         .leftJoinAndSelect('po.supplier', 'supplier')
         .leftJoinAndSelect('po.createdBy', 'createdBy')
         .leftJoinAndSelect('po.approvedBy', 'approvedBy')
+        .where('po.organization_id = :tenantId', { tenantId })
         .orderBy('po.createdAt', 'DESC');
 
       if (status) {
@@ -43,10 +50,16 @@ export class PurchaseOrderController {
   static getPurchaseOrder = async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
+      const tenantId = (req as any).tenant?.id || (req as any).user?.organizationId;
+
+      if (!tenantId) {
+        return res.status(400).json({ message: 'Organization context required' });
+      }
+
       const poRepo = AppDataSource.getRepository(PurchaseOrder);
 
       const order = await poRepo.findOne({
-        where: { id },
+        where: { id, organizationId: tenantId },
         relations: ['supplier', 'createdBy', 'approvedBy']
       });
 
@@ -80,7 +93,7 @@ export class PurchaseOrderController {
       const supplierRepo = AppDataSource.getRepository(Supplier);
       const userRepo = AppDataSource.getRepository(User);
 
-      const supplier = await supplierRepo.findOne({ where: { id: supplierId } });
+      const supplier = await supplierRepo.findOne({ where: { id: supplierId, organizationId } });
       if (!supplier) {
         return res.status(404).json({ message: 'Supplier not found' });
       }
@@ -91,7 +104,7 @@ export class PurchaseOrderController {
       }
 
       // Calculate total amount
-      const totalAmount = items.reduce((sum: number, item: any) => 
+      const totalAmount = items.reduce((sum: number, item: any) =>
         sum + (item.quantity * item.unitPrice), 0
       );
 
@@ -128,11 +141,16 @@ export class PurchaseOrderController {
       const { id } = req.params;
       const { status } = req.body;
       const userId = (req as any).user?.id;
+      const tenantId = (req as any).tenant?.id || (req as any).user?.organizationId;
+
+      if (!tenantId) {
+        return res.status(400).json({ message: 'Organization context required' });
+      }
 
       const poRepo = AppDataSource.getRepository(PurchaseOrder);
       const userRepo = AppDataSource.getRepository(User);
 
-      const order = await poRepo.findOne({ where: { id } });
+      const order = await poRepo.findOne({ where: { id, organizationId: tenantId } });
       if (!order) {
         return res.status(404).json({ message: 'Purchase order not found' });
       }
@@ -163,12 +181,17 @@ export class PurchaseOrderController {
     try {
       const { id } = req.params;
       const userId = (req as any).user?.id;
+      const tenantId = (req as any).tenant?.id || (req as any).user?.organizationId;
+
+      if (!tenantId) {
+        return res.status(400).json({ message: 'Organization context required' });
+      }
 
       const poRepo = AppDataSource.getRepository(PurchaseOrder);
       const medicineRepo = AppDataSource.getRepository(Medicine);
       const movementRepo = AppDataSource.getRepository(StockMovement);
 
-      const order = await poRepo.findOne({ where: { id } });
+      const order = await poRepo.findOne({ where: { id, organizationId: tenantId } });
       if (!order) {
         return res.status(404).json({ message: 'Purchase order not found' });
       }
@@ -179,7 +202,7 @@ export class PurchaseOrderController {
 
       // Update stock for each item
       for (const item of order.items) {
-        const medicine = await medicineRepo.findOne({ where: { id: item.medicineId } });
+        const medicine = await medicineRepo.findOne({ where: { id: item.medicineId, organizationId: tenantId } });
         if (medicine) {
           const previousStock = medicine.currentStock;
           medicine.currentStock += item.quantity;
@@ -219,13 +242,20 @@ export class PurchaseOrderController {
   static generateAutoOrders = async (req: Request, res: Response) => {
     try {
       const userId = (req as any).user?.id;
+      const tenantId = (req as any).tenant?.id || (req as any).user?.organizationId;
+
+      if (!tenantId) {
+        return res.status(400).json({ message: 'Organization context required' });
+      }
+
       const medicineRepo = AppDataSource.getRepository(Medicine);
       const poRepo = AppDataSource.getRepository(PurchaseOrder);
 
-      // Get medicines that need reordering
+      // Get medicines that need reordering (filtered by org)
       const lowStockMedicines = await medicineRepo.createQueryBuilder('m')
         .where('m.currentStock <= m.reorderLevel')
         .andWhere('m.isActive = true')
+        .andWhere('m.organization_id = :tenantId', { tenantId })
         .getMany();
 
       if (lowStockMedicines.length === 0) {
@@ -235,8 +265,6 @@ export class PurchaseOrderController {
         });
       }
 
-      // Group by supplier (for now, we'll create one order with all items)
-      // In production, you'd group by actual supplier relationships
       const items = lowStockMedicines.map(medicine => ({
         medicineId: medicine.id,
         medicineName: medicine.name,
@@ -246,9 +274,8 @@ export class PurchaseOrderController {
 
       const totalAmount = items.reduce((sum, item) => sum + (item.quantity * item.unitPrice), 0);
 
-      // For demo, use first active supplier
       const supplierRepo = AppDataSource.getRepository(Supplier);
-      const supplier = await supplierRepo.findOne({ where: { isActive: true } });
+      const supplier = await supplierRepo.findOne({ where: { isActive: true, organizationId: tenantId } });
 
       if (!supplier) {
         return res.status(400).json({ message: 'No active supplier found' });
@@ -258,6 +285,7 @@ export class PurchaseOrderController {
 
       const purchaseOrder = poRepo.create({
         orderNumber,
+        organizationId: tenantId,
         supplier,
         status: PurchaseOrderStatus.DRAFT,
         items,

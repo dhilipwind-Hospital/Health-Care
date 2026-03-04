@@ -277,7 +277,7 @@ export class AvailabilityController {
         return res.status(403).json({ message: 'You can only delete your own availability slots' });
       }
 
-      await AppDataSource.getRepository(AvailabilitySlot).remove(slot);
+      await tenantRepo.delete(slot.id);
       return res.json({ message: 'Availability slot deleted' });
     } catch (error) {
       console.error('Error deleting availability:', error);

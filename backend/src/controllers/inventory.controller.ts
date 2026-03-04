@@ -15,7 +15,10 @@ export class InventoryController {
       const medicineRepo = AppDataSource.getRepository(Medicine);
       const alertRepo = AppDataSource.getRepository(StockAlert);
 
-      const medicines = await medicineRepo.find({ where: { isActive: true } });
+      const tenantId = (req as any).tenant?.id || (req as any).user?.organizationId;
+      const orgFilter: any = { isActive: true };
+      if (tenantId) { orgFilter.organizationId = tenantId; }
+      const medicines = await medicineRepo.find({ where: orgFilter });
       const alerts: StockAlert[] = [];
       const now = new Date();
 
@@ -150,6 +153,17 @@ export class InventoryController {
       const { id } = req.params;
       const alertRepo = AppDataSource.getRepository(StockAlert);
 
+      const tenantId = (req as any).tenant?.id || (req as any).user?.organizationId;
+
+      // Verify alert belongs to this org before acknowledging
+      const alert = await alertRepo.findOne({ where: { id }, relations: ['medicine'] });
+      if (!alert) {
+        return res.status(404).json({ message: 'Alert not found' });
+      }
+      if (tenantId && alert.medicine?.organizationId !== tenantId) {
+        return res.status(404).json({ message: 'Alert not found' });
+      }
+
       await alertRepo.update(id, { status: AlertStatus.ACKNOWLEDGED });
 
       return res.json({ message: 'Alert acknowledged successfully' });
@@ -206,7 +220,11 @@ export class InventoryController {
       const medicineRepo = AppDataSource.getRepository(Medicine);
       const movementRepo = AppDataSource.getRepository(StockMovement);
 
-      const medicine = await medicineRepo.findOne({ where: { id: medicineId } });
+      const tenantId = (req as any).tenant?.id || (req as any).user?.organizationId;
+      const whereClause: any = { id: medicineId };
+      if (tenantId) { whereClause.organizationId = tenantId; }
+
+      const medicine = await medicineRepo.findOne({ where: whereClause });
       if (!medicine) {
         return res.status(404).json({ message: 'Medicine not found' });
       }

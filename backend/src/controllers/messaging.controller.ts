@@ -36,8 +36,20 @@ export class MessagingController {
 
       await messageRepo.save(message);
 
-      // TODO: Send notification to recipient
-      // await NotificationService.sendMessageNotification(recipient, sender, message);
+      // Send in-app notification to recipient
+      try {
+        const { NotificationController } = require('./notification.controller');
+        const { NotificationType } = require('../models/Notification');
+        await NotificationController.createNotification(
+          recipientId,
+          NotificationType.GENERAL,
+          'New Message',
+          `You have a new message from ${sender.firstName} ${sender.lastName}`,
+          { actionUrl: '/messaging' }
+        );
+      } catch (notifError) {
+        console.error('Failed to send message notification:', notifError);
+      }
 
       return res.status(201).json({
         message: 'Message sent successfully',

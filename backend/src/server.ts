@@ -87,6 +87,8 @@ import assetRoutes from './routes/asset.routes';
 import infectionControlRoutes from './routes/infection-control.routes';
 import dutyRosterRoutes from './routes/duty-roster.routes';
 import telemedicineRoutes from './routes/telemedicine.routes';
+import { TelemedicineController } from './controllers/telemedicine.controller';
+import { TelemedicineConsultation } from './models/Telemedicine';
 import abhaRoutes from './routes/abha.routes';
 import pcpndtRoutes from './routes/pcpndt.routes';
 import insuranceTpaRoutes from './routes/insurance-tpa.routes';
@@ -1428,48 +1430,22 @@ export class Server {
     } catch (e) {
       console.warn('triage.routes not loaded:', (e as any)?.message || e);
     }
-    // Telemedicine routes - Temporary mock endpoints (TODO: Convert to TypeORM)
-    this.app.post('/api/telemedicine/sessions', authenticate, async (req: Request, res: Response) => {
-      try {
-        const session = {
-          id: Date.now().toString(),
-          sessionId: `TM-2024-${String(Math.floor(Math.random() * 1000)).padStart(3, '0')}`,
-          ...req.body,
-          patientAvatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${req.body.patientName}`,
-          doctorAvatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${req.body.doctorName}`,
-          status: 'Scheduled',
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        };
-        res.status(201).json({ success: true, message: 'Session created', data: session });
-      } catch (error: any) {
-        res.status(500).json({ success: false, message: error.message });
-      }
-    });
-
-    this.app.get('/api/telemedicine/sessions', authenticate, async (_req: Request, res: Response) => {
-      try {
-        res.status(200).json({ success: true, data: [] });
-      } catch (error: any) {
-        res.status(500).json({ success: false, message: error.message });
-      }
-    });
-
-    this.app.put('/api/telemedicine/sessions/:id', authenticate, async (req: Request, res: Response) => {
-      try {
-        const session = {
-          id: req.params.id,
-          ...req.body,
-          updatedAt: new Date(),
-        };
-        res.status(200).json({ success: true, message: 'Session updated', data: session });
-      } catch (error: any) {
-        res.status(500).json({ success: false, message: error.message });
-      }
-    });
-
+    // Telemedicine /sessions aliases — delegate to the real TelemedicineController
+    // (proper routes already mounted at /api/telemedicine via telemedicineRoutes)
+    this.app.post('/api/telemedicine/sessions', authenticate, (req, res) => TelemedicineController.create(req, res));
+    this.app.get('/api/telemedicine/sessions', authenticate, (req, res) => TelemedicineController.list(req, res));
+    this.app.put('/api/telemedicine/sessions/:id', authenticate, (req, res) => TelemedicineController.update(req, res));
     this.app.delete('/api/telemedicine/sessions/:id', authenticate, async (req: Request, res: Response) => {
       try {
+        const repo = AppDataSource.getRepository(TelemedicineConsultation);
+        const orgId = (req as any).user?.organizationId || (req as any).tenant?.id;
+        const where: any = { id: req.params.id };
+        if (orgId) where.organizationId = orgId;
+        const consultation = await repo.findOne({ where });
+        if (!consultation) {
+          return res.status(404).json({ success: false, message: 'Session not found' });
+        }
+        await repo.remove(consultation);
         res.status(200).json({ success: true, message: 'Session deleted successfully' });
       } catch (error: any) {
         res.status(500).json({ success: false, message: error.message });

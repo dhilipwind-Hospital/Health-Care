@@ -114,7 +114,15 @@ export class EmergencyController {
   // Get statistics
   static getStatistics = async (req: Request, res: Response) => {
     try {
+      const user = (req as any).user;
+      const tenantId = (req as any).tenant?.id || user?.organizationId;
+
+      if (!tenantId) {
+        return res.status(400).json({ message: 'Organization context required' });
+      }
+
       const repo = AppDataSource.getRepository(EmergencyRequest);
+      const orgFilter = { organizationId: tenantId };
 
       const [
         total,
@@ -124,14 +132,15 @@ export class EmergencyController {
         critical,
         avgResponseTime
       ] = await Promise.all([
-        repo.count(),
-        repo.count({ where: { status: EmergencyStatus.PENDING } }),
-        repo.count({ where: { status: EmergencyStatus.IN_PROGRESS } }),
-        repo.count({ where: { status: EmergencyStatus.RESOLVED } }),
-        repo.count({ where: { priority: EmergencyPriority.CRITICAL } }),
+        repo.count({ where: orgFilter }),
+        repo.count({ where: { ...orgFilter, status: EmergencyStatus.PENDING } }),
+        repo.count({ where: { ...orgFilter, status: EmergencyStatus.IN_PROGRESS } }),
+        repo.count({ where: { ...orgFilter, status: EmergencyStatus.RESOLVED } }),
+        repo.count({ where: { ...orgFilter, priority: EmergencyPriority.CRITICAL } }),
         repo.createQueryBuilder('emergency')
           .select('AVG(EXTRACT(EPOCH FROM (emergency.respondedAt - emergency.createdAt)))', 'avg')
           .where('emergency.respondedAt IS NOT NULL')
+          .andWhere('emergency.organization_id = :tenantId', { tenantId })
           .getRawOne()
       ]);
 
@@ -154,6 +163,12 @@ export class EmergencyController {
     try {
       const { id } = req.params;
       const { userId } = req.body;
+      const currentUser = (req as any).user;
+      const tenantId = (req as any).tenant?.id || currentUser?.organizationId;
+
+      if (!tenantId) {
+        return res.status(400).json({ message: 'Organization context required' });
+      }
 
       if (!userId) {
         return res.status(400).json({ message: 'userId is required' });
@@ -162,12 +177,12 @@ export class EmergencyController {
       const repo = AppDataSource.getRepository(EmergencyRequest);
       const userRepo = AppDataSource.getRepository(User);
 
-      const request = await repo.findOne({ where: { id } });
+      const request = await repo.findOne({ where: { id, organizationId: tenantId } });
       if (!request) {
         return res.status(404).json({ message: 'Emergency request not found' });
       }
 
-      const user = await userRepo.findOne({ where: { id: userId } });
+      const user = await userRepo.findOne({ where: { id: userId, organizationId: tenantId } });
       if (!user) {
         return res.status(404).json({ message: 'User not found' });
       }
@@ -199,13 +214,19 @@ export class EmergencyController {
     try {
       const { id } = req.params;
       const { status, responseNotes } = req.body;
+      const user = (req as any).user;
+      const tenantId = (req as any).tenant?.id || user?.organizationId;
+
+      if (!tenantId) {
+        return res.status(400).json({ message: 'Organization context required' });
+      }
 
       if (!status || !Object.values(EmergencyStatus).includes(status)) {
         return res.status(400).json({ message: 'Valid status is required' });
       }
 
       const repo = AppDataSource.getRepository(EmergencyRequest);
-      const request = await repo.findOne({ where: { id } });
+      const request = await repo.findOne({ where: { id, organizationId: tenantId } });
 
       if (!request) {
         return res.status(404).json({ message: 'Emergency request not found' });
@@ -244,13 +265,19 @@ export class EmergencyController {
     try {
       const { id } = req.params;
       const { priority } = req.body;
+      const user = (req as any).user;
+      const tenantId = (req as any).tenant?.id || user?.organizationId;
+
+      if (!tenantId) {
+        return res.status(400).json({ message: 'Organization context required' });
+      }
 
       if (!priority || !Object.values(EmergencyPriority).includes(priority)) {
         return res.status(400).json({ message: 'Valid priority is required' });
       }
 
       const repo = AppDataSource.getRepository(EmergencyRequest);
-      const request = await repo.findOne({ where: { id } });
+      const request = await repo.findOne({ where: { id, organizationId: tenantId } });
 
       if (!request) {
         return res.status(404).json({ message: 'Emergency request not found' });
@@ -279,13 +306,19 @@ export class EmergencyController {
     try {
       const { id } = req.params;
       const { notes } = req.body;
+      const user = (req as any).user;
+      const tenantId = (req as any).tenant?.id || user?.organizationId;
+
+      if (!tenantId) {
+        return res.status(400).json({ message: 'Organization context required' });
+      }
 
       if (!notes) {
         return res.status(400).json({ message: 'Notes are required' });
       }
 
       const repo = AppDataSource.getRepository(EmergencyRequest);
-      const request = await repo.findOne({ where: { id } });
+      const request = await repo.findOne({ where: { id, organizationId: tenantId } });
 
       if (!request) {
         return res.status(404).json({ message: 'Emergency request not found' });
@@ -319,10 +352,16 @@ export class EmergencyController {
   static getRequest = async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
+      const user = (req as any).user;
+      const tenantId = (req as any).tenant?.id || user?.organizationId;
+
+      if (!tenantId) {
+        return res.status(400).json({ message: 'Organization context required' });
+      }
 
       const repo = AppDataSource.getRepository(EmergencyRequest);
       const request = await repo.findOne({
-        where: { id },
+        where: { id, organizationId: tenantId },
         relations: ['assignedTo']
       });
 
@@ -356,9 +395,15 @@ export class EmergencyController {
   static deleteRequest = async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
+      const user = (req as any).user;
+      const tenantId = (req as any).tenant?.id || user?.organizationId;
+
+      if (!tenantId) {
+        return res.status(400).json({ message: 'Organization context required' });
+      }
 
       const repo = AppDataSource.getRepository(EmergencyRequest);
-      const request = await repo.findOne({ where: { id } });
+      const request = await repo.findOne({ where: { id, organizationId: tenantId } });
 
       if (!request) {
         return res.status(404).json({ message: 'Emergency request not found' });

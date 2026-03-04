@@ -166,7 +166,7 @@ export class MedicineController {
       const medicineRepository = AppDataSource.getRepository(Medicine);
       
       // Find existing medicine
-      let medicine = await medicineRepository.findOne({ where: { id } });
+      let medicine = await medicineRepository.findOne({ where: { id, organizationId: tenantId } });
       if (!medicine) {
         return res.status(404).json({ message: 'Medicine not found' });
       }

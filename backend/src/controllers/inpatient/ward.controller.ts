@@ -42,10 +42,17 @@ export class WardController {
   static getWardById = async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
+      const user = (req as any).user;
+      const tenantId = (req as any).tenant?.id || user?.organizationId;
+
+      if (!tenantId) {
+        return res.status(400).json({ success: false, message: 'Organization context required' });
+      }
+
       const wardRepository = AppDataSource.getRepository(Ward);
 
       const ward = await wardRepository.findOne({
-        where: { id },
+        where: { id, organizationId: tenantId },
         relations: ['department', 'rooms', 'rooms.beds']
       });
 
@@ -197,10 +204,16 @@ export class WardController {
     try {
       const { id } = req.params;
       const { name, wardNumber, description, departmentId, capacity, location, isActive } = req.body;
+      const user = (req as any).user;
+      const tenantId = (req as any).tenant?.id || user?.organizationId;
+
+      if (!tenantId) {
+        return res.status(400).json({ success: false, message: 'Organization context required' });
+      }
 
       const wardRepository = AppDataSource.getRepository(Ward);
 
-      const ward = await wardRepository.findOne({ where: { id } });
+      const ward = await wardRepository.findOne({ where: { id, organizationId: tenantId } });
       if (!ward) {
         return res.status(404).json({
           success: false,
@@ -210,7 +223,7 @@ export class WardController {
 
       // Check if ward number is being changed and if it already exists
       if (wardNumber && wardNumber !== ward.wardNumber) {
-        const existingWard = await wardRepository.findOne({ where: { wardNumber } });
+        const existingWard = await wardRepository.findOne({ where: { wardNumber, organizationId: tenantId } });
         if (existingWard) {
           return res.status(400).json({
             success: false,
@@ -248,10 +261,17 @@ export class WardController {
   static deleteWard = async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
+      const user = (req as any).user;
+      const tenantId = (req as any).tenant?.id || user?.organizationId;
+
+      if (!tenantId) {
+        return res.status(400).json({ success: false, message: 'Organization context required' });
+      }
+
       const wardRepository = AppDataSource.getRepository(Ward);
 
       const ward = await wardRepository.findOne({
-        where: { id },
+        where: { id, organizationId: tenantId },
         relations: ['rooms']
       });
 
@@ -289,10 +309,17 @@ export class WardController {
   static getWardOccupancy = async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
+      const user = (req as any).user;
+      const tenantId = (req as any).tenant?.id || user?.organizationId;
+
+      if (!tenantId) {
+        return res.status(400).json({ success: false, message: 'Organization context required' });
+      }
+
       const wardRepository = AppDataSource.getRepository(Ward);
 
       const ward = await wardRepository.findOne({
-        where: { id },
+        where: { id, organizationId: tenantId },
         relations: ['rooms', 'rooms.beds', 'rooms.beds.currentAdmission']
       });
 

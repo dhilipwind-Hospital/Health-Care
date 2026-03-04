@@ -42,10 +42,17 @@ export class RoomController {
   static getRoomsByWard = async (req: Request, res: Response) => {
     try {
       const { wardId } = req.params;
+      const user = (req as any).user;
+      const tenantId = (req as any).tenant?.id || user?.organizationId;
+
+      if (!tenantId) {
+        return res.status(400).json({ success: false, message: 'Organization context required' });
+      }
+
       const roomRepository = AppDataSource.getRepository(Room);
 
       const rooms = await roomRepository.find({
-        where: { wardId },
+        where: { wardId, organizationId: tenantId },
         relations: ['beds'],
         order: { roomNumber: 'ASC' }
       });
@@ -67,10 +74,17 @@ export class RoomController {
   static getRoomById = async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
+      const user = (req as any).user;
+      const tenantId = (req as any).tenant?.id || user?.organizationId;
+
+      if (!tenantId) {
+        return res.status(400).json({ success: false, message: 'Organization context required' });
+      }
+
       const roomRepository = AppDataSource.getRepository(Room);
 
       const room = await roomRepository.findOne({
-        where: { id },
+        where: { id, organizationId: tenantId },
         relations: ['ward', 'beds', 'beds.currentAdmission']
       });
 
@@ -171,10 +185,16 @@ export class RoomController {
     try {
       const { id } = req.params;
       const { roomNumber, wardId, roomType, capacity, dailyRate, features, isActive } = req.body;
+      const user = (req as any).user;
+      const tenantId = (req as any).tenant?.id || user?.organizationId;
+
+      if (!tenantId) {
+        return res.status(400).json({ success: false, message: 'Organization context required' });
+      }
 
       const roomRepository = AppDataSource.getRepository(Room);
 
-      const room = await roomRepository.findOne({ where: { id } });
+      const room = await roomRepository.findOne({ where: { id, organizationId: tenantId } });
       if (!room) {
         return res.status(404).json({
           success: false,
@@ -184,7 +204,7 @@ export class RoomController {
 
       // Check if room number is being changed and if it already exists
       if (roomNumber && roomNumber !== room.roomNumber) {
-        const existingRoom = await roomRepository.findOne({ where: { roomNumber } });
+        const existingRoom = await roomRepository.findOne({ where: { roomNumber, organizationId: tenantId } });
         if (existingRoom) {
           return res.status(400).json({
             success: false,
@@ -222,10 +242,17 @@ export class RoomController {
   static deleteRoom = async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
+      const user = (req as any).user;
+      const tenantId = (req as any).tenant?.id || user?.organizationId;
+
+      if (!tenantId) {
+        return res.status(400).json({ success: false, message: 'Organization context required' });
+      }
+
       const roomRepository = AppDataSource.getRepository(Room);
 
       const room = await roomRepository.findOne({
-        where: { id },
+        where: { id, organizationId: tenantId },
         relations: ['beds']
       });
 
