@@ -532,17 +532,27 @@
   backdrop-filter: blur(16px) !important;
   border-radius: 24px !important;
   border: 1px solid rgba(30, 58, 95, 0.08) !important;
-  padding: 2.5rem 2rem !important;
+  padding: 2rem 2rem 2rem !important;
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
   box-shadow:
     0 8px 32px rgba(30, 58, 95, 0.08),
     0 2px 8px rgba(30, 58, 95, 0.04),
     inset 0 1px 0 rgba(255, 255, 255, 0.9) !important;
-  /* Flexbox for consistent layout */
+  /* Flex column so all cards stretch to row height */
   display: flex !important;
   flex-direction: column !important;
   align-items: flex-start !important;
-  min-height: 280px;
+  /* Ant Design .ant-card-body must also be flex column */
+}
+
+/* Make Ant Design card body fill full height and be flex column */
+.feature-card .ant-card-body {
+  padding: 1.75rem 1.75rem 1.75rem !important;
+  width: 100%;
+  height: 100%;
+  display: flex !important;
+  flex-direction: column !important;
+  box-sizing: border-box;
 }
 
 .feature-card:hover {
@@ -570,8 +580,19 @@
 }
 
 .feature-icon {
-  margin-bottom: 1.5rem;
+  margin-bottom: 1.25rem;
   display: block;
+  flex-shrink: 0;
+}
+
+/* Title area: fixed min-height so 1-line and 2-line titles occupy same space */
+.feature-card .ant-card-body > div {
+  flex-shrink: 0;
+}
+
+/* Description: grows to fill remaining space so all cards have same bottom edge */
+.feature-card .ant-card-body > .ant-typography:last-child {
+  flex-grow: 1;
 }
 
 .hero-badge .anticon {
@@ -600,18 +621,40 @@
 }
 
 .feature-card h4 {
-  font-size: 1.375rem !important;
+  font-size: 1.2rem !important;
   font-weight: 600 !important;
-  margin-bottom: 1rem !important;
+  margin: 0 0 0 0 !important;
   color: #1f2937 !important;
   letter-spacing: -0.01em !important;
+  line-height: 1.35 !important;
 }
 
 .feature-card p {
   color: #4b5563 !important;
-  line-height: 1.7 !important;
-  font-size: 1rem !important;
+  line-height: 1.65 !important;
+  font-size: 0.925rem !important;
   font-weight: 400 !important;
+  margin: 0 !important;
+  /* Clamp to 3 lines max — prevents any card from growing taller than others */
+  display: -webkit-box !important;
+  -webkit-line-clamp: 3 !important;
+  line-clamp: 3 !important;
+  -webkit-box-orient: vertical !important;
+  overflow: hidden !important;
+}
+
+/* Pricing cols: stretch so all three cards reach the same height */
+.pricing-section .ant-row {
+  align-items: stretch !important;
+}
+
+.pricing-section .ant-col {
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+.pricing-section .ant-col > .ant-card {
+  flex: 1 !important;
 }
 
 /* Pricing Section */

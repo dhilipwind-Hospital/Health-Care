@@ -268,126 +268,33 @@ const SaaSLanding: React.FC = () => {
               Comprehensive features designed for healthcare excellence
             </Paragraph>
           </div>
-          <Row gutter={[24, 24]}>
-            <Col xs={24} sm={12} md={6} className="scroll-animate-stagger">
-              <Card className="feature-card scroll-animate-card" hoverable>
-                <TeamOutlined className="feature-icon" />
-                <Title level={4}>Patient Management</Title>
-                <Paragraph>
-                  Complete patient records, medical history, appointments, and more.
-                  HIPAA compliant and secure.
-                </Paragraph>
-              </Card>
-            </Col>
-            <Col xs={24} sm={12} md={6} className="scroll-animate-stagger">
-              <Card className="feature-card scroll-animate-card" hoverable>
-                <MedicineBoxOutlined className="feature-icon" />
-                <Title level={4}>Multi-Department</Title>
-                <Paragraph>
-                  Manage multiple departments, services, and specializations with ease.
-                  Complete workflow automation.
-                </Paragraph>
-              </Card>
-            </Col>
-            <Col xs={24} sm={12} md={6} className="scroll-animate-stagger">
-              <Card className="feature-card scroll-animate-card" hoverable>
-                <SafetyOutlined className="feature-icon" />
-                <Title level={4}>Pharmacy & Lab</Title>
-                <Paragraph>
-                  Integrated pharmacy management, lab orders, and results tracking.
-                  Real-time inventory.
-                </Paragraph>
-              </Card>
-            </Col>
-            <Col xs={24} sm={12} md={6} className="scroll-animate-stagger">
-              <Card className="feature-card scroll-animate-card" hoverable>
-                <CloudOutlined className="feature-icon" />
-                <Title level={4}>Cloud-Based</Title>
-                <Paragraph>
-                  Access from anywhere, anytime. Automatic backups and 99.9% uptime
-                  guarantee.
-                </Paragraph>
-              </Card>
-            </Col>
-            <Col xs={24} sm={12} md={6} className="scroll-animate-stagger">
-              <Card className="feature-card scroll-animate-card" hoverable>
-                <LockOutlined className="feature-icon" />
-                <Title level={4}>Data Security</Title>
-                <Paragraph>
-                  Enterprise-grade security with encryption, role-based access, and
-                  audit logs.
-                </Paragraph>
-              </Card>
-            </Col>
-            <Col xs={24} sm={12} md={6} className="scroll-animate-stagger">
-              <Card className="feature-card scroll-animate-card" hoverable>
-                <GlobalOutlined className="feature-icon" />
-                <Title level={4}>Multi-Tenant</Title>
-                <Paragraph>
-                  Each hospital gets their own isolated environment with custom
-                  branding.
-                </Paragraph>
-              </Card>
-            </Col>
-            <Col xs={24} sm={12} md={6} className="scroll-animate-stagger">
-              <Card className="feature-card scroll-animate-card" hoverable>
-                <HomeOutlined className="feature-icon" />
-                <Title level={4}>Bed Management</Title>
-                <Paragraph>
-                  Real-time bed occupancy tracking, allocation, and transfer management
-                  across departments.
-                </Paragraph>
-              </Card>
-            </Col>
-            <Col xs={24} sm={12} md={6} className="scroll-animate-stagger">
-              <Card className="feature-card scroll-animate-card" hoverable>
-                <ScheduleOutlined className="feature-icon" />
-                <Title level={4}>Queue Management</Title>
-                <Paragraph>
-                  Token-based queue system for OPD, departments, and services. Reduce
-                  wait times.
-                </Paragraph>
-              </Card>
-            </Col>
-            <Col xs={24} sm={12} md={6} className="scroll-animate-stagger">
-              <Card className="feature-card scroll-animate-card" hoverable>
-                <ThunderboltOutlined className="feature-icon" />
-                <Title level={4}>Smart Reminders</Title>
-                <Paragraph>
-                  Automated SMS and email appointment reminders. Reduce no-shows by 40%.
-                </Paragraph>
-              </Card>
-            </Col>
-            <Col xs={24} sm={12} md={6} className="scroll-animate-stagger">
-              <Card className="feature-card scroll-animate-card" hoverable>
-                <BarChartOutlined className="feature-icon" />
-                <Title level={4}>Analytics Dashboard</Title>
-                <Paragraph>
-                  Real-time insights, performance metrics, and revenue tracking for
-                  data-driven decisions.
-                </Paragraph>
-              </Card>
-            </Col>
-            <Col xs={24} sm={12} md={6} className="scroll-animate-stagger">
-              <Card className="feature-card scroll-animate-card" hoverable>
-                <AuditOutlined className="feature-icon" />
-                <Title level={4}>Audit Logs</Title>
-                <Paragraph>
-                  Complete activity tracking and compliance reporting for regulatory
-                  requirements.
-                </Paragraph>
-              </Card>
-            </Col>
-            <Col xs={24} sm={12} md={6} className="scroll-animate-stagger">
-              <Card className="feature-card scroll-animate-card" hoverable>
-                <BellOutlined className="feature-icon" />
-                <Title level={4}>Real-time Notifications</Title>
-                <Paragraph>
-                  Instant alerts for critical events, lab results, and patient updates
-                  across the platform.
-                </Paragraph>
-              </Card>
-            </Col>
+          <Row gutter={[24, 24]} style={{ alignItems: 'stretch' }}>
+            {([
+              { icon: <TeamOutlined className="feature-icon" />, title: 'Patient Management', desc: 'Complete patient records, medical history, and appointments. HIPAA compliant.' },
+              { icon: <MedicineBoxOutlined className="feature-icon" />, title: 'Multi-Department', desc: 'Manage departments, services, and specializations with full workflow automation.' },
+              { icon: <SafetyOutlined className="feature-icon" />, title: 'Pharmacy & Lab', desc: 'Integrated pharmacy management, lab orders, results tracking, and inventory.' },
+              { icon: <CloudOutlined className="feature-icon" />, title: 'Cloud-Based', desc: 'Access from anywhere, anytime. Automatic backups and 99.9% uptime guaranteed.' },
+              { icon: <LockOutlined className="feature-icon" />, title: 'Data Security', desc: 'Enterprise-grade encryption, role-based access control, and full audit trails.' },
+              { icon: <GlobalOutlined className="feature-icon" />, title: 'Multi-Tenant', desc: 'Each hospital gets an isolated environment with custom branding and settings.' },
+              { icon: <HomeOutlined className="feature-icon" />, title: 'Bed Management', desc: 'Real-time bed occupancy tracking, allocation, and transfer across departments.' },
+              { icon: <ScheduleOutlined className="feature-icon" />, title: 'Queue Management', desc: 'Token-based queue system for OPD, departments, and services. Reduces wait times.' },
+              { icon: <ThunderboltOutlined className="feature-icon" />, title: 'Smart Reminders', desc: 'Automated SMS and email appointment reminders. Reduce no-shows by up to 40%.' },
+              { icon: <BarChartOutlined className="feature-icon" />, title: 'Analytics Dashboard', desc: 'Real-time insights, performance metrics, and revenue tracking for decisions.' },
+              { icon: <AuditOutlined className="feature-icon" />, title: 'Audit Logs', desc: 'Complete activity tracking and compliance reporting for regulatory requirements.' },
+              { icon: <BellOutlined className="feature-icon" />, title: 'Notifications', desc: 'Instant alerts for critical events, lab results, and patient updates platform-wide.' },
+            ] as { icon: React.ReactNode; title: string; desc: string }[]).map((f, i) => (
+              <Col key={i} xs={24} sm={12} md={6} className="scroll-animate-stagger" style={{ display: 'flex' }}>
+                <Card className="feature-card scroll-animate-card" hoverable style={{ width: '100%' }}>
+                  {f.icon}
+                  <div style={{ minHeight: 56, display: 'flex', alignItems: 'flex-start' }}>
+                    <Title level={4} style={{ margin: 0 }}>{f.title}</Title>
+                  </div>
+                  <Paragraph style={{ marginTop: 12, marginBottom: 0, display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                    {f.desc}
+                  </Paragraph>
+                </Card>
+              </Col>
+            ))}
           </Row>
         </div>
       </section>
@@ -402,14 +309,14 @@ const SaaSLanding: React.FC = () => {
           <div className="journey-timeline scroll-animate" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', maxWidth: '1000px', margin: '0 auto', position: 'relative' }}>
             <div style={{ position: 'absolute', top: '30px', left: '10%', right: '10%', height: '2px', background: 'linear-gradient(90deg, #10B981 0%, #10B981 100%)', zIndex: 0 }}></div>
             {[
-              { icon: <MobileOutlined />, title: 'Book Online', desc: 'Patient books via portal' },
-              { icon: <IdcardOutlined />, title: 'Check-In', desc: 'Token & queue system' },
-              { icon: <UserOutlined />, title: 'Consultation', desc: 'Doctor reviews' },
-              { icon: <ExperimentOutlined />, title: 'Treatment', desc: 'Lab & pharmacy' },
-              { icon: <DollarOutlined />, title: 'Billing', desc: 'Invoice & payment' }
+              { icon: <MobileOutlined style={{ fontSize: 24, color: '#fff' }} />, title: 'Book Online', desc: 'Patient books via portal' },
+              { icon: <IdcardOutlined style={{ fontSize: 24, color: '#fff' }} />, title: 'Check-In', desc: 'Token & queue system' },
+              { icon: <UserOutlined style={{ fontSize: 24, color: '#fff' }} />, title: 'Consultation', desc: 'Doctor reviews' },
+              { icon: <ExperimentOutlined style={{ fontSize: 24, color: '#fff' }} />, title: 'Treatment', desc: 'Lab & pharmacy' },
+              { icon: <DollarOutlined style={{ fontSize: 24, color: '#fff' }} />, title: 'Billing', desc: 'Invoice & payment' }
             ].map((step, index) => (
               <div key={index} className="journey-step scroll-animate-stagger" style={{ textAlign: 'center', flex: 1, position: 'relative', zIndex: 1 }}>
-                <div style={{ width: '60px', height: '60px', borderRadius: '50%', background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px', margin: '0 auto 12px', boxShadow: '0 4px 12px rgba(16, 185, 129, 0.3)' }}>
+                <div style={{ width: '60px', height: '60px', borderRadius: '50%', background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px', boxShadow: '0 4px 12px rgba(16, 185, 129, 0.3)', flexShrink: 0 }}>
                   {step.icon}
                 </div>
                 <Text strong style={{ display: 'block', fontSize: '14px', color: '#1E3A5F', marginBottom: '4px' }}>{step.title}</Text>
