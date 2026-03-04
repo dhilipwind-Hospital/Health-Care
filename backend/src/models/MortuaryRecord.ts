@@ -1,6 +1,7 @@
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn } from 'typeorm';
 import { Organization } from './Organization';
 import { User } from './User';
+import { Admission } from './inpatient/Admission';
 
 export enum MortuaryStatus {
   ADMITTED = 'admitted',
@@ -43,6 +44,10 @@ export class MortuaryRecord {
 
   @Column({ name: 'admission_id', nullable: true })
   admissionId?: string;
+
+  @ManyToOne(() => Admission, { nullable: true })
+  @JoinColumn({ name: 'admission_id' })
+  admission?: Admission;
 
   @Column({ name: 'date_of_death', type: 'date' })
   dateOfDeath!: Date;

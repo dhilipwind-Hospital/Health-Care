@@ -44,9 +44,11 @@ const WritePrescription: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   
-  // Get patient name from URL parameters
+  // Get context from URL parameters
   const urlParams = new URLSearchParams(location.search);
   const patientNameFromUrl = urlParams.get('patientName');
+  const appointmentIdFromUrl = urlParams.get('appointmentId');
+  const admissionIdFromUrl = urlParams.get('admissionId');
   
   // Debug logging (can be removed in production)
   console.log('WritePrescription Debug:', {
@@ -345,6 +347,8 @@ const WritePrescription: React.FC = () => {
           quantity: item.quantity,
           instructions: item.instructions,
         })),
+        ...(appointmentIdFromUrl && { appointmentId: appointmentIdFromUrl }),
+        ...(admissionIdFromUrl && { admissionId: admissionIdFromUrl }),
       };
       
       // Create prescription via API

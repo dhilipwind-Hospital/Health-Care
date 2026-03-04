@@ -30,7 +30,7 @@ export class LabOrderController {
   // Create a new lab order (for doctors)
   static createLabOrder = async (req: Request, res: Response) => {
     try {
-      const { patientId, tests, clinicalNotes, diagnosis, isUrgent } = req.body;
+      const { patientId, tests, clinicalNotes, diagnosis, isUrgent, visitId, admissionId, appointmentId } = req.body;
       const doctorId = (req as any).user.id;
       const user = (req as any).user;
       const orgId = (req as any).tenant?.id || user?.organizationId;
@@ -57,7 +57,10 @@ export class LabOrderController {
         clinicalNotes,
         diagnosis,
         isUrgent: isUrgent || false,
-        status: 'ordered'
+        status: 'ordered',
+        ...(visitId && { visitId }),
+        ...(admissionId && { admissionId }),
+        ...(appointmentId && { appointmentId }),
       });
 
       // Create order items

@@ -3,7 +3,7 @@ import { Form, Select, Input, Button, Card, Table, message, Checkbox, Tag } from
 import { PlusOutlined, DeleteOutlined } from '@ant-design/icons';
 import api from '../../services/api';
 import styled from 'styled-components';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 
 const { TextArea } = Input;
 const { Option } = Select;
@@ -34,6 +34,9 @@ interface Patient {
 const OrderLabTest: React.FC = () => {
   const [form] = Form.useForm();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const appointmentIdFromUrl = searchParams.get('appointmentId');
+  const admissionIdFromUrl = searchParams.get('admissionId');
   const [loading, setLoading] = useState(false);
   const [tests, setTests] = useState<LabTest[]>([]);
   const [patients, setPatients] = useState<Patient[]>([]);
@@ -108,7 +111,9 @@ const OrderLabTest: React.FC = () => {
         tests: selectedTests.map(t => t.id),
         clinicalNotes: values.clinicalNotes,
         diagnosis: values.diagnosis,
-        isUrgent: values.isUrgent || false
+        isUrgent: values.isUrgent || false,
+        ...(appointmentIdFromUrl && { appointmentId: appointmentIdFromUrl }),
+        ...(admissionIdFromUrl && { admissionId: admissionIdFromUrl }),
       };
 
       const response = await api.post('/lab/orders', orderData);

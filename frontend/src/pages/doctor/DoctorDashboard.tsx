@@ -602,8 +602,9 @@ const DoctorDashboard: React.FC = () => {
           instructions: values.instructions,
         }],
         notes: values.notes,
+        ...(appointmentIdParam && { appointmentId: appointmentIdParam }),
       };
-      
+
       await api.post('/prescriptions', data);
       message.success('Prescription created successfully');
       setPrescriptionModalVisible(false);
@@ -629,8 +630,9 @@ const DoctorDashboard: React.FC = () => {
         testType: values.testType,
         priority: values.priority || 'normal',
         notes: values.notes,
+        ...(appointmentIdParam && { appointmentId: appointmentIdParam }),
       };
-      
+
       await api.post('/laboratory/orders', data);
       message.success('Lab test ordered successfully');
       setLabOrderModalVisible(false);

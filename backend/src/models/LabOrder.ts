@@ -54,6 +54,16 @@ export class LabOrder {
   @OneToMany(() => LabOrderItem, item => item.labOrder, { cascade: true })
   items!: LabOrderItem[];
 
+  // Integration FKs — link lab order to visit/admission/appointment context
+  @Column({ name: 'visit_id', type: 'uuid', nullable: true })
+  visitId?: string;
+
+  @Column({ name: 'admission_id', type: 'uuid', nullable: true })
+  admissionId?: string;
+
+  @Column({ name: 'appointment_id', type: 'uuid', nullable: true })
+  appointmentId?: string;
+
   @CreateDateColumn()
   createdAt!: Date;
 

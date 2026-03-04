@@ -11,6 +11,7 @@ import { Organization } from '../Organization';
 import { Location } from '../Location';
 import { User } from '../User';
 import { DialysisMachine } from './DialysisMachine';
+import { Admission } from '../inpatient/Admission';
 
 export enum DialysisSessionStatus {
   SCHEDULED = 'scheduled',
@@ -86,6 +87,10 @@ export class DialysisSession {
 
   @Column({ name: 'admission_id', type: 'uuid', nullable: true })
   admissionId?: string;
+
+  @ManyToOne(() => Admission, { nullable: true })
+  @JoinColumn({ name: 'admission_id' })
+  admission?: Admission;
 
   // Schedule
   @Column({ type: 'date' })

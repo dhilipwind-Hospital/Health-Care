@@ -13,7 +13,7 @@ export class PrescriptionController {
   // Create a new prescription (for doctors)
   static createPrescription = async (req: Request, res: Response) => {
     try {
-      const { patientId, items, diagnosis, notes } = req.body;
+      const { patientId, items, diagnosis, notes, visitId, admissionId, appointmentId } = req.body;
 
       // Get doctor ID and tenant context from authenticated user
       const doctorId = (req as any).user?.id;
@@ -48,7 +48,10 @@ export class PrescriptionController {
           diagnosis,
           notes,
           status: PrescriptionStatus.PENDING,
-          organizationId: tenantId
+          organizationId: tenantId,
+          ...(visitId && { visitId }),
+          ...(admissionId && { admissionId }),
+          ...(appointmentId && { appointmentId }),
         });
 
         // Validate prescription

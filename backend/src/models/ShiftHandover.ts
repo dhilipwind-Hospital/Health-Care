@@ -1,6 +1,8 @@
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn } from 'typeorm';
 import { Organization } from './Organization';
 import { User } from './User';
+import { Ward } from './inpatient/Ward';
+import { Department } from './Department';
 
 export enum HandoverStatus {
   DRAFT = 'draft',
@@ -43,8 +45,16 @@ export class ShiftHandover {
   @Column({ name: 'ward_id', nullable: true })
   wardId?: string;
 
+  @ManyToOne(() => Ward, { nullable: true })
+  @JoinColumn({ name: 'ward_id' })
+  ward?: Ward;
+
   @Column({ name: 'department_id', nullable: true })
   departmentId?: string;
+
+  @ManyToOne(() => Department, { nullable: true })
+  @JoinColumn({ name: 'department_id' })
+  department?: Department;
 
   @Column({ name: 'patient_updates', type: 'jsonb', nullable: true })
   patientUpdates?: Record<string, any>[];

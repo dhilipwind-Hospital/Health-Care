@@ -1,6 +1,8 @@
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn } from 'typeorm';
 import { Organization } from './Organization';
 import { User } from './User';
+import { Ward } from './inpatient/Ward';
+import { Bed } from './inpatient/Bed';
 
 export enum HousekeepingTaskType {
   CLEANING = 'cleaning',
@@ -43,11 +45,19 @@ export class HousekeepingTask {
   @Column({ name: 'ward_id', nullable: true })
   wardId?: string;
 
+  @ManyToOne(() => Ward, { nullable: true })
+  @JoinColumn({ name: 'ward_id' })
+  ward?: Ward;
+
   @Column({ name: 'room_id', nullable: true })
   roomId?: string;
 
   @Column({ name: 'bed_id', nullable: true })
   bedId?: string;
+
+  @ManyToOne(() => Bed, { nullable: true })
+  @JoinColumn({ name: 'bed_id' })
+  bed?: Bed;
 
   @Column({ name: 'location_name', length: 100, nullable: true })
   locationName?: string;

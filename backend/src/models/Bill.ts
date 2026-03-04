@@ -2,6 +2,8 @@ import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateCol
 import { User } from './User';
 import { Appointment } from './Appointment';
 import { Organization } from './Organization';
+import { Visit } from './Visit';
+import { Admission } from './inpatient/Admission';
 import { IsNotEmpty, IsOptional, IsString, IsNumber, IsEnum } from 'class-validator';
 
 export enum BillStatus {
@@ -49,6 +51,21 @@ export class Bill {
   @ManyToOne(() => Appointment, { nullable: true })
   @JoinColumn({ name: 'appointment_id' })
   appointment?: Appointment;
+
+  // Integration FKs — link bill to visit (OPD) or admission (IPD)
+  @Column({ name: 'visit_id', type: 'uuid', nullable: true })
+  visitId?: string;
+
+  @ManyToOne(() => Visit, { nullable: true })
+  @JoinColumn({ name: 'visit_id' })
+  visit?: Visit;
+
+  @Column({ name: 'admission_id', type: 'uuid', nullable: true })
+  admissionId?: string;
+
+  @ManyToOne(() => Admission, { nullable: true })
+  @JoinColumn({ name: 'admission_id' })
+  admission?: Admission;
 
   @ManyToOne(() => Organization)
   @JoinColumn({ name: 'organization_id' })

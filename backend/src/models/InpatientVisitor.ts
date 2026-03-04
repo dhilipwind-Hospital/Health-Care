@@ -1,6 +1,7 @@
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn } from 'typeorm';
 import { Organization } from './Organization';
 import { User } from './User';
+import { Admission } from './inpatient/Admission';
 
 export enum VisitorStatus {
   CHECKED_IN = 'checked_in',
@@ -42,6 +43,10 @@ export class InpatientVisitor {
 
   @Column({ name: 'admission_id', nullable: true })
   admissionId?: string;
+
+  @ManyToOne(() => Admission, { nullable: true })
+  @JoinColumn({ name: 'admission_id' })
+  admission?: Admission;
 
   @Column({ length: 200, nullable: true })
   purpose?: string;

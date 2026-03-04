@@ -68,6 +68,19 @@ export class Prescription {
   @OneToMany(() => PrescriptionItem, item => item.prescription, { cascade: true })
   items!: PrescriptionItem[];
 
+  // Integration FKs — link prescription to visit/admission/appointment context
+  @Column({ name: 'visit_id', type: 'uuid', nullable: true })
+  @IsOptional()
+  visitId?: string;
+
+  @Column({ name: 'admission_id', type: 'uuid', nullable: true })
+  @IsOptional()
+  admissionId?: string;
+
+  @Column({ name: 'appointment_id', type: 'uuid', nullable: true })
+  @IsOptional()
+  appointmentId?: string;
+
   @CreateDateColumn({ name: 'created_at' })
   createdAt!: Date;
 

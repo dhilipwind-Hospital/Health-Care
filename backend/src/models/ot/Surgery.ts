@@ -12,6 +12,7 @@ import { Organization } from '../Organization';
 import { Location } from '../Location';
 import { User } from '../User';
 import { OtRoom } from './OtRoom';
+import { Admission } from '../inpatient/Admission';
 
 export enum SurgeryType {
   ELECTIVE = 'elective',
@@ -94,6 +95,10 @@ export class Surgery {
 
   @Column({ name: 'admission_id', type: 'uuid', nullable: true })
   admissionId?: string;
+
+  @ManyToOne(() => Admission, { nullable: true })
+  @JoinColumn({ name: 'admission_id' })
+  admission?: Admission;
 
   @Column({ unique: true })
   surgeryNumber!: string;

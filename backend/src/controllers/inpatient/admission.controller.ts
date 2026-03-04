@@ -5,6 +5,7 @@ import { Bed, BedStatus } from '../../models/inpatient/Bed';
 import { User } from '../../models/User';
 import { UserRole } from '../../types/roles';
 import { NotificationType } from '../../models/Notification';
+import { HousekeepingTask, HousekeepingTaskType, HousekeepingPriority, HousekeepingStatus } from '../../models/HousekeepingTask';
 
 export class AdmissionController {
   // Generate unique admission number
@@ -516,6 +517,24 @@ export class AdmissionController {
       bed.status = BedStatus.CLEANING;
       bed.currentAdmission = null as any;
       await bedRepository.save(bed);
+
+      // Auto-create housekeeping task for the vacated bed
+      try {
+        const hkRepo = AppDataSource.getRepository(HousekeepingTask);
+        const todayCompact = new Date().toISOString().split('T')[0].replace(/-/g, '');
+        const hkCount = await hkRepo.count({ where: { organizationId: tenantId } });
+        await hkRepo.save(hkRepo.create({
+          organizationId: tenantId,
+          taskNumber: `HK-${todayCompact}-${String(hkCount + 1).padStart(4, '0')}`,
+          bedId: admission.bedId,
+          locationName: `Bed ${bed.bedNumber || ''} (Post-Discharge)`,
+          taskType: HousekeepingTaskType.SANITIZATION,
+          priority: HousekeepingPriority.URGENT,
+          status: HousekeepingStatus.PENDING,
+        }));
+      } catch (hkErr) {
+        console.error('Auto-housekeeping trigger failed (non-blocking):', hkErr);
+      }
 
       return res.json({
         success: true,

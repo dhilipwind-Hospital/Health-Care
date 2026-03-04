@@ -86,6 +86,10 @@ export class PhysiotherapyOrder {
   @Column({ type: 'text', nullable: true })
   precautions?: string;
 
+  // Integration FK — link to inpatient admission if applicable
+  @Column({ name: 'admission_id', type: 'uuid', nullable: true })
+  admissionId?: string;
+
   @Column({ name: 'start_date', type: 'date', nullable: true })
   startDate?: Date;
 
