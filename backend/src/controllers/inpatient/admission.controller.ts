@@ -2,10 +2,16 @@ import { Request, Response } from 'express';
 import { AppDataSource } from '../../config/database';
 import { Admission, AdmissionStatus } from '../../models/inpatient/Admission';
 import { Bed, BedStatus } from '../../models/inpatient/Bed';
+import { Room } from '../../models/inpatient/Room';
 import { User } from '../../models/User';
 import { UserRole } from '../../types/roles';
 import { NotificationType } from '../../models/Notification';
 import { HousekeepingTask, HousekeepingTaskType, HousekeepingPriority, HousekeepingStatus } from '../../models/HousekeepingTask';
+import { Bill, BillStatus } from '../../models/Bill';
+import { LabOrder } from '../../models/LabOrder';
+import { LabOrderItem } from '../../models/LabOrderItem';
+import { Prescription } from '../../models/pharmacy/Prescription';
+import { PrescriptionItem } from '../../models/pharmacy/PrescriptionItem';
 
 export class AdmissionController {
   // Generate unique admission number
@@ -536,10 +542,121 @@ export class AdmissionController {
         console.error('Auto-housekeeping trigger failed (non-blocking):', hkErr);
       }
 
+      // Auto-generate discharge bill (non-blocking)
+      let generatedBill: any = null;
+      try {
+        const billRepo = AppDataSource.getRepository(Bill);
+        const roomRepo = AppDataSource.getRepository(Room);
+        const labOrderRepo = AppDataSource.getRepository(LabOrder);
+        const prescriptionRepo = AppDataSource.getRepository(Prescription);
+
+        const itemDetails: Array<{ name: string; quantity: number; unitPrice: number; total: number }> = [];
+
+        // 1. Room charges — days × dailyRate
+        const room = await roomRepo.findOne({ where: { id: bed.roomId } });
+        const admitTime = new Date(admission.admissionDateTime).getTime();
+        const dischargeTime = admission.dischargeDateTime!.getTime();
+        const stayDays = Math.max(1, Math.ceil((dischargeTime - admitTime) / (1000 * 60 * 60 * 24)));
+        const dailyRate = room ? Number(room.dailyRate) || 0 : 0;
+        if (dailyRate > 0) {
+          itemDetails.push({
+            name: `Room Charges (${room!.roomType} - ${stayDays} day${stayDays > 1 ? 's' : ''})`,
+            quantity: stayDays,
+            unitPrice: dailyRate,
+            total: stayDays * dailyRate,
+          });
+        }
+
+        // 2. Lab test charges
+        const labOrders = await labOrderRepo.find({
+          where: { patientId: admission.patientId, admissionId: admission.id, organizationId: tenantId },
+        });
+        if (labOrders.length > 0) {
+          const labItemRepo = AppDataSource.getRepository(LabOrderItem);
+          for (const order of labOrders) {
+            const labItems = await labItemRepo.find({
+              where: { labOrderId: order.id },
+              relations: ['labTest'],
+            });
+            for (const li of labItems) {
+              if (li.labTest && li.status !== 'cancelled') {
+                const cost = Number(li.labTest.cost) || 0;
+                if (cost > 0) {
+                  itemDetails.push({
+                    name: `Lab: ${li.labTest.name} (${li.labTest.code})`,
+                    quantity: 1,
+                    unitPrice: cost,
+                    total: cost,
+                  });
+                }
+              }
+            }
+          }
+        }
+
+        // 3. Prescription/medicine charges
+        const prescriptions = await prescriptionRepo.find({
+          where: { patientId: admission.patientId, admissionId: admission.id, organizationId: tenantId },
+        });
+        if (prescriptions.length > 0) {
+          const prescItemRepo = AppDataSource.getRepository(PrescriptionItem);
+          for (const presc of prescriptions) {
+            const prescItems = await prescItemRepo.find({
+              where: { prescriptionId: presc.id },
+              relations: ['medicine'],
+            });
+            for (const pi of prescItems) {
+              if (pi.medicine && pi.status !== 'cancelled') {
+                const price = Number(pi.medicine.sellingPrice) || 0;
+                if (price > 0) {
+                  itemDetails.push({
+                    name: `Medicine: ${pi.medicine.name} (×${pi.quantity})`,
+                    quantity: pi.quantity,
+                    unitPrice: price,
+                    total: pi.quantity * price,
+                  });
+                }
+              }
+            }
+          }
+        }
+
+        // Calculate totals
+        const subtotal = itemDetails.reduce((sum, item) => sum + item.total, 0);
+
+        if (subtotal > 0) {
+          // Generate bill number
+          const year = new Date().getFullYear();
+          const billCount = await billRepo.count({ where: { organizationId: tenantId } });
+          const billNumber = `BIL-${year}-${String(billCount + 1).padStart(5, '0')}`;
+
+          const bill = billRepo.create({
+            patient: admission.patient,
+            organizationId: tenantId,
+            admissionId: admission.id,
+            billNumber,
+            amount: subtotal,
+            subtotal,
+            grandTotal: subtotal,
+            balanceDue: subtotal,
+            billDate: new Date(),
+            dueDate: new Date(Date.now() + 30 * 86400000), // 30 days
+            status: BillStatus.PENDING,
+            billType: 'ipd',
+            description: `Discharge bill for admission ${admission.admissionNumber}`,
+            itemDetails,
+          });
+          generatedBill = await billRepo.save(bill);
+        }
+      } catch (billErr) {
+        console.error('Auto-billing on discharge failed (non-blocking):', billErr);
+      }
+
       return res.json({
         success: true,
         message: 'Patient discharged successfully',
-        admission
+        admission,
+        ...(generatedBill && { bill: { id: generatedBill.id, billNumber: generatedBill.billNumber, amount: generatedBill.amount } }),
       });
     } catch (error) {
       console.error('Error discharging patient:', error);

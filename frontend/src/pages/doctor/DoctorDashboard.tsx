@@ -603,6 +603,7 @@ const DoctorDashboard: React.FC = () => {
         }],
         notes: values.notes,
         ...(appointmentIdParam && { appointmentId: appointmentIdParam }),
+        ...(currentQueueItem?.visitId && { visitId: currentQueueItem.visitId }),
       };
 
       await api.post('/prescriptions', data);
@@ -631,6 +632,7 @@ const DoctorDashboard: React.FC = () => {
         priority: values.priority || 'normal',
         notes: values.notes,
         ...(appointmentIdParam && { appointmentId: appointmentIdParam }),
+        ...(currentQueueItem?.visitId && { visitId: currentQueueItem.visitId }),
       };
 
       await api.post('/laboratory/orders', data);
@@ -712,7 +714,16 @@ const DoctorDashboard: React.FC = () => {
         // Ignore
       }
     }
-    
+
+    // Advance visit to billing stage
+    if (currentQueueItem?.visitId) {
+      try {
+        await api.post(`/visits/${currentQueueItem.visitId}/advance`, { toStage: 'billing' });
+      } catch (e) {
+        // Non-blocking — visit advance is best-effort
+      }
+    }
+
     message.success('Consultation completed successfully');
     navigate('/queue/doctor');
   };

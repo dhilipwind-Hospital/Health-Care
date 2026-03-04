@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Table, Tag, Button, Descriptions, Modal, Empty } from 'antd';
+import { Card, Table, Tag, Button, Descriptions, Modal, Empty, message } from 'antd';
 import { FileTextOutlined, DownloadOutlined, EyeOutlined } from '@ant-design/icons';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 import api from '../../services/api';
 import styled from 'styled-components';
 
@@ -72,8 +74,58 @@ const PatientLabResults: React.FC = () => {
   };
 
   const downloadReport = (result: LabResult) => {
-    // TODO: Implement PDF download
-    console.log('Download report for:', result);
+    try {
+      const doc = new jsPDF();
+      const pageWidth = doc.internal.pageSize.getWidth();
+
+      // Header
+      doc.setFontSize(18);
+      doc.text('Laboratory Test Report', pageWidth / 2, 20, { align: 'center' });
+      doc.setFontSize(10);
+      doc.setTextColor(100);
+      doc.text(`Generated: ${new Date().toLocaleString()}`, pageWidth / 2, 27, { align: 'center' });
+      doc.setTextColor(0);
+
+      // Order info
+      doc.setFontSize(12);
+      doc.text(`Order #: ${result.orderNumber}`, 14, 40);
+      doc.text(`Order Date: ${new Date(result.orderDate).toLocaleDateString()}`, 14, 48);
+      doc.text(`Ordered By: Dr. ${result.doctorName}`, 14, 56);
+
+      // Test details table
+      autoTable(doc, {
+        startY: 68,
+        head: [['Field', 'Value']],
+        body: [
+          ['Test Name', `${result.testName} (${result.testCode})`],
+          ['Result', `${result.result.resultValue} ${result.result.units || ''}`],
+          ['Reference Range', result.result.referenceRange || 'N/A'],
+          ['Status', result.result.flag.toUpperCase()],
+          ['Interpretation', result.result.interpretation || 'N/A'],
+          ['Result Date', new Date(result.result.resultTime).toLocaleString()],
+          ['Verified', result.result.isVerified ? 'Yes' : 'Pending'],
+          ...(result.result.comments ? [['Comments', result.result.comments]] : []),
+        ],
+        theme: 'grid',
+        headStyles: { fillColor: [41, 128, 185] },
+        columnStyles: { 0: { fontStyle: 'bold', cellWidth: 50 } },
+      });
+
+      // Critical warning
+      if (result.result.flag === 'critical') {
+        const finalY = (doc as any).lastAutoTable?.finalY || 150;
+        doc.setFontSize(11);
+        doc.setTextColor(255, 0, 0);
+        doc.text('WARNING: Critical result — requires immediate medical attention.', 14, finalY + 15);
+        doc.setTextColor(0);
+      }
+
+      doc.save(`Lab-Report-${result.orderNumber}-${result.testCode}.pdf`);
+      message.success('PDF downloaded');
+    } catch (err) {
+      console.error('PDF generation failed:', err);
+      message.error('Failed to generate PDF');
+    }
   };
 
   const columns = [
