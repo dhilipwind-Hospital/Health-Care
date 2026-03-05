@@ -55,16 +55,28 @@ const MortuaryManagement: React.FC = () => {
 
   const handleAdmit = async (values: any) => {
     try {
-      await api.post('/mortuary/admit', { ...values, dateOfDeath: values.dateOfDeath?.format('YYYY-MM-DD') });
+      const payload = {
+        ...values,
+        dateOfDeath: values.dateOfDeath?.format('YYYY-MM-DD'),
+        policeNotified: values.policeNotified ?? false,
+        postMortemRequired: values.postMortemRequired ?? false,
+      };
+      await api.post('/mortuary/admit', payload);
       message.success('Body admitted'); setAdmitModalOpen(false); admitForm.resetFields(); fetchAll();
-    } catch { message.error('Failed to admit'); }
+    } catch (err: any) {
+      const msg = err?.response?.data?.message || 'Failed to admit';
+      message.error(msg);
+    }
   };
 
   const handleRelease = async (values: any) => {
     try {
       await api.patch(`/mortuary/${selectedId}/release`, values);
       message.success('Body released'); setReleaseModalOpen(false); releaseForm.resetFields(); fetchAll();
-    } catch { message.error('Failed to release'); }
+    } catch (err: any) {
+      const msg = err?.response?.data?.message || 'Failed to release';
+      message.error(msg);
+    }
   };
 
   const filtered = records.filter(r => !search || r.deceasedName?.toLowerCase().includes(search.toLowerCase()) || r.recordNumber?.toLowerCase().includes(search.toLowerCase()));

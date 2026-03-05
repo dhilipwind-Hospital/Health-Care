@@ -1,7 +1,7 @@
 import jwt from 'jsonwebtoken';
 import { User } from '../models/User';
 
-const ACCESS_TOKEN_EXPIRY = '15m';
+const ACCESS_TOKEN_EXPIRY = '4h';
 const REFRESH_TOKEN_EXPIRY = '7d';
 
 const getJwtSecret = () => process.env.JWT_SECRET || 'your-secret-key';
@@ -32,7 +32,7 @@ export const generateTokens = (user: User) => {
   return {
     accessToken,
     refreshToken,
-    expiresIn: 15 * 60 // 15 minutes in seconds
+    expiresIn: 4 * 60 * 60 // 4 hours in seconds
   };
 };
 

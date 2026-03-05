@@ -21,11 +21,24 @@ export class MortuaryController {
   static create = async (req: Request, res: Response) => {
     try {
       const orgId = (req as any).user?.organizationId || (req as any).tenant?.id;
+      if (!orgId) {
+        return res.status(400).json({ success: false, message: 'Organization context is required' });
+      }
+      const { deceasedName, dateOfDeath } = req.body;
+      if (!deceasedName || !dateOfDeath) {
+        return res.status(400).json({ success: false, message: 'deceasedName and dateOfDeath are required' });
+      }
       const repo = AppDataSource.getRepository(MortuaryRecord);
       const today = new Date().toISOString().split('T')[0].replace(/-/g, '');
       const count = await repo.count({ where: { organizationId: orgId } });
       const recordNumber = `MR-${today}-${String(count + 1).padStart(4, '0')}`;
-      const record = repo.create({ ...req.body, organizationId: orgId, recordNumber } as any);
+      const record = repo.create({
+        ...req.body,
+        policeNotified: req.body.policeNotified ?? false,
+        postMortemRequired: req.body.postMortemRequired ?? false,
+        organizationId: orgId,
+        recordNumber,
+      } as any);
       const saved = await repo.save(record);
       res.status(201).json({ success: true, data: saved });
     } catch (error: any) {
@@ -51,12 +64,21 @@ export class MortuaryController {
   static admit = async (req: Request, res: Response) => {
     try {
       const orgId = (req as any).user?.organizationId || (req as any).tenant?.id;
+      if (!orgId) {
+        return res.status(400).json({ success: false, message: 'Organization context is required' });
+      }
+      const { deceasedName, dateOfDeath } = req.body;
+      if (!deceasedName || !dateOfDeath) {
+        return res.status(400).json({ success: false, message: 'deceasedName and dateOfDeath are required' });
+      }
       const repo = AppDataSource.getRepository(MortuaryRecord);
       const today = new Date().toISOString().split('T')[0].replace(/-/g, '');
       const count = await repo.count({ where: { organizationId: orgId } });
       const recordNumber = `MR-${today}-${String(count + 1).padStart(4, '0')}`;
       const record = repo.create({
         ...req.body,
+        policeNotified: req.body.policeNotified ?? false,
+        postMortemRequired: req.body.postMortemRequired ?? false,
         organizationId: orgId,
         recordNumber,
         status: MortuaryStatus.ADMITTED,
