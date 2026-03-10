@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import { Input, Select, message, Spin, Modal, Result, Button, Calendar, Badge } from 'antd';
+import { Input, Select, message, Spin, Modal, Result, Button, Calendar } from 'antd';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import dayjs, { Dayjs } from 'dayjs';
@@ -63,6 +63,11 @@ const BookAppointmentStepper: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<string>('name');
 
+  // Real availability data: doctorId -> available time slot strings (e.g. "9:00", "9:30")
+  const [doctorAvailability, setDoctorAvailability] = useState<Record<string, string[]>>({});
+  const [availabilityLoading, setAvailabilityLoading] = useState(false);
+  const [availabilityDate, setAvailabilityDate] = useState<string | null>(null);
+
   // Success modal
   const [showSuccess, setShowSuccess] = useState(false);
   const [bookingDetails, setBookingDetails] = useState<any>(null);
@@ -70,6 +75,42 @@ const BookAppointmentStepper: React.FC = () => {
   useEffect(() => {
     loadData();
   }, []);
+
+  // Fetch real availability when date changes
+  useEffect(() => {
+    if (!selectedDate) return;
+    const dateStr = selectedDate.format('YYYY-MM-DD');
+    if (dateStr === availabilityDate) return; // already fetched for this date
+
+    const fetchAvailability = async () => {
+      setAvailabilityLoading(true);
+      try {
+        const res = await api.get('/availability/slots/available', {
+          params: { date: dateStr },
+          suppressErrorToast: true,
+        } as any);
+        const slots = res.data?.data || [];
+        const avMap: Record<string, string[]> = {};
+        for (const entry of slots) {
+          const docId = entry.doctor?.id;
+          if (!docId) continue;
+          const times = (entry.availableTimeSlots || []).map((ts: any) => {
+            const d = new Date(ts.startTime);
+            return `${d.getHours()}:${String(d.getMinutes()).padStart(2, '0')}`;
+          });
+          avMap[docId] = [...(avMap[docId] || []), ...times];
+        }
+        setDoctorAvailability(avMap);
+        setAvailabilityDate(dateStr);
+      } catch {
+        // If availability API fails, clear data so all show as available (graceful fallback)
+        setDoctorAvailability({});
+        setAvailabilityDate(dateStr);
+      }
+      setAvailabilityLoading(false);
+    };
+    fetchAvailability();
+  }, [selectedDate, availabilityDate]);
 
   const loadData = async () => {
     try {
@@ -185,22 +226,29 @@ const BookAppointmentStepper: React.FC = () => {
     return Array.from(deptMap.entries()).map(([id, name]) => ({ id, name }));
   }, [doctors, departments]);
 
-  // Generate time slots
+  // Generate time slots — use real availability when available
   const generateTimeSlots = useMemo(() => {
     const morning: { label: string; value: string; available: boolean }[] = [];
     const afternoon: { label: string; value: string; available: boolean }[] = [];
     const evening: { label: string; value: string; available: boolean }[] = [];
+
+    // Check if we have real availability data for the selected doctor
+    const hasRealData = selectedDoctor && availabilityDate && Object.keys(doctorAvailability).length > 0;
+    const doctorSlots = selectedDoctor ? doctorAvailability[selectedDoctor.id] : undefined;
+
+    const isSlotAvailable = (hourVal: string) => {
+      if (!hasRealData) return true; // No availability data → show all as available (fallback)
+      if (!doctorSlots) return false; // Doctor has no availability slots for this date
+      return doctorSlots.includes(hourVal);
+    };
 
     // Morning: 9 AM - 12 PM
     for (let hour = 9; hour < 12; hour++) {
       for (const min of [0, 30]) {
         const h12 = hour > 12 ? hour - 12 : hour;
         const label = `${String(h12).padStart(2, '0')}:${String(min).padStart(2, '0')}`;
-        morning.push({
-          label,
-          value: `${hour}:${String(min).padStart(2, '0')}`,
-          available: true,
-        });
+        const value = `${hour}:${String(min).padStart(2, '0')}`;
+        morning.push({ label, value, available: isSlotAvailable(value) });
       }
     }
 
@@ -209,11 +257,8 @@ const BookAppointmentStepper: React.FC = () => {
       for (const min of [0, 30]) {
         const h12 = hour > 12 ? hour - 12 : hour;
         const label = `${String(h12).padStart(2, '0')}:${String(min).padStart(2, '0')}`;
-        afternoon.push({
-          label,
-          value: `${hour}:${String(min).padStart(2, '0')}`,
-          available: true,
-        });
+        const value = `${hour}:${String(min).padStart(2, '0')}`;
+        afternoon.push({ label, value, available: isSlotAvailable(value) });
       }
     }
 
@@ -222,16 +267,13 @@ const BookAppointmentStepper: React.FC = () => {
       for (const min of [0, 30]) {
         const h12 = hour - 12;
         const label = `${String(h12).padStart(2, '0')}:${String(min).padStart(2, '0')}`;
-        evening.push({
-          label,
-          value: `${hour}:${String(min).padStart(2, '0')}`,
-          available: true,
-        });
+        const value = `${hour}:${String(min).padStart(2, '0')}`;
+        evening.push({ label, value, available: isSlotAvailable(value) });
       }
     }
 
     return { morning, afternoon, evening };
-  }, []);
+  }, [selectedDoctor, doctorAvailability, availabilityDate]);
 
   // Current step computation
   const currentStep = useMemo(() => {
@@ -551,26 +593,34 @@ const BookAppointmentStepper: React.FC = () => {
               <div className="doctor-cards-grid">
                 {filteredDoctors.map((doctor) => {
                   const isSelected = selectedDoctor?.id === doctor.id;
+                  const hasRealData = availabilityDate && Object.keys(doctorAvailability).length > 0;
+                  const doctorSlots = doctorAvailability[doctor.id];
+                  const isAvailable = !hasRealData || (doctorSlots && doctorSlots.length > 0);
+                  const slotCount = doctorSlots?.length || 0;
+
                   return (
                     <div
                       key={doctor.id}
-                      className={`doctor-card ${isSelected ? 'selected' : ''}`}
+                      className={`doctor-card ${isSelected ? 'selected' : ''} ${hasRealData && !isAvailable ? 'unavailable' : ''}`}
                       onClick={() => {
                         setSelectedDoctor(doctor);
-                        // Reset time when changing doctor
                         setSelectedTime(null);
                       }}
                     >
                       {/* Badge */}
                       <div
-                        className={`doctor-card-badge ${isSelected ? 'badge-selected' : 'badge-available'}`}
+                        className={`doctor-card-badge ${isSelected ? 'badge-selected' : hasRealData && !isAvailable ? 'badge-unavailable' : 'badge-available'}`}
                       >
                         {isSelected ? (
                           <>
                             <CheckCircleOutlined /> Selected
                           </>
+                        ) : hasRealData && !isAvailable ? (
+                          <>Not Available</>
+                        ) : hasRealData ? (
+                          <>{slotCount} slot{slotCount !== 1 ? 's' : ''} open</>
                         ) : (
-                          <>● Available Today</>
+                          <>Available Today</>
                         )}
                       </div>
 
@@ -598,9 +648,13 @@ const BookAppointmentStepper: React.FC = () => {
                       </div>
 
                       {/* Availability */}
-                      <div className="doctor-card-availability available">
-                        <span className="availability-dot green" />
-                        Available Today
+                      <div className={`doctor-card-availability ${hasRealData && !isAvailable ? 'not-available' : 'available'}`}>
+                        <span className={`availability-dot ${hasRealData && !isAvailable ? 'red' : 'green'}`} />
+                        {hasRealData && !isAvailable
+                          ? 'Not available on this date'
+                          : hasRealData
+                            ? `${slotCount} slot${slotCount !== 1 ? 's' : ''} available`
+                            : 'Available Today'}
                       </div>
                     </div>
                   );
@@ -636,6 +690,8 @@ const BookAppointmentStepper: React.FC = () => {
               </div>
               {!selectedDate ? (
                 <div className="summary-empty">Please select a date first</div>
+              ) : availabilityLoading ? (
+                <div className="summary-empty"><Spin size="small" /> Loading availability...</div>
               ) : (
                 <>
                   <div className="time-section">

@@ -214,6 +214,22 @@
   box-shadow: 0 4px 16px rgba(13, 148, 136, 0.12);
 }
 
+.doctor-card.unavailable {
+  border-color: #fecaca;
+  background: #fef2f2;
+  opacity: 0.75;
+}
+
+.doctor-card.unavailable:hover {
+  border-color: #f87171;
+  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.08);
+}
+
+.doctor-card.unavailable .doctor-card-avatar {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
 .doctor-card-badge {
   position: absolute;
   top: 10px;
@@ -239,6 +255,11 @@
 
 .badge-selected .anticon {
   color: #fff !important;
+}
+
+.badge-unavailable {
+  background: #fef2f2;
+  color: #dc2626;
 }
 
 .badge-next {
@@ -300,6 +321,10 @@
   color: #059669;
 }
 
+.doctor-card-availability.not-available {
+  color: #dc2626;
+}
+
 .doctor-card-availability.next-available {
   color: #b45309;
 }
@@ -313,6 +338,10 @@
 
 .availability-dot.green {
   background: #059669;
+}
+
+.availability-dot.red {
+  background: #dc2626;
 }
 
 .availability-dot.orange {
