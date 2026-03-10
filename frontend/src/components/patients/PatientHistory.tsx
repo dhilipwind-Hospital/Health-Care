@@ -5,7 +5,7 @@
  * This is a NEW file - does not modify any existing code.
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
     Card,
     Timeline,
@@ -55,23 +55,130 @@ import {
 
 const { Title, Text } = Typography;
 
+const MONTH_BAR_COLORS = [
+    '#FF6B6B', '#FF8E53', '#FFC857', '#A8E06C', '#56CCF2',
+    '#7B68EE', '#E056A0', '#4ECDC4', '#FF7675', '#74B9FF',
+    '#A29BFE', '#FD79A8'
+];
+
 const HistoryContainer = styled.div`
   .history-stat-card {
     transition: all 0.3s ease;
     cursor: pointer;
-    
+
     &:hover {
       transform: translateY(-2px);
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     }
   }
-  
+
   .timeline-card {
     margin-top: 16px;
   }
-  
+
   .ant-timeline-item-content {
     padding-bottom: 16px;
+  }
+
+  .month-bar-container {
+    display: flex;
+    width: 100%;
+    border-radius: 8px;
+    overflow: hidden;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    min-height: 52px;
+  }
+
+  .month-bar-segment {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 4px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    min-width: 70px;
+    border-right: 1px solid rgba(255, 255, 255, 0.3);
+
+    &:last-child {
+      border-right: none;
+    }
+
+    &:hover {
+      filter: brightness(1.1);
+      transform: scaleY(1.08);
+    }
+
+    &.selected {
+      transform: scaleY(1.12);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+      z-index: 2;
+      filter: brightness(1.15);
+    }
+
+    .month-label {
+      color: #fff;
+      font-weight: 600;
+      font-size: 12px;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+      white-space: nowrap;
+    }
+
+    .month-count {
+      color: rgba(255, 255, 255, 0.9);
+      font-size: 10px;
+      margin-top: 2px;
+    }
+
+    .month-dots {
+      display: flex;
+      gap: 2px;
+      margin-top: 3px;
+    }
+
+    .event-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      border: 1px solid rgba(255, 255, 255, 0.5);
+    }
+  }
+
+  .selected-month-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid #f0f0f0;
+
+    .month-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: #262626;
+    }
+
+    .month-event-count {
+      font-size: 14px;
+      color: #8c8c8c;
+    }
+  }
+
+  .year-divider {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    margin-bottom: 4px;
+
+    .year-label {
+      font-size: 11px;
+      font-weight: 700;
+      color: #8c8c8c;
+      letter-spacing: 1px;
+      margin-right: 8px;
+    }
   }
 `;
 
@@ -95,6 +202,7 @@ const PatientHistory: React.FC<PatientHistoryProps> = ({ patientId }) => {
     const [notes, setNotes] = useState<ClinicalNote[]>([]);
 
     const [dataLoaded, setDataLoaded] = useState(false);
+    const [selectedMonth, setSelectedMonth] = useState<string | null>(null);
 
     useEffect(() => {
         if (patientId) {
@@ -269,6 +377,63 @@ const PatientHistory: React.FC<PatientHistoryProps> = ({ patientId }) => {
         );
     };
 
+    // Group timeline entries by month (only months with data)
+    const monthGroups = useMemo(() => {
+        const entries = getTimelineEntries();
+        const groups: Record<string, { entries: typeof entries; year: number; month: number; label: string }> = {};
+
+        entries.forEach(entry => {
+            const d = dayjs(entry.date);
+            if (!d.isValid()) return;
+            const key = d.format('YYYY-MM');
+            if (!groups[key]) {
+                groups[key] = {
+                    entries: [],
+                    year: d.year(),
+                    month: d.month(),
+                    label: d.format('MMM YYYY')
+                };
+            }
+            groups[key].entries.push(entry);
+        });
+
+        // Sort by date ascending (oldest left, newest right)
+        return Object.entries(groups)
+            .sort(([a], [b]) => a.localeCompare(b))
+            .map(([key, value], index) => ({
+                key,
+                ...value,
+                color: MONTH_BAR_COLORS[index % MONTH_BAR_COLORS.length]
+            }));
+    }, [admissions, visits, vitals, labs, prescriptions, procedures, documents, notes, searchText]);
+
+    // Auto-select the latest month when data loads
+    useEffect(() => {
+        if (monthGroups.length > 0 && !selectedMonth) {
+            setSelectedMonth(monthGroups[monthGroups.length - 1].key);
+        }
+    }, [monthGroups]);
+
+    const selectedMonthData = useMemo(() => {
+        if (!selectedMonth) return null;
+        return monthGroups.find(g => g.key === selectedMonth) || null;
+    }, [selectedMonth, monthGroups]);
+
+    // Get event type color for dots
+    const getEventDotColor = (type: string) => {
+        const colors: Record<string, string> = {
+            admission: '#f5222d',
+            discharge: '#52c41a',
+            visit: '#1890ff',
+            lab: '#722ed1',
+            prescription: '#13c2c2',
+            procedure: '#fa541c',
+            document: '#2f54eb',
+            note: '#faad14'
+        };
+        return colors[type] || '#d9d9d9';
+    };
+
     // Table columns for admissions
     const admissionColumns = [
         {
@@ -403,26 +568,88 @@ const PatientHistory: React.FC<PatientHistoryProps> = ({ patientId }) => {
                             description="Click 'Load History' to view patient timeline"
                             image={Empty.PRESENTED_IMAGE_SIMPLE}
                         />
-                    ) : getTimelineEntries().length === 0 ? (
+                    ) : monthGroups.length === 0 ? (
                         <Empty description="No history records found" />
                     ) : (
-                        <Timeline mode="left">
-                            {getTimelineEntries().map((entry, index) => (
-                                <Timeline.Item
-                                    key={index}
-                                    color={entry.color}
-                                    dot={entry.icon}
-                                >
-                                    <Text type="secondary" style={{ fontSize: 12 }}>
-                                        {dayjs(entry.date).format('MMM D, YYYY')}
-                                    </Text>
-                                    <br />
-                                    <Text strong>{entry.title}</Text>
-                                    <br />
-                                    <Text type="secondary">{entry.description}</Text>
-                                </Timeline.Item>
-                            ))}
-                        </Timeline>
+                        <>
+                            {/* Horizontal Month Bar */}
+                            <div className="month-bar-container">
+                                {(() => {
+                                    const totalEvents = monthGroups.reduce((sum, g) => sum + g.entries.length, 0);
+                                    let lastYear: number | null = null;
+
+                                    return monthGroups.map((group) => {
+                                        const widthPercent = Math.max((group.entries.length / totalEvents) * 100, 8);
+                                        const showYearDivider = lastYear !== null && group.year !== lastYear;
+                                        lastYear = group.year;
+
+                                        // Get unique event types for dots
+                                        const eventTypes = [...new Set(group.entries.map(e => e.type))];
+
+                                        return (
+                                            <React.Fragment key={group.key}>
+                                                {showYearDivider && (
+                                                    <div style={{
+                                                        width: '2px',
+                                                        background: 'rgba(255,255,255,0.6)',
+                                                        alignSelf: 'stretch'
+                                                    }} />
+                                                )}
+                                                <div
+                                                    className={`month-bar-segment ${selectedMonth === group.key ? 'selected' : ''}`}
+                                                    style={{
+                                                        flex: `${widthPercent} 0 0%`,
+                                                        backgroundColor: group.color
+                                                    }}
+                                                    onClick={() => setSelectedMonth(group.key)}
+                                                >
+                                                    <span className="month-label">{group.label}</span>
+                                                    <span className="month-count">{group.entries.length} {group.entries.length === 1 ? 'event' : 'events'}</span>
+                                                    <div className="month-dots">
+                                                        {eventTypes.slice(0, 5).map((type, i) => (
+                                                            <div
+                                                                key={i}
+                                                                className="event-dot"
+                                                                style={{ backgroundColor: getEventDotColor(type) }}
+                                                            />
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            </React.Fragment>
+                                        );
+                                    });
+                                })()}
+                            </div>
+
+                            {/* Selected Month Events */}
+                            {selectedMonthData && (
+                                <>
+                                    <div className="selected-month-header">
+                                        <span className="month-title">{selectedMonthData.label}</span>
+                                        <span className="month-event-count">
+                                            {selectedMonthData.entries.length} {selectedMonthData.entries.length === 1 ? 'event' : 'events'}
+                                        </span>
+                                    </div>
+                                    <Timeline mode="left">
+                                        {selectedMonthData.entries.map((entry, index) => (
+                                            <Timeline.Item
+                                                key={index}
+                                                color={entry.color}
+                                                dot={entry.icon}
+                                            >
+                                                <Text type="secondary" style={{ fontSize: 12 }}>
+                                                    {dayjs(entry.date).format('MMM D, YYYY')}
+                                                </Text>
+                                                <br />
+                                                <Text strong>{entry.title}</Text>
+                                                <br />
+                                                <Text type="secondary">{entry.description}</Text>
+                                            </Timeline.Item>
+                                        ))}
+                                    </Timeline>
+                                </>
+                            )}
+                        </>
                     )}
                 </Card>
             )
