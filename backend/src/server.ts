@@ -711,6 +711,17 @@ export class Server {
     });
 
     // Seed Ayphen Care Hospital (complete org with all roles, patients, OPD/IPD flow)
+    this.app.post('/api/flush-data', async (req: Request, res: Response) => {
+      try {
+        const { flushData } = await import(path.join(__dirname, 'scripts', 'flush-data'));
+        await flushData();
+        res.status(200).json({ message: 'All data flushed successfully' });
+      } catch (error: any) {
+        console.error('Flush error:', error);
+        res.status(500).json({ message: 'Failed to flush data', error: error.message });
+      }
+    });
+
     this.app.post('/api/seed-ayphen-complete', async (req: Request, res: Response) => {
       try {
         const seedModule = await import(path.join(__dirname, 'scripts', 'seed-ayphen-complete'));
