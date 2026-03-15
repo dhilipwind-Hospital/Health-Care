@@ -710,6 +710,18 @@ export class Server {
       }
     });
 
+    // Seed Ayphen Care Hospital (complete org with all roles, patients, OPD/IPD flow)
+    this.app.post('/api/seed-ayphen-complete', async (req: Request, res: Response) => {
+      try {
+        const seedModule = await import(path.join(__dirname, 'scripts', 'seed-ayphen-complete'));
+        await seedModule.seedAyphenComplete();
+        res.status(201).json({ message: 'Ayphen Care Hospital seeded successfully' });
+      } catch (error: any) {
+        console.error('Seed Ayphen error:', error);
+        res.status(500).json({ message: 'Failed to seed Ayphen Care', error: error.message });
+      }
+    });
+
     // Seed super admin endpoint (one-time use)
     this.app.post('/api/seed-super-admin', async (req: Request, res: Response) => {
       try {

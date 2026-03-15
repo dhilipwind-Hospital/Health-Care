@@ -1,52 +1,24 @@
 import 'reflect-metadata';
 import { AppDataSource } from '../config/database';
-import { User } from '../models/User';
-import { Organization } from '../models/Organization';
-import { Department } from '../models/Department';
-import { Service } from '../models/Service';
-import { Ward } from '../models/inpatient/Ward';
-import { Room } from '../models/inpatient/Room';
-import { Bed } from '../models/inpatient/Bed';
-import { Admission } from '../models/inpatient/Admission';
-import { Appointment } from '../models/Appointment';
 
 async function flushData() {
   try {
-    console.log('🗑️  Starting data flush...\n');
+    console.log('🗑️  Starting FULL data flush...\n');
 
     await AppDataSource.initialize();
     console.log('✅ Database connected\n');
 
-    // Delete in order of dependencies (children first)
-    const tables = [
-      { name: 'Admissions', repo: AppDataSource.getRepository(Admission) },
-      { name: 'Appointments', repo: AppDataSource.getRepository(Appointment) },
-      { name: 'Beds', repo: AppDataSource.getRepository(Bed) },
-      { name: 'Rooms', repo: AppDataSource.getRepository(Room) },
-      { name: 'Wards', repo: AppDataSource.getRepository(Ward) },
-      { name: 'Services', repo: AppDataSource.getRepository(Service) },
-      { name: 'Departments', repo: AppDataSource.getRepository(Department) },
-      { name: 'Users', repo: AppDataSource.getRepository(User) },
-      { name: 'Organizations', repo: AppDataSource.getRepository(Organization) }
-    ];
+    const entities = AppDataSource.entityMetadatas;
+    const tableNames = entities.map(e => `"${e.tableName}"`).join(', ');
 
-    for (const table of tables) {
-      try {
-        const count = await table.repo.count();
-        if (count > 0) {
-          // Use delete instead of clear to avoid foreign key issues
-          await table.repo.delete({});
-          console.log(`✅ Cleared ${table.name}: ${count} records`);
-        } else {
-          console.log(`⏭️  ${table.name}: Already empty`);
-        }
-      } catch (error) {
-        console.log(`⚠️  Could not clear ${table.name}: ${error instanceof Error ? error.message : String(error)}`);
-      }
-    }
+    console.log(`Found ${entities.length} tables to flush:`);
+    entities.forEach(e => console.log(`  - ${e.tableName}`));
 
-    console.log('\n🎉 Data flush completed!');
-    console.log('📊 Database is now empty and ready for fresh seeding.\n');
+    console.log('\nTruncating all tables with CASCADE...');
+    await AppDataSource.query(`TRUNCATE TABLE ${tableNames} CASCADE`);
+
+    console.log(`\n🎉 Data flush completed! ${entities.length} tables cleared.`);
+    console.log('📊 Database schema preserved. Ready for fresh seeding.\n');
 
     await AppDataSource.destroy();
   } catch (error) {
