@@ -723,13 +723,13 @@ export class Server {
     });
 
     this.app.post('/api/seed-ayphen-complete', async (req: Request, res: Response) => {
+      res.status(202).json({ message: 'Seeding started in background. Check logs or try login in ~30s.' });
       try {
         const seedModule = await import(path.join(__dirname, 'scripts', 'seed-ayphen-complete'));
         await seedModule.seedAyphenComplete();
-        res.status(201).json({ message: 'Ayphen Care Hospital seeded successfully' });
+        console.log('✅ Ayphen Care seeding completed successfully');
       } catch (error: any) {
-        console.error('Seed Ayphen error:', error);
-        res.status(500).json({ message: 'Failed to seed Ayphen Care', error: error.message });
+        console.error('❌ Seed Ayphen error:', error);
       }
     });
 
