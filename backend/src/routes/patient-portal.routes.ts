@@ -155,7 +155,7 @@ router.get('/bills/:id/invoice.pdf', errorHandler(async (req: any, res: Response
   doc.end();
 }));
 
-// Stripe test mode stub
+// Stripe payment - test mode returns mock, production uses Stripe SDK
 router.post('/bills/:id/stripe-test', errorHandler(async (req: any, res: Response) => {
   const repo = AppDataSource.getRepository(Bill);
   const id = String(req.params.id);
@@ -163,12 +163,41 @@ router.post('/bills/:id/stripe-test', errorHandler(async (req: any, res: Respons
   if (!bill || String((bill as any).patient?.id) !== String(req.user.id)) {
     return res.status(404).json({ message: 'Bill not found' });
   }
-  // In real integration, create a PaymentIntent here. For now, return a mock URL in test mode.
-  if (String(process.env.STRIPE_TEST_MODE || '1') === '1') {
-    const url = `https://dashboard.stripe.com/test/payments`;
-    return res.json({ checkoutUrl: url, amount: (bill as any).amount, currency: 'usd', testMode: true });
+  if ((bill as any).status === 'paid') {
+    return res.status(400).json({ message: 'Bill already paid' });
   }
-  return res.status(501).json({ message: 'Stripe not configured' });
+  const amount = Number((bill as any).amount) - Number((bill as any).paidAmount || 0);
+  if (amount <= 0) {
+    return res.status(400).json({ message: 'No balance due' });
+  }
+
+  // If Stripe secret key is configured, create a real checkout session
+  if (process.env.STRIPE_SECRET_KEY && String(process.env.STRIPE_TEST_MODE || '1') !== '1') {
+    try {
+      const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+      const session = await stripe.checkout.sessions.create({
+        payment_method_types: ['card'],
+        line_items: [{
+          price_data: {
+            currency: 'inr',
+            product_data: { name: `Bill #${(bill as any).billNumber || id}` },
+            unit_amount: Math.round(amount * 100),
+          },
+          quantity: 1,
+        }],
+        mode: 'payment',
+        success_url: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/portal/bills?payment=success&bill=${id}`,
+        cancel_url: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/portal/bills?payment=cancelled&bill=${id}`,
+        metadata: { billId: id, patientId: req.user.id },
+      });
+      return res.json({ checkoutUrl: session.url, amount, currency: 'inr', testMode: false, sessionId: session.id });
+    } catch (err: any) {
+      return res.status(500).json({ message: 'Stripe error', error: err.message });
+    }
+  }
+
+  // Test mode fallback
+  return res.json({ checkoutUrl: `https://dashboard.stripe.com/test/payments`, amount, currency: 'inr', testMode: true });
 }));
 
 /**
@@ -298,11 +327,32 @@ router.post('/bills/:id/pay', errorHandler(async (req: any, res: Response) => {
   if ((bill as any).status === BillStatus.CANCELLED) {
     return res.status(400).json({ message: 'Bill is cancelled' });
   }
+
   const method = req.body?.paymentMethod as any;
-  (bill as any).paidAmount = (bill as any).amount;
-  (bill as any).status = BillStatus.PAID;
+  const transactionId = req.body?.transactionId;
+  const paymentGateway = req.body?.paymentGateway;
+  const totalAmount = Number((bill as any).amount || 0);
+  const alreadyPaid = Number((bill as any).paidAmount || 0);
+  const payAmount = req.body?.amount ? Math.min(Number(req.body.amount), totalAmount - alreadyPaid) : (totalAmount - alreadyPaid);
+
+  if (payAmount <= 0) {
+    return res.status(400).json({ message: 'No balance due' });
+  }
+
+  const newPaidAmount = alreadyPaid + payAmount;
+  (bill as any).paidAmount = newPaidAmount;
   (bill as any).paidDate = new Date();
   if (method) (bill as any).paymentMethod = method;
+  if (transactionId) (bill as any).transactionId = transactionId;
+  if (paymentGateway) (bill as any).paymentGateway = paymentGateway;
+
+  // Set status based on payment
+  if (newPaidAmount >= totalAmount) {
+    (bill as any).status = BillStatus.PAID;
+  } else {
+    (bill as any).status = BillStatus.PARTIALLY_PAID || 'partially_paid';
+  }
+
   await repo.save(bill as any);
   const updated = await repo.findOne({ where: { id } });
   return res.json(updated);

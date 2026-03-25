@@ -208,13 +208,41 @@ router.post('/:id/photo', authorize({ requireOneOf: [Permission.UPDATE_USER] }),
  *       401:
  *         description: Unauthorized - Authentication required
  */
-router.get('/me/medical-records', (req: Request, res: Response) => {
-  res.status(200).json({
-    status: 'success',
-    message: 'Medical records endpoint is not implemented yet',
-    data: []
-  });
-});
+router.get('/me/medical-records', authenticate, errorHandler(async (req: Request, res: Response) => {
+  const userId = (req as any).user?.id;
+  const organizationId = (req as any).user?.organizationId || (req as any).tenant?.id;
+  const { page = '1', limit = '10', startDate, endDate, q, type } = req.query as any;
+  const pageNum = Math.max(parseInt(String(page), 10) || 1, 1);
+  const limitNum = Math.min(Math.max(parseInt(String(limit), 10) || 10, 1), 100);
+
+  const { AppDataSource } = require('../config/database');
+  const { MedicalRecord } = require('../models/MedicalRecord');
+
+  const qb = AppDataSource.getRepository(MedicalRecord).createQueryBuilder('r')
+    .leftJoin('r.patient', 'p')
+    .leftJoinAndSelect('r.doctor', 'doctor')
+    .where('p.id = :pid', { pid: userId })
+    .orderBy('r.recordDate', 'DESC')
+    .skip((pageNum - 1) * limitNum)
+    .take(limitNum);
+
+  if (organizationId) {
+    qb.andWhere('r.organizationId = :orgId', { orgId: organizationId });
+  }
+  if (startDate && endDate) {
+    qb.andWhere('r.recordDate BETWEEN :start AND :end', { start: new Date(String(startDate)), end: new Date(String(endDate)) });
+  }
+  if (type) {
+    qb.andWhere('r.type = :type', { type: String(type) });
+  }
+  if (q) {
+    const s = `%${String(q).toLowerCase()}%`;
+    qb.andWhere('(LOWER(r.title) LIKE :s OR LOWER(r.description) LIKE :s OR LOWER(r.diagnosis) LIKE :s OR LOWER(r.treatment) LIKE :s)', { s });
+  }
+
+  const [items, total] = await qb.getManyAndCount();
+  res.json({ status: 'success', data: items, meta: { total, page: pageNum, limit: limitNum, totalPages: Math.ceil(total / limitNum) } });
+}));
 
 // Update user's organization
 router.patch('/me', authenticate, errorHandler(UserController.updateUserOrganization));

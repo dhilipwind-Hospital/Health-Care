@@ -473,19 +473,34 @@ export class UserController {
     }
   };
 
-  // Get user's medical records (placeholder - to be implemented)
   static getMedicalRecords = async (req: Request, res: Response) => {
     const userId = (req as any).user?.id;
+    const organizationId = (req as any).user?.organizationId || (req as any).tenant?.id;
 
     if (!userId) {
       return res.status(401).json({ message: 'Authentication required' });
     }
 
-    // This is a placeholder implementation
-    // In a real application, this would fetch medical records from a records service
     try {
-      // Return empty array for now
-      return res.json([]);
+      const { MedicalRecord } = require('../models/MedicalRecord');
+      const { page = '1', limit = '20' } = req.query as any;
+      const pageNum = Math.max(parseInt(String(page), 10) || 1, 1);
+      const limitNum = Math.min(Math.max(parseInt(String(limit), 10) || 20, 1), 100);
+
+      const qb = AppDataSource.getRepository(MedicalRecord).createQueryBuilder('r')
+        .leftJoin('r.patient', 'p')
+        .leftJoinAndSelect('r.doctor', 'doctor')
+        .where('p.id = :pid', { pid: userId })
+        .orderBy('r.recordDate', 'DESC')
+        .skip((pageNum - 1) * limitNum)
+        .take(limitNum);
+
+      if (organizationId) {
+        qb.andWhere('r.organizationId = :orgId', { orgId: organizationId });
+      }
+
+      const [items, total] = await qb.getManyAndCount();
+      return res.json({ data: items, meta: { total, page: pageNum, limit: limitNum, totalPages: Math.ceil(total / limitNum) } });
     } catch (error) {
       console.error('Error fetching medical records:', error);
       return res.status(500).json({ message: 'Error fetching medical records' });
